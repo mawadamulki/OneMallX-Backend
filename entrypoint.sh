@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+# Wait for DB (compose healthcheck does not gate artisan network timing)
+until php artisan db:monitor >/dev/null 2>&1; do
+  sleep 2
+done
+
+php artisan migrate --force
+php artisan optimize:clear
+php artisan storage:link --force
+
+exec "$@"

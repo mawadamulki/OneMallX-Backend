@@ -1,0 +1,46 @@
+# Git / CI
+.git
+.gitignore
+.gitattributes
+.gitlab-ci.yml
+
+# Docker / compose (not needed inside the app image context)
+.dockerignore
+docker-compose*.yml
+docker/
+
+# Env & secrets (runtime inject via compose / orchestrator)
+.env
+.env.*
+!.env.example
+
+# Dependencies & build artifacts
+node_modules
+vendor
+npm-debug.log
+
+# Laravel runtime / cache (mounted or recreated in container)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+public/hot
+
+# Tests & tooling
+tests
+phpunit.xml
+.phpunit.result.cache
+.phpunit.cache
+.php-cs-fixer.cache
+
+# Editors & OS
+.idea
+.vscode
+.fleet
+.zed
+.DS_Store
+
+# Docs
+*.md
+README.md

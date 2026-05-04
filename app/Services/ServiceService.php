@@ -1,0 +1,160 @@
+<?php
+
+namespace App\Services;
+
+use App\DAO\ServiceDAO;
+use App\Models\Service;
+use App\Support\WorkingWeekday;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class ServiceService
+{
+    public function __construct(private ServiceDAO $serviceDAO) {}
+
+    public function getServicesByArea($areaId)
+    {
+        $services = $this->serviceDAO->getByArea($areaId);
+
+        return $services->map(function ($service) {
+            return [
+                'id' => $service->id,
+                'name' => $service->name,
+                'image' => $service->media->first()?->url,
+                'rating' => round($service->rates->avg('score'), 1),
+                'is_favorite' => false, // لاحقاً
+            ];
+        });
+    }
+
+    public function getServiceDetails($id)
+    {
+        $service = $this->serviceDAO->findWithDetails($id);
+
+        if (! $service) {
+            return ['error' => 'Service not found'];
+        }
+
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'description' => $service->description,
+            'location' => $service->locationID,
+            'openTime' => $service->openTime,
+            'closeTime' => $service->closeTime,
+            'days' => $service->workingDays
+                ->sortBy('weekday')
+                ->map(fn ($d) => WorkingWeekday::isoToAbbrev($d->weekday))
+                ->values()
+                ->all(),
+            'weekdays' => $service->workingDays->sortBy('weekday')->pluck('weekday')->values()->all(),
+            'image' => $service->media->first()?->url,
+            'rating' => round($service->rates->avg('score'), 1),
+        ];
+    }
+
+    public function adminServicesSummaryList(int $perPage): LengthAwarePaginator
+    {
+        return $this->serviceDAO->paginateAdminServicesSummary($perPage)
+            ->through(fn (Service $service) => [
+                'id' => $service->id,
+                'name' => $service->name,
+                'media' => $service->media->first()?->url,
+            ]);
+    }
+
+    public function adminServiceDetails($serviceId): array
+    {
+        $service = $this->serviceDAO->findAdminServiceById($serviceId);
+
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'description' => $service->description,
+            'location' => $service->locationID,
+            'media' => $service->media->first()?->url,
+            'openTime' => $service->openTime,
+            'closeTime' => $service->closeTime,
+            'days' => $service->workingDays
+                ->sortBy('weekday')
+                ->map(fn ($d) => WorkingWeekday::isoToAbbrev($d->weekday))
+                ->values()
+                ->all(),
+            'owner' => $service->relationLoaded('owner') && $service->owner
+                ? [
+                    'id' => $service->owner->id,
+                    'name' => $service->owner->name,
+                    'email' => $service->owner->email,
+                    'phoneNumber' => $service->owner->phoneNumber,
+                    'status' => $service->owner->status,
+                ]
+                : null,
+            'area' => $service->relationLoaded('area') && $service->area
+                ? [
+                    'id' => $service->area->id,
+                    'name' => $service->area->name,
+                    'number' => $service->area->number,
+                    'usageType' => $service->area->usageType,
+                    'category' => $service->area->category,
+                    'floorID' => $service->area->floorID,
+                    'floor' => $service->area->relationLoaded('floor') && $service->area->floor
+                        ? [
+                            'id' => $service->area->floor->id,
+                            'name' => $service->area->floor->name,
+                            'number' => $service->area->floor->number,
+                            'mallID' => $service->area->floor->mallID,
+                        ]
+                        : null,
+                ]
+                : null,
+        ];
+    }
+
+    public function adminServiceItems($serviceId)
+    {
+        $serviceItems = $this->serviceDAO->getAdminServiceItems($serviceId);
+
+        return $serviceItems->map(function ($serviceItem) {
+            return [
+                'id' => $serviceItem->id,
+                'name' => $serviceItem->name,
+                'media' => $serviceItem->media->first()?->url,
+            ];
+        });
+    }
+
+    public function adminServiceItemDetails($serviceItemId)
+    {
+        $serviceItem = $this->serviceDAO->findAdminServiceItemById($serviceItemId);
+        if (! $serviceItem) {
+            return ['error' => 'Service item not found'];
+        }
+
+        return [
+            'id' => $serviceItem->id,
+            'name' => $serviceItem->name,
+            'media' => $serviceItem->media->first()?->url,
+            'service' => [
+                'id' => $serviceItem->service->id,
+                'name' => $serviceItem->service->name,
+            ],
+            'employees' => $serviceItem->employees->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                ];
+            }),
+            'bookings' => $serviceItem->bookings->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'date' => $booking->date,
+                    'time' => $booking->time,
+                    'employee' => [
+                        'id' => $booking->employee->id,
+                        'name' => $booking->employee->name,
+                    ],
+                ];
+            }),
+
+        ];
+    }
+}

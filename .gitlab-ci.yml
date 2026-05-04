@@ -1,0 +1,72 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: "1"
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  SERVER_IP: "72.62.42.213"
+  SERVER_PATH: "/opt/onemall"
+  COMPOSE_SERVICE_APP: "app"
+
+build:image:
+  stage: build
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:latest" || true
+    - docker build --cache-from "$CI_REGISTRY_IMAGE:latest" --target production -t "$IMAGE_TAG" -t "$CI_REGISTRY_IMAGE:latest" .
+    - docker push "$IMAGE_TAG"
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+  script:
+    - scp $ONEMALL_ENV root@$SERVER_IP:$SERVER_PATH/.env.prod
+    - |
+      ssh root@$SERVER_IP "
+        cd $SERVER_PATH && \
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin $CI_REGISTRY && \
+        export CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE && \
+        export ENV_FILE_PATH=.env.prod && \
+        docker compose pull && \
+        docker compose up -d --remove-orphans && \
+
+        sleep 15 && \
+
+         echo 'Checking container status...' && \
+        docker compose ps && \
+
+        if docker compose ps | grep 'onemall-app' | grep 'Up'; then
+          echo 'Container is running ✅' && \
+          if [ \"$RESET_DB\" = \"true\" ]; then
+            echo 'Running migrate:fresh...' && \
+            docker compose run --rm $COMPOSE_SERVICE_APP php artisan migrate:fresh --seed --force;
+          fi
+        else
+          echo 'Container is NOT running ❌' && \
+          docker compose logs $COMPOSE_SERVICE_APP --tail=100 && \
+          exit 1;
+        fi && \
+
+        echo 'Resetting Spatie permission cache...' && \
+        docker compose run --rm $COMPOSE_SERVICE_APP php artisan permission:cache-reset && \
+
+        docker image prune -f && \
+        docker logout $CI_REGISTRY
+      "
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
