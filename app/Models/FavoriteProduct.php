@@ -10,13 +10,13 @@ class FavoriteProduct extends Model
     use HasFactory;
 
     protected $fillable = [
-        'favoriteID',
+        'userID',
         'productID',
     ];
 
-    public function favorite()
+    public function user()
     {
-        return $this->belongsTo(Favorite::class, 'favoriteID');
+        return $this->belongsTo(User::class, 'userID');
     }
 
     public function product()
@@ -24,4 +24,3 @@ class FavoriteProduct extends Model
         return $this->belongsTo(Product::class, 'productID');
     }
 }
-

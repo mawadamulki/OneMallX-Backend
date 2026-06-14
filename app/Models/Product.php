@@ -12,15 +12,42 @@ class Product extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'detail',
-        'price',
-        'quantity',
+        'shortDetail',
         'storeID',
+        'status',
+        'isFeatured',
+        'publishedAt',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'isFeatured' => 'boolean',
+            'publishedAt' => 'datetime',
+        ];
+    }
 
     public function store()
     {
         return $this->belongsTo(Store::class, 'storeID');
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class, 'productID');
+    }
+
+    public function defaultVariant()
+    {
+        return $this->hasOne(ProductVariant::class, 'productID')->where('isDefault', true);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'product_category', 'productID', 'categoryID')
+            ->withTimestamps();
     }
 
     public function media()
@@ -33,19 +60,8 @@ class Product extends Model
         return $this->morphMany(Rate::class, 'rateable', 'rateableType', 'rateableID');
     }
 
-    public function basketProducts()
-    {
-        return $this->hasMany(BasketProduct::class, 'productID');
-    }
-
-    public function orderProducts()
-    {
-        return $this->hasMany(OrderProduct::class, 'productID');
-    }
-
     public function favoriteProducts()
     {
         return $this->hasMany(FavoriteProduct::class, 'productID');
     }
 }
-

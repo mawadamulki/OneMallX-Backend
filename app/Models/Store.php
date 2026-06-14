@@ -36,6 +36,21 @@ class Store extends Model
         return $this->hasMany(Product::class, 'storeID');
     }
 
+    public function productVariants()
+    {
+        return $this->hasMany(ProductVariant::class, 'storeID');
+    }
+
+    public function categories()
+    {
+        return $this->hasMany(Category::class, 'storeID');
+    }
+
+    public function productAttributes()
+    {
+        return $this->hasMany(ProductAttribute::class, 'storeID');
+    }
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');

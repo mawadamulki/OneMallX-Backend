@@ -60,8 +60,11 @@ class StoreClass implements StoreInterface
     {
         return Product::query()
             ->where('storeID', $storeId)
-            ->select(['id', 'name', 'price'])
-            ->with(['media' => fn ($q) => $q->orderBy('id')])
+            ->select(['id', 'name', 'slug', 'status'])
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'defaultVariant',
+            ])
             ->orderBy('name')
             ->paginate($perPage);
     }
@@ -70,7 +73,12 @@ class StoreClass implements StoreInterface
     {
         $product = Product::query()
             ->whereKey($productId)
-            ->with(['media', 'store'])->first();
+            ->with([
+                'media',
+                'store',
+                'categories',
+                'variants.attributeValues.attribute',
+            ])->first();
 
         if (! $product) {
             return null;

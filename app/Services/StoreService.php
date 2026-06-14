@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DAO\StoreInterface;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Store;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -143,10 +144,16 @@ class StoreService
 
     private function toAdminProductSummaryArray(Product $product): array
     {
+        $defaultVariant = $product->relationLoaded('defaultVariant') ? $product->defaultVariant : null;
+
         return [
             'id' => $product->id,
             'name' => $product->name,
-            'price' => $product->price,
+            'slug' => $product->slug,
+            'status' => $product->status,
+            'sku' => $defaultVariant?->sku,
+            'price' => $defaultVariant?->price,
+            'quantity' => $defaultVariant?->quantity,
             'media' => $this->mapMediaCollection($product),
         ];
     }
@@ -158,13 +165,26 @@ class StoreService
         return [
             'id' => $product->id,
             'name' => $product->name,
+            'slug' => $product->slug,
             'detail' => $product->detail,
-            'price' => $product->price,
-            'quantity' => $product->quantity,
+            'shortDetail' => $product->shortDetail,
+            'status' => $product->status,
+            'isFeatured' => $product->isFeatured,
+            'publishedAt' => $product->publishedAt,
             'storeID' => $product->storeID,
             'created_at' => $product->created_at,
             'updated_at' => $product->updated_at,
             'media' => $this->mapMediaCollection($product),
+            'categories' => $product->relationLoaded('categories')
+                ? $product->categories->map(fn ($category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                ])->values()->all()
+                : [],
+            'variants' => $product->relationLoaded('variants')
+                ? $product->variants->map(fn (ProductVariant $variant) => $this->toAdminVariantArray($variant))->values()->all()
+                : [],
             'store' => $store
                 ? [
                     'id' => $store->id,
@@ -179,7 +199,38 @@ class StoreService
         ];
     }
 
-    private function mapMediaCollection(Store|Product $model): array
+    private function toAdminVariantArray(ProductVariant $variant): array
+    {
+        return [
+            'id' => $variant->id,
+            'sku' => $variant->sku,
+            'barcode' => $variant->barcode,
+            'name' => $variant->name,
+            'price' => $variant->price,
+            'compareAtPrice' => $variant->compareAtPrice,
+            'quantity' => $variant->quantity,
+            'reservedQuantity' => $variant->reservedQuantity,
+            'availableQuantity' => $variant->availableQuantity(),
+            'weight' => $variant->weight,
+            'isDefault' => $variant->isDefault,
+            'status' => $variant->status,
+            'attributes' => $variant->relationLoaded('attributeValues')
+                ? $variant->attributeValues->map(fn ($value) => [
+                    'id' => $value->id,
+                    'value' => $value->value,
+                    'attribute' => $value->relationLoaded('attribute') && $value->attribute
+                        ? [
+                            'id' => $value->attribute->id,
+                            'name' => $value->attribute->name,
+                            'code' => $value->attribute->code,
+                        ]
+                        : null,
+                ])->values()->all()
+                : [],
+        ];
+    }
+
+    private function mapMediaCollection(Store|Product|ProductVariant $model): array
     {
         if (! $model->relationLoaded('media')) {
             return [];

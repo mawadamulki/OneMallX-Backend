@@ -74,7 +74,7 @@ class ServiceDemoSeeder extends Seeder
                 $floorLabel = $area->floor?->name ?? 'Floor';
 
                 for ($unit = 1; $unit <= self::SERVICES_PER_AREA; $unit++) {
-                    $owner = $this->createServiceOwner($area->id, $unit);
+                    $owner = $this->createServiceProvider($area->id, $unit);
                     $ownerCount++;
 
                     $service = Service::query()->create([
@@ -164,7 +164,7 @@ class ServiceDemoSeeder extends Seeder
         return $customers;
     }
 
-    private function createServiceOwner(int $areaId, int $unit): User
+    private function createServiceProvider(int $areaId, int $unit): User
     {
         $owner = User::query()->create([
             'name' => "Provider — Area {$areaId} Service {$unit}",

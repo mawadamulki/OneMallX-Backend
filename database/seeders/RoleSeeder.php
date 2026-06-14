@@ -39,12 +39,14 @@ class RoleSeeder extends Seeder
         $serviceProvider->givePermissionTo([
             'get subscription plans',
             'manage service subscriptions',
+            'manage service catalog',
         ]);
 
         $storeOwner = Role::findByName('Store Owner', 'web');
         $storeOwner->givePermissionTo([
             'get subscription plans',
             'manage store subscriptions',
+            'manage store products',
         ]);
 
         $customer = Role::findByName('Customer', 'web');

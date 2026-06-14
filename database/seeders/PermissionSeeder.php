@@ -25,6 +25,8 @@ class PermissionSeeder extends Seeder
             'manage users',
             'manage store subscriptions',
             'manage service subscriptions',
+            'manage store products',
+            'manage service catalog',
         ];
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);

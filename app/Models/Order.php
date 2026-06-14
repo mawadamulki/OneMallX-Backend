@@ -26,9 +26,21 @@ class Order extends Model
         return $this->belongsTo(User::class, 'userID');
     }
 
-    public function products()
+    public function items()
     {
-        return $this->hasMany(OrderProduct::class, 'orderID');
+        return $this->hasMany(OrderItem::class, 'orderID');
+    }
+
+    public function productItems()
+    {
+        return $this->hasMany(OrderItem::class, 'orderID')
+            ->where('lineType', OrderItem::LINE_TYPE_PRODUCT);
+    }
+
+    public function serviceItems()
+    {
+        return $this->hasMany(OrderItem::class, 'orderID')
+            ->where('lineType', OrderItem::LINE_TYPE_SERVICE);
     }
 
     public function customerPayment()
@@ -36,4 +48,3 @@ class Order extends Model
         return $this->hasOne(CustomerPayment::class, 'orderID');
     }
 }
-

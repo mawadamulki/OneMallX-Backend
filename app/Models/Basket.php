@@ -20,9 +20,21 @@ class Basket extends Model
         return $this->belongsTo(User::class, 'userID');
     }
 
-    public function products()
+    public function items()
     {
-        return $this->hasMany(BasketProduct::class, 'basketID');
+        return $this->hasMany(BasketItem::class, 'basketID');
+    }
+
+    public function productItems()
+    {
+        return $this->hasMany(BasketItem::class, 'basketID')
+            ->where('lineType', BasketItem::LINE_TYPE_PRODUCT);
+    }
+
+    public function serviceItems()
+    {
+        return $this->hasMany(BasketItem::class, 'basketID')
+            ->where('lineType', BasketItem::LINE_TYPE_SERVICE);
     }
 
     public function order()
@@ -30,4 +42,3 @@ class Basket extends Model
         return $this->hasOne(Order::class, 'basketID');
     }
 }
-

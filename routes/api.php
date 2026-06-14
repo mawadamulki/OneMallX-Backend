@@ -5,8 +5,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ServiceProviderController;
+use App\Http\Controllers\ServiceProviderEmployeeController;
+use App\Http\Controllers\ServiceProviderItemController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceItemController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductAttributeController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscribtionPlanController;
 use App\Http\Controllers\SubscriptionExtensionController;
@@ -170,6 +176,56 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/serviceSubscriptions/extend', [SubscriptionExtensionController::class, 'submitService']);
         Route::post('/serviceSubscriptions/newPlanRequest', [SubscriptionNewRequestController::class, 'submitService']);
         Route::get('/serviceSubscriptions/me', [SubscriptionRequestController::class, 'myServiceSubscription']);
+    });
+
+    Route::middleware(['permission:manage store products'])->group(function () {
+        Route::get('/storeProducts', [ProductController::class, 'index']);
+        Route::get('/storeProducts/{productId}', [ProductController::class, 'show']);
+        Route::post('/storeProducts', [ProductController::class, 'store']);
+        Route::put('/storeProducts/{productId}', [ProductController::class, 'update']);
+        Route::delete('/storeProducts/{productId}', [ProductController::class, 'destroy']);
+        Route::post('/storeProductMedia/{productId}', [ProductController::class, 'storeMedia']);
+        Route::delete('/storeProductMedia/{mediaId}', [ProductController::class, 'destroyMedia']);
+
+        Route::post('/storeProducts/variants/{productId}', [ProductController::class, 'storeVariant']);
+        Route::put('/storeProductVariants/{variantId}', [ProductController::class, 'updateVariant']);
+        Route::delete('/storeProductVariants/{variantId}', [ProductController::class, 'destroyVariant']);
+
+        Route::get('/storeCategories', [CategoryController::class, 'index']);
+        Route::post('/storeCategories', [CategoryController::class, 'store']);
+        Route::put('/storeCategories/{categoryId}', [CategoryController::class, 'update']);
+        Route::delete('/storeCategories/{categoryId}', [CategoryController::class, 'destroy']);
+
+        Route::get('/storeAttributes', [ProductAttributeController::class, 'index']);
+        Route::post('/storeAttributes', [ProductAttributeController::class, 'store']);
+        Route::put('/storeAttributes/{attributeId}', [ProductAttributeController::class, 'update']);
+        Route::delete('/storeAttributes/{attributeId}', [ProductAttributeController::class, 'destroy']);
+        Route::post('/storeAttributes/values/{attributeId}', [ProductAttributeController::class, 'storeValue']);
+        Route::put('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'updateValue']);
+        Route::delete('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'destroyValue']);
+    });
+
+    Route::middleware(['permission:manage service catalog'])->group(function () {
+        Route::get('/serviceProvider', [ServiceProviderController::class, 'show']);
+        Route::put('/serviceProvider', [ServiceProviderController::class, 'update']);
+        Route::put('/serviceProvider/workingDays', [ServiceProviderController::class, 'syncWorkingDays']);
+        Route::post('/serviceProviderMedia', [ServiceProviderController::class, 'storeMedia']);
+        Route::delete('/serviceProviderMedia/{mediaId}', [ServiceProviderController::class, 'destroyMedia']);
+
+        Route::get('/serviceProviderItems', [ServiceProviderItemController::class, 'index']);
+        Route::get('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'show']);
+        Route::post('/serviceProviderItems', [ServiceProviderItemController::class, 'store']);
+        Route::put('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'update']);
+        Route::delete('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'destroy']);
+        Route::put('/serviceProviderItems/{itemId}/employees', [ServiceProviderItemController::class, 'syncEmployees']);
+        Route::post('/serviceProviderItems/{itemId}/media', [ServiceProviderItemController::class, 'storeMedia']);
+        Route::delete('/serviceProviderItemMedia/{mediaId}', [ServiceProviderItemController::class, 'destroyMedia']);
+
+        Route::get('/serviceProviderEmployees', [ServiceProviderEmployeeController::class, 'index']);
+        Route::post('/serviceProviderEmployees', [ServiceProviderEmployeeController::class, 'store']);
+        Route::put('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'update']);
+        Route::delete('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'destroy']);
+        Route::put('/serviceProviderEmployees/{employeeId}/workingDays', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
     });
 
 });

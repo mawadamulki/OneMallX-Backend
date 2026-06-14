@@ -54,6 +54,11 @@ class ServiceItem extends Model
         return $this->hasMany(Booking::class, 'serviceItemID');
     }
 
+    public function basketItems()
+    {
+        return $this->morphMany(BasketItem::class, 'item', 'itemType', 'itemID');
+    }
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');

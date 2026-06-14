@@ -4,10 +4,12 @@ namespace Database\Seeders;
 
 use App\Models\Area;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class StoreDemoSeeder extends Seeder
 {
@@ -74,13 +76,29 @@ class StoreDemoSeeder extends Seeder
                 $storeCount++;
 
                 for ($p = 1; $p <= self::PRODUCTS_PER_STORE; $p++) {
-                    Product::query()->create([
+                    $productName = "Demo Product {$p}";
+                    $sku = strtoupper("SKU-{$area->id}-{$unit}-{$p}");
+                    $price = 499 + ($p * 397) + ($unit * 13);
+                    $quantity = 8 + ($p * 4) + ($unit % 7);
+
+                    $product = Product::query()->create([
                         'storeID' => $store->id,
-                        'name' => "SKU-{$area->id}-{$unit}-{$p}",
+                        'name' => $productName,
+                        'slug' => Str::slug($productName).'-'.$area->id.'-'.$unit.'-'.$p,
                         'detail' => "Demo product {$p} for {$store->name}.",
-                        'price' => 499 + ($p * 397) + ($unit * 13),
-                        'quantity' => 8 + ($p * 4) + ($unit % 7),
+                        'status' => 'active',
                     ]);
+
+                    ProductVariant::query()->create([
+                        'productID' => $product->id,
+                        'storeID' => $store->id,
+                        'sku' => $sku,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'isDefault' => true,
+                        'status' => 'active',
+                    ]);
+
                     $productCount++;
                 }
             }
