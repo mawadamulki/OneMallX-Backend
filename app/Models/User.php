@@ -61,4 +61,14 @@ class User extends Authenticatable
             'password_reset_otp_expires_at' => 'datetime',
         ];
     }
+
+    public function rates()
+    {
+        return $this->hasMany(Rate::class, 'userID');
+    }
+
+    public function rateReports()
+    {
+        return $this->hasMany(RateReport::class, 'reporterUserID');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\DAO;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Models\StoreSubscription;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -25,8 +26,31 @@ class ProductClass implements ProductInterface
                 'categories',
                 'variants' => fn ($q) => $q->select(['id', 'productID', 'price', 'quantity']),
             ])
+            ->orderByRaw("CASE status WHEN 'active' THEN 0 WHEN 'draft' THEN 1 WHEN 'archived' THEN 2 ELSE 3 END")
             ->orderByDesc('created_at')
             ->paginate($perPage);
+    }
+
+    public function countActiveProductsForStore(int $storeId): int
+    {
+        return Product::query()
+            ->where('storeID', $storeId)
+            ->where('status', 'active')
+            ->count();
+    }
+
+    public function findStoreSpaceForStore(int $storeId): ?int
+    {
+        $subscription = StoreSubscription::query()
+            ->with('storeSubscriptionPlan')
+            ->where('storeID', $storeId)
+            ->orderByDesc('endDate')
+            ->orderByDesc('id')
+            ->first();
+
+        $storeSpace = $subscription?->storeSubscriptionPlan?->storeSpace;
+
+        return $storeSpace !== null ? (int) $storeSpace : null;
     }
 
     public function findProductForStore(int $productId, int $storeId): ?Product

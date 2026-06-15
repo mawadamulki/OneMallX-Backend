@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Services\StoreService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StoreController extends Controller
 {
@@ -85,5 +86,95 @@ class StoreController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    public function showForOwner()
+    {
+        $result = $this->storeService->showForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function planForOwner()
+    {
+        $result = $this->storeService->planForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function updateForOwner(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $result = $this->storeService->updateForOwner((int) Auth::id(), $validated);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
+        }
+
+        return response()->json($result);
+    }
+
+    public function storeMedia(Request $request)
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->storeService->attachMediaForOwner((int) Auth::id(), $validated['photo']);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result, $result['http_status'] ?? 201);
+    }
+
+    public function storeLogo(Request $request)
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->storeService->attachLogoForOwner((int) Auth::id(), $validated['photo']);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result, $result['http_status'] ?? 201);
+    }
+
+    public function destroyLogo()
+    {
+        $result = $this->storeService->deleteLogoForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function destroyMedia($mediaId)
+    {
+        $result = $this->storeService->deleteMediaForOwner((int) Auth::id(), (int) $mediaId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
     }
 }

@@ -33,6 +33,7 @@ class RoleSeeder extends Seeder
             'manage stores',
             'manage services',
             'manage users',
+            'manage rates',
         ]);
 
         $serviceProvider = Role::findByName('Service Provider', 'web');
@@ -40,6 +41,8 @@ class RoleSeeder extends Seeder
             'get subscription plans',
             'manage service subscriptions',
             'manage service catalog',
+            'view service ratings',
+            'report rates',
         ]);
 
         $storeOwner = Role::findByName('Store Owner', 'web');
@@ -47,11 +50,15 @@ class RoleSeeder extends Seeder
             'get subscription plans',
             'manage store subscriptions',
             'manage store products',
+            'view store ratings',
+            'report rates',
         ]);
 
         $customer = Role::findByName('Customer', 'web');
         $customer->givePermissionTo([
             'show floors and areas',
+            'rate entities',
+            'report rates',
         ]);
     }
 }

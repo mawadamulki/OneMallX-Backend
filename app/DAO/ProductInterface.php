@@ -13,6 +13,10 @@ interface ProductInterface
 
     public function paginateProductsForStore(int $storeId, int $perPage): LengthAwarePaginator;
 
+    public function countActiveProductsForStore(int $storeId): int;
+
+    public function findStoreSpaceForStore(int $storeId): ?int;
+
     public function findProductForStore(int $productId, int $storeId): ?Product;
 
     public function findVariantForStore(int $variantId, int $storeId): ?ProductVariant;

@@ -13,6 +13,8 @@ class StoreClass implements StoreInterface
         $query = Store::query()
             ->visibleToCustomers()
             ->with(['area.floor', 'media'])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
             ->orderBy('name');
 
         if ($areaId !== null) {
@@ -31,6 +33,8 @@ class StoreClass implements StoreInterface
         return Store::query()
             ->whereKey($store->id)
             ->with(['area.floor', 'media'])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
             ->first();
     }
 
@@ -85,5 +89,20 @@ class StoreClass implements StoreInterface
         }
 
         return $product;
+    }
+
+    public function findStoreByOwnerId(int $userId): ?Store
+    {
+        return Store::query()
+            ->where('storeOwnerID', $userId)
+            ->with(['media'])
+            ->first();
+    }
+
+    public function updateStore(Store $store, array $data): Store
+    {
+        $store->update($data);
+
+        return $store->fresh(['media']);
     }
 }

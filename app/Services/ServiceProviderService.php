@@ -15,7 +15,7 @@ class ServiceProviderService
         protected ServiceProviderInterface $serviceProviderClass,
     ) {}
 
-    public function showForProvider(int $userId): array
+    public function showForOwner(int $userId): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
 
@@ -25,11 +25,11 @@ class ServiceProviderService
 
         return [
             'success' => true,
-            'service' => $this->toFullArray($service),
+            'service' => $this->toOwnerArray($service),
         ];
     }
 
-    public function updateForProvider(int $userId, array $payload): array
+    public function updateForOwner(int $userId, array $payload): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
 
@@ -54,11 +54,11 @@ class ServiceProviderService
         return [
             'success' => true,
             'message' => 'Service updated.',
-            'service' => $this->toFullArray($updated),
+            'service' => $this->toOwnerArray($updated),
         ];
     }
 
-    public function syncWorkingDaysForProvider(int $userId, array $payload): array
+    public function syncWorkingDaysForOwner(int $userId, array $payload): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
 
@@ -79,11 +79,11 @@ class ServiceProviderService
         return [
             'success' => true,
             'message' => 'Working days updated.',
-            'service' => $this->toFullArray($updated),
+            'service' => $this->toOwnerArray($updated),
         ];
     }
 
-    public function attachMediaForProvider(int $userId, UploadedFile $file): array
+    public function attachMediaForOwner(int $userId, UploadedFile $file): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
 
@@ -106,7 +106,7 @@ class ServiceProviderService
         ];
     }
 
-    public function deleteMediaForProvider(int $userId, int $mediaId): array
+    public function deleteMediaForOwner(int $userId, int $mediaId): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
 
@@ -138,7 +138,7 @@ class ServiceProviderService
         ];
     }
 
-    private function toFullArray(Service $service): array
+    private function toOwnerArray(Service $service): array
     {
         return [
             'id' => $service->id,

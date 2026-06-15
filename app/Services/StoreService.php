@@ -3,10 +3,15 @@
 namespace App\Services;
 
 use App\DAO\StoreInterface;
+use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Models\StoreSubscription;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class StoreService
 {
@@ -65,6 +70,166 @@ class StoreService
         return $this->toAdminProductFullArray($product);
     }
 
+    public function showForOwner(int $userId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'store' => $this->toOwnerArray($store),
+        ];
+    }
+
+    public function updateForOwner(int $userId, array $payload): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $data = [];
+
+        foreach (['name', 'description'] as $field) {
+            if (array_key_exists($field, $payload)) {
+                $data[$field] = $payload[$field];
+            }
+        }
+
+        if ($data === []) {
+            return $this->fail('No fields to update.', 422);
+        }
+
+        $updated = $this->storeClass->updateStore($store, $data);
+
+        return [
+            'success' => true,
+            'message' => 'Store updated.',
+            'store' => $this->toOwnerArray($updated),
+        ];
+    }
+
+    public function planForOwner(int $userId): array
+    {
+        $subscription = StoreSubscription::query()
+            ->with(['storeSubscriptionPlan.floor', 'planPrice'])
+            ->whereHas('store', fn ($q) => $q->where('storeOwnerID', $userId))
+            ->orderByDesc('endDate')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($subscription === null) {
+            return $this->fail('No subscription found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'plan' => $this->toOwnerPlanArray($subscription),
+        ];
+    }
+
+    public function attachMediaForOwner(int $userId, UploadedFile $file): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $path = $file->store("stores/{$store->id}", 'public');
+
+        $media = $store->media()->create([
+            'fileType' => $file->getClientMimeType(),
+            'url' => $path,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Photo uploaded.',
+            'url' => $media->url,
+            'http_status' => 201,
+        ];
+    }
+
+    public function attachLogoForOwner(int $userId, UploadedFile $file): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        if ($store->logo) {
+            Storage::disk('public')->delete($store->logo);
+        }
+
+        $path = $file->store("stores/{$store->id}/logo", 'public');
+        $updated = $this->storeClass->updateStore($store, ['logo' => $path]);
+
+        return [
+            'success' => true,
+            'message' => 'Logo uploaded.',
+            'logo' => $this->resolvePublicUrl($updated->logo),
+            'http_status' => 201,
+        ];
+    }
+
+    public function deleteLogoForOwner(int $userId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        if ($store->logo) {
+            Storage::disk('public')->delete($store->logo);
+            $this->storeClass->updateStore($store, ['logo' => null]);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Logo deleted.',
+            'deleted' => true,
+        ];
+    }
+
+    public function deleteMediaForOwner(int $userId, int $mediaId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $media = Media::query()
+            ->whereKey($mediaId)
+            ->where('mediableType', Store::class)
+            ->where('mediableID', $store->id)
+            ->first();
+
+        if ($media === null) {
+            return $this->fail('Media not found.', 404);
+        }
+
+        $relative = $media->publicDiskRelativePath();
+        if ($relative !== null) {
+            Storage::disk('public')->delete($relative);
+        }
+
+        $media->forceDelete();
+
+        return [
+            'success' => true,
+            'message' => 'Media deleted.',
+            'deleted' => true,
+        ];
+    }
+
     private function toCustomerArray(Store $store): array
     {
         return [
@@ -85,6 +250,8 @@ class StoreService
                 ]
                 : null,
             'media' => $this->mapMediaCollection($store),
+            'rating' => $store->rates_avg_score !== null ? round((float) $store->rates_avg_score, 1) : null,
+            'rating_count' => (int) ($store->rates_count ?? 0),
         ];
     }
 
@@ -140,6 +307,54 @@ class StoreService
                 ]
                 : null,
         ];
+    }
+
+    private function toOwnerArray(Store $store): array
+    {
+        return [
+            'id' => $store->id,
+            'name' => $store->name,
+            'description' => $store->description,
+            'logo' => $this->resolvePublicUrl($store->logo),
+            'status' => $store->status,
+            'accountStatus' => $store->accountStatus,
+            'media' => $this->mapOwnerMediaUrls($store),
+        ];
+    }
+
+    private function toOwnerPlanArray(StoreSubscription $subscription): array
+    {
+        $plan = $subscription->storeSubscriptionPlan;
+        $price = $subscription->planPrice;
+        $floor = $plan?->floor;
+
+        return [
+            'id' => $plan?->id,
+            'name' => $plan?->name,
+            'storeSpace' => $plan?->storeSpace,
+            'adsNumber' => $plan?->adsNumber,
+            'startDate' => $this->formatSubscriptionDate($subscription->startDate),
+            'endDate' => $this->formatSubscriptionDate($subscription->endDate),
+            'autoRenew' => (bool) $subscription->autoRenew,
+            'durationMonths' => $price ? (int) $price->duration : null,
+            'price' => $price?->price,
+            'floor' => $floor
+                ? [
+                    'id' => $floor->id,
+                    'name' => $floor->name,
+                    'number' => $floor->number,
+                ]
+                : null,
+        ];
+    }
+
+    private function formatSubscriptionDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return Carbon::parse($value)->toDateString();
     }
 
     private function toAdminProductSummaryArray(Product $product): array
@@ -241,5 +456,33 @@ class StoreService
             'url' => $m->url,
             'fileType' => $m->fileType,
         ])->values()->all();
+    }
+
+    private function mapOwnerMediaUrls(Store $store): array
+    {
+        if (! $store->relationLoaded('media')) {
+            return [];
+        }
+
+        return $store->media->map(fn (Media $media) => $media->url)->values()->all();
+    }
+
+    private function resolvePublicUrl(?string $stored): ?string
+    {
+        if ($stored === null || $stored === '') {
+            return null;
+        }
+
+        return (new Media(['url' => $stored]))->url;
+    }
+
+    /** @return array{success: false, message: string, http_status: int} */
+    private function fail(string $message, int $httpStatus): array
+    {
+        return [
+            'success' => false,
+            'message' => $message,
+            'http_status' => $httpStatus,
+        ];
     }
 }

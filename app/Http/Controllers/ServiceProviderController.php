@@ -14,7 +14,7 @@ class ServiceProviderController extends Controller
 
     public function show()
     {
-        $result = $this->serviceProviderService->showForProvider((int) Auth::id());
+        $result = $this->serviceProviderService->showForOwner((int) Auth::id());
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
@@ -34,7 +34,7 @@ class ServiceProviderController extends Controller
             'paymentAccount' => 'nullable|string|max:255',
         ]);
 
-        $result = $this->serviceProviderService->updateForProvider((int) Auth::id(), $validated);
+        $result = $this->serviceProviderService->updateForOwner((int) Auth::id(), $validated);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
@@ -50,7 +50,7 @@ class ServiceProviderController extends Controller
             'weekdays.*' => 'integer|min:1|max:7',
         ]);
 
-        $result = $this->serviceProviderService->syncWorkingDaysForProvider((int) Auth::id(), $validated);
+        $result = $this->serviceProviderService->syncWorkingDaysForOwner((int) Auth::id(), $validated);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
@@ -65,7 +65,7 @@ class ServiceProviderController extends Controller
             'photo' => 'required|image|max:5120',
         ]);
 
-        $result = $this->serviceProviderService->attachMediaForProvider((int) Auth::id(), $validated['photo']);
+        $result = $this->serviceProviderService->attachMediaForOwner((int) Auth::id(), $validated['photo']);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
@@ -76,7 +76,7 @@ class ServiceProviderController extends Controller
 
     public function destroyMedia($mediaId)
     {
-        $result = $this->serviceProviderService->deleteMediaForProvider((int) Auth::id(), (int) $mediaId);
+        $result = $this->serviceProviderService->deleteMediaForOwner((int) Auth::id(), (int) $mediaId);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);

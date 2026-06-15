@@ -27,5 +27,10 @@ class Rate extends Model
     {
         return $this->morphTo(__FUNCTION__, 'rateableType', 'rateableID');
     }
+
+    public function reports()
+    {
+        return $this->hasMany(RateReport::class, 'rateID');
+    }
 }
 

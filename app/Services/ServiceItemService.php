@@ -84,6 +84,7 @@ class ServiceItemService
                 'employee_prices' => $employeePrices,
                 'image' => $item->media->first()?->url,
                 'rating' => round($item->rates->avg('score'), 1),
+                'rating_count' => $item->rates->count(),
             ];
         });
     }

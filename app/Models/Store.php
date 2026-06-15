@@ -16,6 +16,7 @@ class Store extends Model
         'storeOwnerID',
         'areaID',
         'description',
+        'logo',
         'status',
         'accountStatus',
         'paymentAccount',

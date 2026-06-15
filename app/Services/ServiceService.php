@@ -21,6 +21,7 @@ class ServiceService
                 'name' => $service->name,
                 'image' => $service->media->first()?->url,
                 'rating' => round($service->rates->avg('score'), 1),
+                'rating_count' => $service->rates->count(),
                 'is_favorite' => false, // لاحقاً
             ];
         });
@@ -49,6 +50,7 @@ class ServiceService
             'weekdays' => $service->workingDays->sortBy('weekday')->pluck('weekday')->values()->all(),
             'image' => $service->media->first()?->url,
             'rating' => round($service->rates->avg('score'), 1),
+            'rating_count' => $service->rates->count(),
         ];
     }
 

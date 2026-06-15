@@ -13,6 +13,7 @@ use App\Http\Controllers\ServiceItemController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RateController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscribtionPlanController;
 use App\Http\Controllers\SubscriptionExtensionController;
@@ -59,6 +60,10 @@ Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
 // ___________________ Stores Mobile Routes ___________________
 Route::get('/stores', [StoreController::class, 'index']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
+
+// ___________________ Rates (public read) ___________________
+Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
+    ->where('type', 'store|product|service|service_item');
 
 // ___________________ Subscription Web Routes ___________________
 Route::middleware('throttle:20,1')->group(function () {
@@ -164,8 +169,47 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/getAdminStoreOwners', [UserController::class, 'adminStoreOwners']);
         Route::get('/getAdminServiceProviders', [UserController::class, 'adminServiceProviders']);
         Route::get('/getAdminCustomers', [UserController::class, 'adminCustomers']);
+        Route::delete('/adminUsers/{userId}', [RateController::class, 'adminDeleteUser']);
     });
 
+
+    // ___________________ Rates Routes ___________________
+    Route::middleware(['permission:rate entities'])->group(function () {
+        Route::post('/rates', [RateController::class, 'store']);
+        Route::put('/rates/{id}', [RateController::class, 'update']);
+        Route::delete('/rates/{id}', [RateController::class, 'destroy']);
+        Route::get('/rates/me', [RateController::class, 'myRates']);
+    });
+
+    Route::middleware(['permission:report rates'])->group(function () {
+        Route::post('/rates/report/{id}', [RateController::class, 'report']);
+    });
+
+    Route::middleware(['permission:view store ratings'])->group(function () {
+        Route::get('/storeRates', [RateController::class, 'storeRates']);
+        Route::get('/storeProductRates', [RateController::class, 'storeProductRates']);
+        Route::get('/storeProductRates/{productId}', [RateController::class, 'storeProductRates']);
+    });
+
+    Route::middleware(['permission:view service ratings'])->group(function () {
+        Route::get('/serviceRates', [RateController::class, 'serviceRates']);
+        Route::get('/serviceItemRates', [RateController::class, 'serviceItemRates']);
+        Route::get('/serviceItemRates/{itemId}', [RateController::class, 'serviceItemRates']);
+    });
+
+    Route::middleware(['permission:manage rates'])->group(function () {
+        Route::get('/adminRates', [RateController::class, 'adminIndex']);
+        Route::get('/adminRates/reportedUsers', [RateController::class, 'adminReportedUsers']);
+        Route::get('/adminRates/{id}', [RateController::class, 'adminShow']);
+        Route::delete('/adminRates/{id}', [RateController::class, 'adminDestroy']);
+        Route::get('/adminRateReports', [RateController::class, 'adminReports']);
+        Route::get('/adminRateReports/{id}', [RateController::class, 'adminShowReport']);
+        Route::post('/adminRateReports/dismiss/{id}', [RateController::class, 'adminDismissReport']);
+        Route::post('/adminRateReports/takeAction/{id}', [RateController::class, 'adminTakeActionOnReport']);
+    });
+
+
+    // ___________________ Subscription Routes ___________________
     Route::middleware(['throttle:20,1', 'permission:manage store subscriptions'])->group(function () {
         Route::post('/storeSubscriptions/extend', [SubscriptionExtensionController::class, 'submitStore']);
         Route::post('/storeSubscriptions/newPlanRequest', [SubscriptionNewRequestController::class, 'submitStore']);
@@ -178,7 +222,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/serviceSubscriptions/me', [SubscriptionRequestController::class, 'myServiceSubscription']);
     });
 
+
+    // ___________________ Store Products Routes ___________________
     Route::middleware(['permission:manage store products'])->group(function () {
+        Route::get('/store', [StoreController::class, 'showForOwner']);
+        Route::get('/storePlan', [StoreController::class, 'planForOwner']);
+        Route::put('/store', [StoreController::class, 'updateForOwner']);
+        Route::post('/storeLogo', [StoreController::class, 'storeLogo']);
+        Route::delete('/storeLogo', [StoreController::class, 'destroyLogo']);
+        Route::post('/storeMedia', [StoreController::class, 'storeMedia']);
+        Route::delete('/storeMedia/{mediaId}', [StoreController::class, 'destroyMedia']);
+
         Route::get('/storeProducts', [ProductController::class, 'index']);
         Route::get('/storeProducts/{productId}', [ProductController::class, 'show']);
         Route::post('/storeProducts', [ProductController::class, 'store']);
@@ -205,7 +259,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'destroyValue']);
     });
 
+
+    // ___________________ Service Catalog Routes ___________________
     Route::middleware(['permission:manage service catalog'])->group(function () {
+        Route::get('/service', [ServiceController::class, 'showForOwner']);
+        Route::put('/service', [ServiceController::class, 'updateForOwner']);
+        Route::put('/service/workingDays', [ServiceController::class, 'syncWorkingDays']);
+        Route::post('/serviceMedia', [ServiceController::class, 'storeMedia']);
+        Route::delete('/serviceMedia/{mediaId}', [ServiceController::class, 'destroyMedia']);
+
         Route::get('/serviceProvider', [ServiceProviderController::class, 'show']);
         Route::put('/serviceProvider', [ServiceProviderController::class, 'update']);
         Route::put('/serviceProvider/workingDays', [ServiceProviderController::class, 'syncWorkingDays']);

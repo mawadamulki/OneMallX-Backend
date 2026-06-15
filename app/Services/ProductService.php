@@ -36,6 +36,8 @@ class ProductService
         return [
             'success' => true,
             'store' => $this->toStoreRefArray($store),
+            'activeProductCount' => $this->productClass->countActiveProductsForStore((int) $store->id),
+            'storeSpace' => $this->productClass->findStoreSpaceForStore((int) $store->id),
             'products' => $paginator,
         ];
     }
@@ -533,6 +535,12 @@ class ProductService
             'name' => $product->name,
             'detail' => $product->detail,
             'media' => $this->mapMediaUrlCollection($product),
+            'categories' => $product->relationLoaded('categories')
+                ? $product->categories->map(fn ($category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                ])->values()->all()
+                : [],
             'variants' => $product->relationLoaded('variants')
                 ? $product->variants->map(fn (ProductVariant $variant) => $this->toVariantDetailArray($variant))->values()->all()
                 : [],

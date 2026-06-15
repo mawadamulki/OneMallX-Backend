@@ -19,4 +19,8 @@ interface StoreInterface
     public function paginateStoreProductsSummary(int $storeId, int $perPage): LengthAwarePaginator;
 
     public function findAdminProductById(int $productId): ?Product;
+
+    public function findStoreByOwnerId(int $userId): ?Store;
+
+    public function updateStore(Store $store, array $data): Store;
 }
