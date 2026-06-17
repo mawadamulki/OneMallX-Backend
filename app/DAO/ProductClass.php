@@ -53,7 +53,7 @@ class ProductClass implements ProductInterface
         return $storeSpace !== null ? (int) $storeSpace : null;
     }
 
-    public function findProductForStore(int $productId, int $storeId): ?Product
+    public function findProductForStore(int $productId, int $storeId, ?int $reporterUserId = null): ?Product
     {
         return Product::query()
             ->whereKey($productId)
@@ -62,6 +62,14 @@ class ProductClass implements ProductInterface
                 'media' => fn ($q) => $q->orderBy('id'),
                 'categories',
                 'variants.attributeValues.attribute',
+                'rates.user:id,name,image',
+                'rates' => function ($q) use ($reporterUserId) {
+                    if ($reporterUserId !== null) {
+                        $q->withExists(['reports as is_reported' => function ($q) use ($reporterUserId) {
+                            $q->where('reporterUserID', $reporterUserId);
+                        }]);
+                    }
+                },
             ])
             ->first();
     }
@@ -123,10 +131,13 @@ class ProductClass implements ProductInterface
                     ->update(['isDefault' => false]);
             }
 
+            $this->applyDiscountLogic($data);
+
             /** @var ProductVariant $variant */
             $variant = $product->variants()->create([
                 ...$data,
                 'storeID' => $storeId,
+                'attributeName' => $this->generateAttributeName($attributeValueIds),
             ]);
 
             if ($attributeValueIds !== []) {
@@ -149,6 +160,12 @@ class ProductClass implements ProductInterface
                     ->where('id', '!=', $variant->id)
                     ->update(['isDefault' => false]);
             }
+
+            if ($attributeValueIds !== null) {
+                $data['attributeName'] = $this->generateAttributeName($attributeValueIds);
+            }
+
+            $this->applyDiscountLogic($data, $variant);
 
             $variant->update($data);
 
@@ -181,6 +198,41 @@ class ProductClass implements ProductInterface
 
             return $deleted;
         });
+    }
+
+    private function applyDiscountLogic(array &$data, ?ProductVariant $existing = null): void
+    {
+        $discount = isset($data['discountPercentage']) ? (int) $data['discountPercentage'] : ($existing ? (int) $existing->discountPercentage : 0);
+
+        if ($discount > 0) {
+            $basePrice = isset($data['price']) ? (int) $data['price'] : ($existing ? ($existing->compareAtPrice ?: $existing->price) : 0);
+
+            if ($basePrice > 0) {
+                $data['compareAtPrice'] = $basePrice;
+                $data['price'] = (int) round($basePrice * (1 - $discount / 100));
+                $data['discountPercentage'] = $discount;
+            }
+        } elseif (isset($data['discountPercentage']) && (int) $data['discountPercentage'] === 0) {
+            if ($existing && $existing->compareAtPrice) {
+                $data['price'] = $existing->compareAtPrice;
+                $data['compareAtPrice'] = null;
+            }
+            $data['discountPercentage'] = 0;
+        }
+    }
+
+    private function generateAttributeName(array $attributeValueIds): ?string
+    {
+        if (empty($attributeValueIds)) {
+            return null;
+        }
+
+        return DB::table('attribute_values')
+            ->whereIn('id', $attributeValueIds)
+            ->orderBy('id')
+            ->pluck('value')
+            ->filter(fn ($val) => $val !== null && $val !== '')
+            ->implode(' / ');
     }
 
     public function skuExistsInStore(int $storeId, string $sku, ?int $excludeVariantId = null): bool
@@ -223,11 +275,14 @@ class ProductClass implements ProductInterface
                 $defaultAssigned = true;
             }
 
+            $this->applyDiscountLogic($variantData);
+
             /** @var ProductVariant $variant */
             $variant = $product->variants()->create([
                 ...$variantData,
                 'storeID' => $storeId,
                 'isDefault' => $isDefault,
+                'attributeName' => $this->generateAttributeName($attributeValueIds),
             ]);
 
             if ($attributeValueIds !== []) {

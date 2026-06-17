@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
@@ -64,6 +65,10 @@ Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 // ___________________ Rates (public read) ___________________
 Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
     ->where('type', 'store|product|service|service_item');
+
+// ___________________ Advertisements (public) ___________________
+Route::get('/ads', [AdvertisementController::class, 'index']);
+
 
 // ___________________ Subscription Web Routes ___________________
 Route::middleware('throttle:20,1')->group(function () {
@@ -257,6 +262,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/storeAttributes/values/{attributeId}', [ProductAttributeController::class, 'storeValue']);
         Route::put('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'updateValue']);
         Route::delete('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'destroyValue']);
+
+        Route::get('/storeAds', [AdvertisementController::class, 'storeAdsIndex']);
+        Route::get('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsShow']);
+        Route::post('/storeAds', [AdvertisementController::class, 'storeAdsStore']);
+        Route::put('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsUpdate']);
+        Route::delete('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsDestroy']);
     });
 
 
@@ -288,6 +299,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'update']);
         Route::delete('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'destroy']);
         Route::put('/serviceProviderEmployees/{employeeId}/workingDays', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
+
+        Route::get('/serviceAds', [AdvertisementController::class, 'serviceAdsIndex']);
+        Route::get('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsShow']);
+        Route::post('/serviceAds', [AdvertisementController::class, 'serviceAdsStore']);
+        Route::put('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsUpdate']);
+        Route::delete('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsDestroy']);
     });
 
 });

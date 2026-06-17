@@ -26,6 +26,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phoneNumber',
+        'image',
         'status',
         'otp_code',
         'otp_expires_at',
@@ -33,6 +34,19 @@ class User extends Authenticatable
         'password_reset_otp_expires_at',
         'is_verified',
     ];
+
+    protected $appends = [
+        'image_url',
+    ];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if ($this->image === null || $this->image === '') {
+            return null;
+        }
+
+        return (new Media(['url' => $this->image]))->url;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

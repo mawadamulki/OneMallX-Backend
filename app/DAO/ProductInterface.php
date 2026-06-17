@@ -17,7 +17,7 @@ interface ProductInterface
 
     public function findStoreSpaceForStore(int $storeId): ?int;
 
-    public function findProductForStore(int $productId, int $storeId): ?Product;
+    public function findProductForStore(int $productId, int $storeId, ?int $reporterUserId = null): ?Product;
 
     public function findVariantForStore(int $variantId, int $storeId): ?ProductVariant;
 

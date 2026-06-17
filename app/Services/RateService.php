@@ -152,8 +152,8 @@ class RateService
         return [
             'success' => true,
             'store_id' => $store->id,
-            'rates' => $this->rateDAO->paginateForStore((int) $store->id, $perPage)
-                ->through(fn (Rate $rate) => $this->formatRate($rate, false)),
+            'rates' => $this->rateDAO->paginateForStore((int) $store->id, $perPage, $userId)
+                ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
     }
 
@@ -175,8 +175,8 @@ class RateService
             'success' => true,
             'store_id' => $store->id,
             'product_id' => $productId,
-            'rates' => $this->rateDAO->paginateForStoreProducts((int) $store->id, $perPage, $productId)
-                ->through(fn (Rate $rate) => $this->formatRate($rate, false)),
+            'rates' => $this->rateDAO->paginateForStoreProducts((int) $store->id, $perPage, $productId, $userId)
+                ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
     }
 
@@ -190,8 +190,8 @@ class RateService
         return [
             'success' => true,
             'service_id' => $service->id,
-            'rates' => $this->rateDAO->paginateForService((int) $service->id, $perPage)
-                ->through(fn (Rate $rate) => $this->formatRate($rate, false)),
+            'rates' => $this->rateDAO->paginateForService((int) $service->id, $perPage, $userId)
+                ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
     }
 
@@ -217,8 +217,8 @@ class RateService
             'success' => true,
             'service_id' => $service->id,
             'service_item_id' => $itemId,
-            'rates' => $this->rateDAO->paginateForServiceItems((int) $service->id, $perPage, $itemId)
-                ->through(fn (Rate $rate) => $this->formatRate($rate, false)),
+            'rates' => $this->rateDAO->paginateForServiceItems((int) $service->id, $perPage, $itemId, $userId)
+                ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
     }
 
@@ -383,6 +383,7 @@ class RateService
                     'user_id' => (int) $row->user_id,
                     'name' => $row->name,
                     'email' => $row->email,
+                    'image' => $row->image ? (new \App\Models\Media(['url' => $row->image]))->url : null,
                     'total_reports' => $total,
                     'pending_reports' => (int) $row->pending_reports,
                     'action_taken_reports' => $actionTaken,
@@ -551,7 +552,7 @@ class RateService
         return $this->fail('Invalid rateable type.', 422);
     }
 
-    private function formatRate(Rate $rate, bool $includeRateable = true): array
+    private function formatRate(Rate $rate, bool $includeRateable = true, bool $includeReportStatus = false): array
     {
         $data = [
             'id' => $rate->id,
@@ -564,10 +565,15 @@ class RateService
             'updated_at' => $rate->updated_at,
         ];
 
+        if ($includeReportStatus) {
+            $data['is_reported'] = (bool) ($rate->is_reported ?? false);
+        }
+
         if ($rate->relationLoaded('user') && $rate->user) {
             $data['user'] = [
                 'id' => $rate->user->id,
                 'name' => $rate->user->name,
+                'image' => $rate->user->image_url,
             ];
         }
 
@@ -601,6 +607,7 @@ class RateService
                 'id' => $report->reporter->id,
                 'name' => $report->reporter->name,
                 'email' => $report->reporter->email,
+                'image' => $report->reporter->image_url,
             ];
         }
 

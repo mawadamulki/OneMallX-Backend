@@ -423,10 +423,12 @@ class StoreService
             'name' => $variant->name,
             'price' => $variant->price,
             'compareAtPrice' => $variant->compareAtPrice,
+            'discountPercentage' => $variant->discountPercentage,
             'quantity' => $variant->quantity,
             'reservedQuantity' => $variant->reservedQuantity,
             'availableQuantity' => $variant->availableQuantity(),
             'weight' => $variant->weight,
+            'attributeName' => $variant->attributeName,
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributes' => $variant->relationLoaded('attributeValues')

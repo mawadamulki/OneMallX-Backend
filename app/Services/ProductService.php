@@ -50,7 +50,7 @@ class ProductService
             return $this->fail('Store not found for this account.', 404);
         }
 
-        $product = $this->productClass->findProductForStore($productId, (int) $store->id);
+        $product = $this->productClass->findProductForStore($productId, (int) $store->id, $userId);
 
         if ($product === null) {
             return $this->fail('Product not found.', 404);
@@ -266,7 +266,7 @@ class ProductService
             $data['sku'] = $sku;
         }
 
-        foreach (['barcode', 'name', 'price', 'compareAtPrice', 'costPrice', 'quantity', 'weight', 'isDefault', 'status'] as $field) {
+        foreach (['barcode', 'name', 'price', 'compareAtPrice', 'discountPercentage', 'costPrice', 'quantity', 'weight', 'isDefault', 'status'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
@@ -466,6 +466,7 @@ class ProductService
             'compareAtPrice' => isset($data['compareAtPrice']) ? (int) $data['compareAtPrice'] : null,
             'costPrice' => isset($data['costPrice']) ? (int) $data['costPrice'] : null,
             'quantity' => (int) ($data['quantity'] ?? 0),
+            'discountPercentage' => isset($data['discountPercentage']) ? (int) $data['discountPercentage'] : 0,
             'weight' => isset($data['weight']) ? (int) $data['weight'] : null,
             'isDefault' => (bool) ($data['isDefault'] ?? false),
             'status' => $data['status'] ?? 'active',
@@ -544,6 +545,22 @@ class ProductService
             'variants' => $product->relationLoaded('variants')
                 ? $product->variants->map(fn (ProductVariant $variant) => $this->toVariantDetailArray($variant))->values()->all()
                 : [],
+            'rates' => $product->relationLoaded('rates')
+                ? $product->rates->map(fn ($rate) => [
+                    'id' => $rate->id,
+                    'score' => $rate->score,
+                    'comment' => $rate->comment,
+                    'user' => $rate->relationLoaded('user') && $rate->user
+                        ? [
+                            'id' => $rate->user->id,
+                            'name' => $rate->user->name,
+                            'image' => $rate->user->image_url,
+                        ]
+                        : null,
+                    'created_at' => $rate->created_at,
+                    'is_reported' => (bool) ($rate->is_reported ?? false),
+                ])->values()->all()
+                : [],
         ];
     }
 
@@ -584,11 +601,13 @@ class ProductService
             'name' => $variant->name,
             'price' => $variant->price,
             'compareAtPrice' => $variant->compareAtPrice,
+            'discountPercentage' => $variant->discountPercentage,
             'costPrice' => $variant->costPrice,
             'quantity' => $variant->quantity,
             'reservedQuantity' => $variant->reservedQuantity,
             'availableQuantity' => $variant->availableQuantity(),
             'weight' => $variant->weight,
+            'attributeName' => $variant->attributeName,
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributes' => $variant->relationLoaded('attributeValues')
@@ -614,10 +633,12 @@ class ProductService
             'sku' => $variant->sku,
             'barcode' => $variant->barcode,
             'price' => $variant->price,
+            'compareAtPrice' => $variant->compareAtPrice,
+            'discountPercentage' => $variant->discountPercentage,
             'quantity' => $variant->quantity,
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
-            'attribute' => $this->formatVariantAttributeString($variant),
+            'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
         ];
     }
 

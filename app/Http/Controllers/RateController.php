@@ -41,14 +41,14 @@ class RateController extends Controller
 
     public function myRates(Request $request)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listMine((int) Auth::id(), $perPage));
     }
 
     public function index(Request $request, string $type, int $id)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listForRateable($type, $id, $perPage));
     }
@@ -60,35 +60,35 @@ class RateController extends Controller
 
     public function storeRates(Request $request)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listStoreRatesForOwner((int) Auth::id(), $perPage));
     }
 
     public function storeProductRates(Request $request, ?int $productId = null)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listStoreProductRatesForOwner((int) Auth::id(), $perPage, $productId));
     }
 
     public function serviceRates(Request $request)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listServiceRatesForProvider((int) Auth::id(), $perPage));
     }
 
     public function serviceItemRates(Request $request, ?int $itemId = null)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->listServiceItemRatesForProvider((int) Auth::id(), $perPage, $itemId));
     }
 
     public function adminIndex(Request $request)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->adminListRates(
             $perPage,
@@ -110,7 +110,7 @@ class RateController extends Controller
 
     public function adminReports(Request $request)
     {
-        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         return $this->respond($this->rateService->adminListReports($perPage, $request->query('status')));
     }

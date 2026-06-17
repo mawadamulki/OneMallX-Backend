@@ -44,6 +44,7 @@ class UserService
             'name' => $user->name,
             'email' => $user->email,
             'phoneNumber' => $user->phoneNumber,
+            'image' => $user->image_url,
             'status' => $user->status,
             'is_verified' => (bool) $user->is_verified,
             'roles' => $user->roles->pluck('name')->values()->all(),
