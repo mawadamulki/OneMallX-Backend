@@ -30,6 +30,17 @@ class AdvertisementController extends Controller
         return response()->json($result);
     }
 
+    public function storeAdsProducts()
+    {
+        $result = $this->advertisementService->listProductsForStoreOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function storeAdsShow($adId)
     {
         $result = $this->advertisementService->showForStoreOwner((int) Auth::id(), (int) $adId);
@@ -110,6 +121,17 @@ class AdvertisementController extends Controller
     public function serviceAdsIndex()
     {
         $result = $this->advertisementService->listForServiceOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function serviceAdsItems()
+    {
+        $result = $this->advertisementService->listItemsForServiceOwner((int) Auth::id());
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);

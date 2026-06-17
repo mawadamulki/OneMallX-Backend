@@ -268,6 +268,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/storeAttributes/values/{valueId}', [ProductAttributeController::class, 'destroyValue']);
 
         Route::get('/storeAds', [AdvertisementController::class, 'storeAdsIndex']);
+        Route::get('/storeAds/products', [AdvertisementController::class, 'storeAdsProducts']);
         Route::get('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsShow']);
         Route::post('/storeAds', [AdvertisementController::class, 'storeAdsStore']);
         Route::put('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsUpdate']);
@@ -305,6 +306,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/serviceProviderEmployees/{employeeId}/workingDays', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
 
         Route::get('/serviceAds', [AdvertisementController::class, 'serviceAdsIndex']);
+        Route::get('/serviceAds/items', [AdvertisementController::class, 'serviceAdsItems']);
         Route::get('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsShow']);
         Route::post('/serviceAds', [AdvertisementController::class, 'serviceAdsStore']);
         Route::put('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsUpdate']);

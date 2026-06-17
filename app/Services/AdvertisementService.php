@@ -70,6 +70,25 @@ class AdvertisementService
         ];
     }
 
+    public function listProductsForStoreOwner(int $userId): array
+    {
+        $store = $this->productClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $products = $this->productClass->listAllProductsForStore((int) $store->id);
+
+        return [
+            'success' => true,
+            'products' => $products->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+            ])->values()->all(),
+        ];
+    }
+
     public function showForStoreOwner(int $userId, int $adId): array
     {
         $store = $this->productClass->findStoreByOwnerId($userId);
@@ -261,6 +280,25 @@ class AdvertisementService
                 'maxDurationDays' => $planInfo['duration'],
             ],
             'ads' => $ads->values()->all(),
+        ];
+    }
+
+    public function listItemsForServiceOwner(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        $items = $this->serviceProviderItemClass->listForService((int) $service->id);
+
+        return [
+            'success' => true,
+            'items' => $items->map(fn ($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+            ])->values()->all(),
         ];
     }
 

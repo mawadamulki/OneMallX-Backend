@@ -31,6 +31,15 @@ class ProductClass implements ProductInterface
             ->paginate($perPage);
     }
 
+    public function listAllProductsForStore(int $storeId): \Illuminate\Support\Collection
+    {
+        return Product::query()
+            ->where('storeID', $storeId)
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
+    }
+
     public function countActiveProductsForStore(int $storeId): int
     {
         return Product::query()
