@@ -30,13 +30,13 @@ interface RateInterface
         ?int $userId = null,
     ): LengthAwarePaginator;
 
-    public function paginateForStore(int $storeId, int $perPage): LengthAwarePaginator;
+    public function paginateForStore(int $storeId, int $perPage, ?int $reporterUserId = null): LengthAwarePaginator;
 
-    public function paginateForStoreProducts(int $storeId, int $perPage, ?int $productId = null): LengthAwarePaginator;
+    public function paginateForStoreProducts(int $storeId, int $perPage, ?int $productId = null, ?int $reporterUserId = null): LengthAwarePaginator;
 
-    public function paginateForService(int $serviceId, int $perPage): LengthAwarePaginator;
+    public function paginateForService(int $serviceId, int $perPage, ?int $reporterUserId = null): LengthAwarePaginator;
 
-    public function paginateForServiceItems(int $serviceId, int $perPage, ?int $serviceItemId = null): LengthAwarePaginator;
+    public function paginateForServiceItems(int $serviceId, int $perPage, ?int $serviceItemId = null, ?int $reporterUserId = null): LengthAwarePaginator;
 
     public function countReportsByReporterToday(int $reporterUserId): int;
 

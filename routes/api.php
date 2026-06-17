@@ -177,6 +177,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/adminUsers/{userId}', [RateController::class, 'adminDeleteUser']);
     });
 
+    // ___________________ User Profile Routes ___________________
+    Route::get('/user/me', [UserController::class, 'me']);
+    Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
+
 
     // ___________________ Rates Routes ___________________
     Route::middleware(['permission:rate entities'])->group(function () {

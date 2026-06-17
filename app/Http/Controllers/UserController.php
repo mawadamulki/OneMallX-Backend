@@ -44,4 +44,26 @@ class UserController extends Controller
             $this->userService->listCustomersForAdmin($perPage)
         );
     }
+
+    public function me()
+    {
+        return response()->json([
+            'success' => true,
+            'user' => $this->userService->getCurrentUserDetail(\Illuminate\Support\Facades\Auth::id()),
+        ]);
+    }
+
+    public function uploadProfilePicture(Request $request)
+    {
+        $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->userService->updateProfilePicture(
+            (int) \Illuminate\Support\Facades\Auth::id(),
+            $request->file('photo')
+        );
+
+        return response()->json($result, $result['http_status'] ?? 200);
+    }
 }

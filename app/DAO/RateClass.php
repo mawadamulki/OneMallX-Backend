@@ -101,17 +101,22 @@ class RateClass implements RateInterface
         return $query->paginate($perPage);
     }
 
-    public function paginateForStore(int $storeId, int $perPage): LengthAwarePaginator
+    public function paginateForStore(int $storeId, int $perPage, ?int $reporterUserId = null): LengthAwarePaginator
     {
         return Rate::query()
             ->where('rateableType', Store::class)
             ->where('rateableID', $storeId)
             ->with('user.media')
+            ->when($reporterUserId !== null, function ($q) use ($reporterUserId) {
+                $q->withCount(['reports as is_reported' => function ($q) use ($reporterUserId) {
+                    $q->where('reporterUserID', $reporterUserId);
+                }]);
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function paginateForStoreProducts(int $storeId, int $perPage, ?int $productId = null): LengthAwarePaginator
+    public function paginateForStoreProducts(int $storeId, int $perPage, ?int $productId = null, ?int $reporterUserId = null): LengthAwarePaginator
     {
         $productIds = Product::query()
             ->where('storeID', $storeId)
@@ -122,21 +127,31 @@ class RateClass implements RateInterface
             ->where('rateableType', Product::class)
             ->whereIn('rateableID', $productIds)
             ->with(['user.media', 'rateable'])
+            ->when($reporterUserId !== null, function ($q) use ($reporterUserId) {
+                $q->withCount(['reports as is_reported' => function ($q) use ($reporterUserId) {
+                    $q->where('reporterUserID', $reporterUserId);
+                }]);
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function paginateForService(int $serviceId, int $perPage): LengthAwarePaginator
+    public function paginateForService(int $serviceId, int $perPage, ?int $reporterUserId = null): LengthAwarePaginator
     {
         return Rate::query()
             ->where('rateableType', Service::class)
             ->where('rateableID', $serviceId)
             ->with('user.media')
+            ->when($reporterUserId !== null, function ($q) use ($reporterUserId) {
+                $q->withCount(['reports as is_reported' => function ($q) use ($reporterUserId) {
+                    $q->where('reporterUserID', $reporterUserId);
+                }]);
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
-    public function paginateForServiceItems(int $serviceId, int $perPage, ?int $serviceItemId = null): LengthAwarePaginator
+    public function paginateForServiceItems(int $serviceId, int $perPage, ?int $serviceItemId = null, ?int $reporterUserId = null): LengthAwarePaginator
     {
         $itemIds = ServiceItem::query()
             ->where('serviceID', $serviceId)
@@ -147,6 +162,11 @@ class RateClass implements RateInterface
             ->where('rateableType', ServiceItem::class)
             ->whereIn('rateableID', $itemIds)
             ->with(['user.media', 'rateable'])
+            ->when($reporterUserId !== null, function ($q) use ($reporterUserId) {
+                $q->withCount(['reports as is_reported' => function ($q) use ($reporterUserId) {
+                    $q->where('reporterUserID', $reporterUserId);
+                }]);
+            })
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }

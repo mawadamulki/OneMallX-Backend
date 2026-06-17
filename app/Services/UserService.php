@@ -34,6 +34,40 @@ class UserService
             ->through(fn (User $user) => $this->formatAdminUser($user));
     }
 
+    public function getCurrentUserDetail(int $userId): array
+    {
+        $user = User::with('media')->findOrFail($userId);
+
+        return $this->formatAdminUser($user);
+    }
+
+    public function updateProfilePicture(int $userId, \Illuminate\Http\UploadedFile $file): array
+    {
+        $user = User::findOrFail($userId);
+
+        // Delete old profile pictures if any
+        foreach ($user->media as $oldMedia) {
+            $relative = $oldMedia->publicDiskRelativePath();
+            if ($relative) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($relative);
+            }
+            $oldMedia->forceDelete();
+        }
+
+        $path = $file->store("users/{$user->id}/profile", 'public');
+
+        $media = $user->media()->create([
+            'fileType' => $file->getClientMimeType(),
+            'url' => $path,
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Profile picture updated.',
+            'image_url' => $media->url,
+        ];
+    }
+
     /**
      * @return array<string, mixed>
      */
