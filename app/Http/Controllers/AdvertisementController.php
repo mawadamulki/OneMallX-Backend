@@ -48,9 +48,8 @@ class AdvertisementController extends Controller
             'image' => 'required|image|max:5120',
             'targetType' => 'required|in:store,product',
             'productId' => 'required_if:targetType,product|integer|min:1',
-            'placement' => 'sometimes|in:home,deals',
             'startDate' => 'required|date|after_or_equal:today',
-            'endDate' => 'required|date|after_or_equal:startDate',
+            'endDate' => 'nullable|date|after_or_equal:startDate',
         ]);
 
         $image = $validated['image'];
@@ -76,7 +75,6 @@ class AdvertisementController extends Controller
             'image' => 'sometimes|image|max:5120',
             'targetType' => 'sometimes|in:store,product',
             'productId' => 'required_if:targetType,product|integer|min:1',
-            'placement' => 'sometimes|in:home,deals',
             'startDate' => 'sometimes|date',
             'endDate' => 'sometimes|date',
         ]);
@@ -138,9 +136,8 @@ class AdvertisementController extends Controller
             'image' => 'required|image|max:5120',
             'targetType' => 'required|in:service,service_item',
             'serviceItemId' => 'required_if:targetType,service_item|integer|min:1',
-            'placement' => 'sometimes|in:home,deals',
             'startDate' => 'required|date|after_or_equal:today',
-            'endDate' => 'required|date|after_or_equal:startDate',
+            'endDate' => 'nullable|date|after_or_equal:startDate',
         ]);
 
         $image = $validated['image'];
@@ -166,7 +163,6 @@ class AdvertisementController extends Controller
             'image' => 'sometimes|image|max:5120',
             'targetType' => 'sometimes|in:service,service_item',
             'serviceItemId' => 'required_if:targetType,service_item|integer|min:1',
-            'placement' => 'sometimes|in:home,deals',
             'startDate' => 'sometimes|date',
             'endDate' => 'sometimes|date',
         ]);

@@ -37,6 +37,8 @@ class SubscriptionPlanService
 
             'storeSpace' => 'required|integer|min:0',
             'adsNumber' => 'required|integer|min:0',
+            'adsDuration' => 'required|integer|min:1',
+            'adsPlacement' => 'required|string|in:home,deals',
 
             'prices' => 'required|array|min:1',
             'prices.*.duration' => 'required|integer|min:1',
@@ -79,6 +81,8 @@ class SubscriptionPlanService
 
             'serviceSpace' => 'required|integer|min:0',
             'adsNumber' => 'required|integer|min:0',
+            'adsDuration' => 'required|integer|min:1',
+            'adsPlacement' => 'required|string|in:home,deals',
 
             'prices' => 'required|array|min:1',
             'prices.*.duration' => 'required|integer|min:1',

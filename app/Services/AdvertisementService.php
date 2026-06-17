@@ -50,7 +50,8 @@ class AdvertisementService
             return $this->fail('Store not found for this account.', 404);
         }
 
-        $allowed = $this->resolveAdsQuotaForStore((int) $store->id);
+        $planInfo = $this->resolvePlanInfoForStore((int) $store->id);
+        $allowed = $planInfo['allowed'];
         $active = $this->advertisementClass->countActiveForStore((int) $store->id);
 
         $ads = $this->advertisementClass
@@ -63,7 +64,7 @@ class AdvertisementService
                 'allowed' => $allowed,
                 'active' => $active,
                 'remaining' => max(0, $allowed - $active),
-                'maxDurationDays' => self::CAMPAIGN_DURATION_DAYS,
+                'maxDurationDays' => $planInfo['duration'],
             ],
             'ads' => $ads->values()->all(),
         ];
@@ -97,7 +98,11 @@ class AdvertisementService
             return $this->fail('Store not found for this account.', 404);
         }
 
-        $dateError = $this->validateDateRange($payload['startDate'], $payload['endDate']);
+        $planInfo = $this->resolvePlanInfoForStore((int) $store->id);
+        $startDate = $payload['startDate'];
+        $endDate = $payload['endDate'] ?? Carbon::parse($startDate)->addDays($planInfo['duration'])->toDateString();
+
+        $dateError = $this->validateDateRange($startDate, $endDate, $planInfo['duration']);
         if ($dateError !== null) {
             return $this->fail($dateError, 422);
         }
@@ -107,7 +112,7 @@ class AdvertisementService
             return $this->fail($target['error'], 422);
         }
 
-        if ($this->wouldBeActiveToday($payload['startDate'], $payload['endDate'])) {
+        if ($this->wouldBeActiveToday($startDate, $endDate)) {
             $quotaError = $this->assertStoreQuotaAvailable((int) $store->id);
             if ($quotaError !== null) {
                 return $this->fail($quotaError, 422);
@@ -122,9 +127,9 @@ class AdvertisementService
             'image' => $path,
             'targetType' => $target['targetType'],
             'targetID' => $target['targetID'],
-            'placement' => $this->normalizePlacement((string) ($payload['placement'] ?? 'home')),
-            'startDate' => $payload['startDate'],
-            'endDate' => $payload['endDate'],
+            'placement' => $planInfo['placement'],
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
 
         return [
@@ -149,10 +154,11 @@ class AdvertisementService
             return $this->fail('Advertisement not found.', 404);
         }
 
+        $planInfo = $this->resolvePlanInfoForStore((int) $store->id);
         $startDate = $payload['startDate'] ?? $ad->startDate?->toDateString();
         $endDate = $payload['endDate'] ?? $ad->endDate?->toDateString();
 
-        $dateError = $this->validateDateRange($startDate, $endDate);
+        $dateError = $this->validateDateRange($startDate, $endDate, $planInfo['duration']);
         if ($dateError !== null) {
             return $this->fail($dateError, 422);
         }
@@ -183,10 +189,6 @@ class AdvertisementService
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
-        }
-
-        if (array_key_exists('placement', $payload)) {
-            $data['placement'] = $this->normalizePlacement((string) $payload['placement']);
         }
 
         if ($image !== null) {
@@ -242,7 +244,8 @@ class AdvertisementService
             return $this->fail('Service not found for this account.', 404);
         }
 
-        $allowed = $this->resolveAdsQuotaForService((int) $service->id);
+        $planInfo = $this->resolvePlanInfoForService((int) $service->id);
+        $allowed = $planInfo['allowed'];
         $active = $this->advertisementClass->countActiveForService((int) $service->id);
 
         $ads = $this->advertisementClass
@@ -255,7 +258,7 @@ class AdvertisementService
                 'allowed' => $allowed,
                 'active' => $active,
                 'remaining' => max(0, $allowed - $active),
-                'maxDurationDays' => self::CAMPAIGN_DURATION_DAYS,
+                'maxDurationDays' => $planInfo['duration'],
             ],
             'ads' => $ads->values()->all(),
         ];
@@ -289,7 +292,11 @@ class AdvertisementService
             return $this->fail('Service not found for this account.', 404);
         }
 
-        $dateError = $this->validateDateRange($payload['startDate'], $payload['endDate']);
+        $planInfo = $this->resolvePlanInfoForService((int) $service->id);
+        $startDate = $payload['startDate'];
+        $endDate = $payload['endDate'] ?? Carbon::parse($startDate)->addDays($planInfo['duration'])->toDateString();
+
+        $dateError = $this->validateDateRange($startDate, $endDate, $planInfo['duration']);
         if ($dateError !== null) {
             return $this->fail($dateError, 422);
         }
@@ -299,7 +306,7 @@ class AdvertisementService
             return $this->fail($target['error'], 422);
         }
 
-        if ($this->wouldBeActiveToday($payload['startDate'], $payload['endDate'])) {
+        if ($this->wouldBeActiveToday($startDate, $endDate)) {
             $quotaError = $this->assertServiceQuotaAvailable((int) $service->id);
             if ($quotaError !== null) {
                 return $this->fail($quotaError, 422);
@@ -314,9 +321,9 @@ class AdvertisementService
             'image' => $path,
             'targetType' => $target['targetType'],
             'targetID' => $target['targetID'],
-            'placement' => $this->normalizePlacement((string) ($payload['placement'] ?? 'home')),
-            'startDate' => $payload['startDate'],
-            'endDate' => $payload['endDate'],
+            'placement' => $planInfo['placement'],
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
 
         return [
@@ -341,10 +348,11 @@ class AdvertisementService
             return $this->fail('Advertisement not found.', 404);
         }
 
+        $planInfo = $this->resolvePlanInfoForService((int) $service->id);
         $startDate = $payload['startDate'] ?? $ad->startDate?->toDateString();
         $endDate = $payload['endDate'] ?? $ad->endDate?->toDateString();
 
-        $dateError = $this->validateDateRange($startDate, $endDate);
+        $dateError = $this->validateDateRange($startDate, $endDate, $planInfo['duration']);
         if ($dateError !== null) {
             return $this->fail($dateError, 422);
         }
@@ -375,10 +383,6 @@ class AdvertisementService
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
-        }
-
-        if (array_key_exists('placement', $payload)) {
-            $data['placement'] = $this->normalizePlacement((string) $payload['placement']);
         }
 
         if ($image !== null) {
@@ -480,7 +484,7 @@ class AdvertisementService
         return 'active';
     }
 
-    private function validateDateRange(string $startDate, string $endDate): ?string
+    private function validateDateRange(string $startDate, string $endDate, int $maxDuration): ?string
     {
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->startOfDay();
@@ -489,8 +493,8 @@ class AdvertisementService
             return 'End date must be on or after start date.';
         }
 
-        if ($start->diffInDays($end) > self::CAMPAIGN_DURATION_DAYS) {
-            return 'Advertisement duration cannot exceed '.self::CAMPAIGN_DURATION_DAYS.' days.';
+        if ($start->diffInDays($end) > $maxDuration) {
+            return "Advertisement duration cannot exceed {$maxDuration} days.";
         }
 
         return null;
@@ -615,7 +619,7 @@ class AdvertisementService
             : 'Target service item not found in your service.';
     }
 
-    private function resolveAdsQuotaForStore(int $storeId): int
+    private function resolvePlanInfoForStore(int $storeId): array
     {
         $subscription = StoreSubscription::query()
             ->with('storeSubscriptionPlan')
@@ -624,10 +628,14 @@ class AdvertisementService
             ->orderByDesc('id')
             ->first();
 
-        return (int) ($subscription?->storeSubscriptionPlan?->adsNumber ?? 0);
+        return [
+            'allowed' => (int) ($subscription?->storeSubscriptionPlan?->adsNumber ?? 0),
+            'duration' => (int) ($subscription?->storeSubscriptionPlan?->adsDuration ?? 30),
+            'placement' => (string) ($subscription?->storeSubscriptionPlan?->adsPlacement ?? 'home'),
+        ];
     }
 
-    private function resolveAdsQuotaForService(int $serviceId): int
+    private function resolvePlanInfoForService(int $serviceId): array
     {
         $subscription = ServiceSubscription::query()
             ->with('serviceSubscriptionPlan')
@@ -636,12 +644,17 @@ class AdvertisementService
             ->orderByDesc('id')
             ->first();
 
-        return (int) ($subscription?->serviceSubscriptionPlan?->adsNumber ?? 0);
+        return [
+            'allowed' => (int) ($subscription?->serviceSubscriptionPlan?->adsNumber ?? 0),
+            'duration' => (int) ($subscription?->serviceSubscriptionPlan?->adsDuration ?? 30),
+            'placement' => (string) ($subscription?->serviceSubscriptionPlan?->adsPlacement ?? 'home'),
+        ];
     }
 
     private function assertStoreQuotaAvailable(int $storeId): ?string
     {
-        $allowed = $this->resolveAdsQuotaForStore($storeId);
+        $planInfo = $this->resolvePlanInfoForStore($storeId);
+        $allowed = $planInfo['allowed'];
 
         if ($allowed <= 0) {
             return 'Your plan does not include advertisement slots.';
@@ -658,7 +671,8 @@ class AdvertisementService
 
     private function assertServiceQuotaAvailable(int $serviceId): ?string
     {
-        $allowed = $this->resolveAdsQuotaForService($serviceId);
+        $planInfo = $this->resolvePlanInfoForService($serviceId);
+        $allowed = $planInfo['allowed'];
 
         if ($allowed <= 0) {
             return 'Your plan does not include advertisement slots.';

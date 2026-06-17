@@ -15,6 +15,8 @@ class ServiceSubscriptionPlan extends Model
         'floorID',
         'serviceSpace',
         'adsNumber',
+        'adsDuration',
+        'adsPlacement',
         'accepting_subscriptions',
     ];
 

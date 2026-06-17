@@ -29,6 +29,8 @@ class SubscriptionPlanClass implements SubscriptionPlanInterface
                 'floorID' => $data['floorID'],
                 'storeSpace' => $data['storeSpace'],
                 'adsNumber' => $data['adsNumber'],
+                'adsDuration' => $data['adsDuration'],
+                'adsPlacement' => $data['adsPlacement'],
             ]);
 
 
@@ -85,6 +87,8 @@ class SubscriptionPlanClass implements SubscriptionPlanInterface
                 'floorID' => $data['floorID'],
                 'serviceSpace' => $data['serviceSpace'],
                 'adsNumber' => $data['adsNumber'],
+                'adsDuration' => $data['adsDuration'],
+                'adsPlacement' => $data['adsPlacement'],
             ]);
 
 
