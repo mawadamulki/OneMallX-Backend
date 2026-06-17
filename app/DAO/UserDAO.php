@@ -10,7 +10,7 @@ class UserDAO implements UserDAOInterface
     public function paginateAllUsersForAdmin(int $perPage): LengthAwarePaginator
     {
         return User::query()
-            ->with('roles')
+            ->with(['roles', 'media'])
             ->orderByDesc('id')
             ->paginate($perPage);
     }
@@ -19,7 +19,7 @@ class UserDAO implements UserDAOInterface
     {
         return User::query()
             ->role('Store Owner')
-            ->with('roles')
+            ->with(['roles', 'media'])
             ->orderByDesc('id')
             ->paginate($perPage);
     }
@@ -28,7 +28,7 @@ class UserDAO implements UserDAOInterface
     {
         return User::query()
             ->role('Service Provider')
-            ->with('roles')
+            ->with(['roles', 'media'])
             ->orderByDesc('id')
             ->paginate($perPage);
     }
@@ -37,7 +37,7 @@ class UserDAO implements UserDAOInterface
     {
         return User::query()
             ->role('Customer')
-            ->with('roles')
+            ->with(['roles', 'media'])
             ->orderByDesc('id')
             ->paginate($perPage);
     }

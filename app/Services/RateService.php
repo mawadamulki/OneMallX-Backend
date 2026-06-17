@@ -383,7 +383,6 @@ class RateService
                     'user_id' => (int) $row->user_id,
                     'name' => $row->name,
                     'email' => $row->email,
-                    'image' => $row->image ? (new \App\Models\Media(['url' => $row->image]))->url : null,
                     'total_reports' => $total,
                     'pending_reports' => (int) $row->pending_reports,
                     'action_taken_reports' => $actionTaken,

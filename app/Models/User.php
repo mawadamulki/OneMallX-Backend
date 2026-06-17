@@ -26,7 +26,6 @@ class User extends Authenticatable
         'email',
         'password',
         'phoneNumber',
-        'image',
         'status',
         'otp_code',
         'otp_expires_at',
@@ -41,11 +40,12 @@ class User extends Authenticatable
 
     public function getImageUrlAttribute(): ?string
     {
-        if ($this->image === null || $this->image === '') {
-            return null;
-        }
+        return $this->media->first()?->url;
+    }
 
-        return (new Media(['url' => $this->image]))->url;
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');
     }
 
     /**

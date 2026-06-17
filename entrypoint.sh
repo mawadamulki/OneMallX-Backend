@@ -10,4 +10,8 @@ php artisan migrate --force
 php artisan optimize:clear
 php artisan storage:link --force
 
+# Ensure storage directories exist and have correct permissions
+mkdir -p storage/logs storage/framework/sessions storage/framework/views storage/framework/cache
+chmod -R 777 storage bootstrap/cache
+
 exec "$@"

@@ -62,7 +62,7 @@ class ProductClass implements ProductInterface
                 'media' => fn ($q) => $q->orderBy('id'),
                 'categories',
                 'variants.attributeValues.attribute',
-                'rates.user:id,name,image',
+                'rates.user.media',
                 'rates' => function ($q) use ($reporterUserId) {
                     if ($reporterUserId !== null) {
                         $q->withExists(['reports as is_reported' => function ($q) use ($reporterUserId) {

@@ -49,7 +49,7 @@ class RateClass implements RateInterface
     public function findById(int $rateId): ?Rate
     {
         return Rate::query()
-            ->with(['user', 'rateable', 'reports.reporter'])
+            ->with(['user.media', 'rateable', 'reports.reporter.media'])
             ->find($rateId);
     }
 
@@ -63,7 +63,7 @@ class RateClass implements RateInterface
         return Rate::query()
             ->where('rateableType', $rateableType)
             ->where('rateableID', $rateableId)
-            ->with('user:id,name,image')
+            ->with('user.media')
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -83,7 +83,7 @@ class RateClass implements RateInterface
         ?int $userId = null,
     ): LengthAwarePaginator {
         $query = Rate::query()
-            ->with(['user:id,name,email,image', 'rateable'])
+            ->with(['user.media', 'rateable'])
             ->orderByDesc('created_at');
 
         if ($rateableType !== null) {
@@ -106,7 +106,7 @@ class RateClass implements RateInterface
         return Rate::query()
             ->where('rateableType', Store::class)
             ->where('rateableID', $storeId)
-            ->with('user:id,name,image')
+            ->with('user.media')
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -121,7 +121,7 @@ class RateClass implements RateInterface
         return Rate::query()
             ->where('rateableType', Product::class)
             ->whereIn('rateableID', $productIds)
-            ->with(['user:id,name,image', 'rateable'])
+            ->with(['user.media', 'rateable'])
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -131,7 +131,7 @@ class RateClass implements RateInterface
         return Rate::query()
             ->where('rateableType', Service::class)
             ->where('rateableID', $serviceId)
-            ->with('user:id,name,image')
+            ->with('user.media')
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -146,7 +146,7 @@ class RateClass implements RateInterface
         return Rate::query()
             ->where('rateableType', ServiceItem::class)
             ->whereIn('rateableID', $itemIds)
-            ->with(['user:id,name,image', 'rateable'])
+            ->with(['user.media', 'rateable'])
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -180,9 +180,9 @@ class RateClass implements RateInterface
     {
         $query = RateReport::query()
             ->with([
-                'rate.user:id,name,email,image',
+                'rate.user.media',
                 'rate.rateable',
-                'reporter:id,name,email,image',
+                'reporter.media',
             ])
             ->orderByDesc('created_at');
 
@@ -197,9 +197,9 @@ class RateClass implements RateInterface
     {
         return RateReport::query()
             ->with([
-                'rate.user:id,name,email,image',
+                'rate.user.media',
                 'rate.rateable',
-                'reporter:id,name,email,image',
+                'reporter.media',
             ])
             ->find($reportId);
     }
@@ -225,12 +225,11 @@ class RateClass implements RateInterface
             ->join('rate_reports', 'rate_reports.rateID', '=', 'rates.id')
             ->join('users', 'users.id', '=', 'rates.userID')
             ->whereNull('rates.deleted_at')
-            ->groupBy('rates.userID', 'users.name', 'users.email', 'users.image')
+            ->groupBy('rates.userID', 'users.name', 'users.email')
             ->select([
                 'rates.userID as user_id',
                 'users.name',
                 'users.email',
-                'users.image',
             ])
             ->selectRaw('COUNT(rate_reports.id) as total_reports')
             ->selectRaw("SUM(CASE WHEN rate_reports.status = 'pending' THEN 1 ELSE 0 END) as pending_reports")
