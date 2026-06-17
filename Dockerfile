@@ -30,7 +30,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Entrypoint
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN tr -d '\r' < /usr/local/bin/entrypoint.sh > /usr/local/bin/entrypoint_unix.sh \
+    && mv /usr/local/bin/entrypoint_unix.sh /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh
 
 # ---------- Vendor (Composer install) ----------
 FROM base AS vendor
