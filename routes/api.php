@@ -306,8 +306,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'update']);
         Route::delete('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'destroy']);
         Route::put('/serviceProviderEmployees/workingDays/{employeeId}', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
-        Route::post('/serviceProviderEmployees/{employeeId}/photo', [ServiceProviderEmployeeController::class, 'storePhoto']);
-        Route::delete('/serviceProviderEmployees/{employeeId}/photo', [ServiceProviderEmployeeController::class, 'destroyPhoto']);
+        Route::post('/serviceProviderEmployees/photo/{employeeId}', [ServiceProviderEmployeeController::class, 'storePhoto']);
+        Route::delete('/serviceProviderEmployees/photo/{employeeId}', [ServiceProviderEmployeeController::class, 'destroyPhoto']);
 
         Route::get('/serviceAds', [AdvertisementController::class, 'serviceAdsIndex']);
         Route::get('/serviceAds/items', [AdvertisementController::class, 'serviceAdsItems']);
