@@ -52,7 +52,7 @@ class ServiceProviderItemService
             'items' => $items->map(fn (ServiceItem $item) => [
                 'id' => $item->id,
                 'name' => $item->name,
-                'price' => $this->priceRangeForItem($item),
+                'price' => (int) $item->price,
             ])->values()->all(),
         ];
     }

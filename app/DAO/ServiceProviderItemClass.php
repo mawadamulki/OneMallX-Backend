@@ -24,7 +24,6 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
     {
         return ServiceItem::query()
             ->where('serviceID', $serviceId)
-            ->with('employees')
             ->orderBy('name')
             ->get(['id', 'name', 'price']);
     }
