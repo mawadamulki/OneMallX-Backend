@@ -19,11 +19,6 @@ interface ServiceProviderItemInterface
 
     public function delete(ServiceItem $item): bool;
 
-    /**
-     * @param  array<int, array{employeeID: int, price?: int|null}>  $employees
-     */
-    public function syncEmployees(ServiceItem $item, array $employees): ServiceItem;
-
     /** @param  int[]  $itemIds */
     public function allBelongToService(int $serviceId, array $itemIds): bool;
 }

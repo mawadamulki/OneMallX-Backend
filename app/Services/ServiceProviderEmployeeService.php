@@ -81,8 +81,8 @@ class ServiceProviderEmployeeService
 
         $employee = $this->serviceProviderEmployeeClass->syncWorkingDaySchedule($employee, $workingDays);
 
-        if (array_key_exists('serviceItemIds', $payload)) {
-            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $payload['serviceItemIds']);
+        if (array_key_exists('serviceItems', $payload)) {
+            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $payload['serviceItems']);
             if ($itemError !== null) {
                 return $itemError;
             }
@@ -131,12 +131,12 @@ class ServiceProviderEmployeeService
             }
         }
 
-        $serviceItemIds = null;
-        if (array_key_exists('serviceItemIds', $payload)) {
-            $serviceItemIds = $payload['serviceItemIds'];
+        $serviceItems = null;
+        if (array_key_exists('serviceItems', $payload)) {
+            $serviceItems = $payload['serviceItems'];
         }
 
-        if ($data === [] && $workingDays === null && $serviceItemIds === null && $photo === null) {
+        if ($data === [] && $workingDays === null && $serviceItems === null && $photo === null) {
             return $this->fail('No fields to update.', 422);
         }
 
@@ -148,8 +148,8 @@ class ServiceProviderEmployeeService
             $employee = $this->serviceProviderEmployeeClass->syncWorkingDaySchedule($employee, $workingDays);
         }
 
-        if ($serviceItemIds !== null) {
-            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $serviceItemIds);
+        if ($serviceItems !== null) {
+            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $serviceItems);
             if ($itemError !== null) {
                 return $itemError;
             }
@@ -425,23 +425,34 @@ class ServiceProviderEmployeeService
         return $this->attachPhoto($employee, $file);
     }
 
-    /** @param  mixed  $raw */
+    /** @param  array<int, array{serviceItemID?: int, id?: int, price?: int|null}>  $raw */
     private function syncServiceItemsForEmployee(Employee $employee, int $serviceId, mixed $raw): ?array
     {
         if (! is_array($raw)) {
-            return $this->fail('serviceItemIds must be an array.', 422);
-        }
-
-        $ids = array_values(array_unique(array_map('intval', $raw)));
-        $ids = array_values(array_filter($ids, fn (int $id) => $id > 0));
-
-        if (! $this->serviceProviderItemClass->allBelongToService($serviceId, $ids)) {
-            return $this->fail('One or more service items do not belong to your service.', 422);
+            return $this->fail('serviceItems must be an array.', 422);
         }
 
         $sync = [];
-        foreach ($ids as $id) {
-            $sync[$id] = ['price' => null];
+
+        foreach ($raw as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $itemId = (int) ($row['serviceItemID'] ?? $row['id'] ?? 0);
+            if ($itemId <= 0) {
+                continue;
+            }
+
+            $sync[$itemId] = [
+                'price' => array_key_exists('price', $row) ? $row['price'] : null,
+            ];
+        }
+
+        $ids = array_keys($sync);
+
+        if (! $this->serviceProviderItemClass->allBelongToService($serviceId, $ids)) {
+            return $this->fail('One or more service items do not belong to your service.', 422);
         }
 
         $employee->serviceItems()->sync($sync);

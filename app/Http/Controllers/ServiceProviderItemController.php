@@ -93,23 +93,6 @@ class ServiceProviderItemController extends Controller
         return response()->json($result);
     }
 
-    public function syncEmployees(Request $request, $itemId)
-    {
-        $validated = $request->validate([
-            'employees' => 'required|array',
-            'employees.*.employeeID' => 'required|integer',
-            'employees.*.price' => 'nullable|integer|min:0',
-        ]);
-
-        $result = $this->ServiceProviderItemService->syncEmployeesForProvider((int) Auth::id(), (int) $itemId, $validated);
-
-        if (! $result['success']) {
-            return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
-        }
-
-        return response()->json($result);
-    }
-
     public function storeMedia(Request $request, $itemId)
     {
         $validated = $request->validate([

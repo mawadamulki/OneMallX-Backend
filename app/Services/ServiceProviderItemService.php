@@ -52,6 +52,7 @@ class ServiceProviderItemService
             'items' => $items->map(fn (ServiceItem $item) => [
                 'id' => $item->id,
                 'name' => $item->name,
+                'price' => $this->priceRangeForItem($item),
             ])->values()->all(),
         ];
     }
@@ -163,35 +164,6 @@ class ServiceProviderItemService
         ];
     }
 
-    public function syncEmployeesForProvider(int $userId, int $itemId, array $payload): array
-    {
-        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
-
-        if ($service === null) {
-            return $this->fail('Service not found for this account.', 404);
-        }
-
-        $item = $this->serviceProviderItemClass->findForService($itemId, (int) $service->id);
-
-        if ($item === null) {
-            return $this->fail('Service item not found.', 404);
-        }
-
-        $employees = $payload['employees'] ?? [];
-        $employeeError = $this->validateEmployeesForService((int) $service->id, $employees);
-        if ($employeeError !== null) {
-            return $this->fail($employeeError, 422);
-        }
-
-        $updated = $this->serviceProviderItemClass->syncEmployees($item, $employees);
-
-        return [
-            'success' => true,
-            'message' => 'Employees updated for this item.',
-            'item' => $this->toFullArray($updated),
-        ];
-    }
-
     public function attachMediaForProvider(int $userId, int $itemId, UploadedFile $file): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
@@ -280,7 +252,7 @@ class ServiceProviderItemService
         return [
             'id' => $item->id,
             'name' => $item->name,
-            'price' => (int) $item->price,
+            'price' => $this->priceRangeForItem($item),
             'duration' => (int) $item->duration,
             'employeeCount' => $item->relationLoaded('employees') ? $item->employees->count() : 0,
             'media' => $this->mapMediaCollection($item),
@@ -293,7 +265,7 @@ class ServiceProviderItemService
             'id' => $item->id,
             'serviceID' => $item->serviceID,
             'name' => $item->name,
-            'price' => (int) $item->price,
+            'price' => $this->priceRangeForItem($item),
             'duration' => (int) $item->duration,
             'media' => $this->mapMediaCollection($item),
             'employees' => $item->relationLoaded('employees')
@@ -305,6 +277,31 @@ class ServiceProviderItemService
                         : (int) $item->price,
                 ])->values()->all()
                 : [],
+        ];
+    }
+
+    /** @return array{min: int, max: int} */
+    private function priceRangeForItem(ServiceItem $item): array
+    {
+        if ($item->relationLoaded('employees') && $item->employees->isNotEmpty()) {
+            $prices = $item->employees
+                ->map(fn ($employee) => $employee->pivot->price !== null
+                    ? (int) $employee->pivot->price
+                    : (int) $item->price)
+                ->values()
+                ->all();
+
+            return [
+                'min' => min($prices),
+                'max' => max($prices),
+            ];
+        }
+
+        $base = (int) $item->price;
+
+        return [
+            'min' => $base,
+            'max' => $base,
         ];
     }
 

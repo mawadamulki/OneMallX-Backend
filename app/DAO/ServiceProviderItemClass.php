@@ -24,8 +24,9 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
     {
         return ServiceItem::query()
             ->where('serviceID', $serviceId)
+            ->with('employees')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'price']);
     }
 
     public function findForService(int $itemId, int $serviceId): ?ServiceItem
@@ -70,15 +71,6 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
     public function delete(ServiceItem $item): bool
     {
         return (bool) $item->delete();
-    }
-
-    public function syncEmployees(ServiceItem $item, array $employees): ServiceItem
-    {
-        return DB::transaction(function () use ($item, $employees) {
-            $this->applyEmployeeSync($item, $employees);
-
-            return $item->fresh(['media', 'employees']);
-        });
     }
 
     /** @param  array<int, array{employeeID: int, price?: int|null}>  $employees */

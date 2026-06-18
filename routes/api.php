@@ -292,7 +292,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/serviceProviderItems', [ServiceProviderItemController::class, 'store']);
         Route::put('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'update']);
         Route::delete('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'destroy']);
-        Route::put('/serviceProviderItems/employees/{itemId}', [ServiceProviderItemController::class, 'syncEmployees']);
         Route::post('/serviceProviderItems/{itemId}/media', [ServiceProviderItemController::class, 'storeMedia']);
         Route::delete('/serviceProviderItemMedia/{mediaId}', [ServiceProviderItemController::class, 'destroyMedia']);
 
