@@ -379,8 +379,8 @@ class ServiceProviderEmployeeService
             ->map(fn ($day) => [
                 'weekday' => (int) $day->weekday,
                 'day' => WorkingWeekday::isoToAbbrev((int) $day->weekday),
-                'startsAt' => $this->formatTime($day->starts_at),
-                'endsAt' => $this->formatTime($day->ends_at),
+                'startsAt' => ServiceEmployeeSchedule::formatTimeForApi($day->getRawOriginal('starts_at') ?? $day->starts_at),
+                'endsAt' => ServiceEmployeeSchedule::formatTimeForApi($day->getRawOriginal('ends_at') ?? $day->ends_at),
             ])
             ->values()
             ->all();
@@ -393,17 +393,6 @@ class ServiceProviderEmployeeService
         }
 
         return $employee->media->first()->url;
-    }
-
-    private function formatTime(mixed $value): string
-    {
-        if ($value === null || $value === '') {
-            return '';
-        }
-
-        $normalized = ServiceEmployeeSchedule::normalizeTimeString($value);
-
-        return substr($normalized, 0, 5);
     }
 
     private function attachPhoto(Employee $employee, UploadedFile $file): Media

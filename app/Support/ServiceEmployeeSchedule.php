@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Employee;
 use App\Models\Service;
 use Carbon\Carbon;
+use DateTimeInterface;
 
 /**
  * Intersects the service's single daily open/close window with an employee's per-weekday interval.
@@ -75,13 +76,19 @@ final class ServiceEmployeeSchedule
 
     public static function normalizeTimeString(mixed $value): string
     {
-        if ($value instanceof Carbon) {
+        if ($value instanceof DateTimeInterface) {
             return $value->format('H:i:s');
         }
 
         $s = trim((string) $value);
         if ($s === '') {
             return '00:00:00';
+        }
+
+        if (preg_match('/(?:\d{4}-\d{2}-\d{2}[ T])?(\d{1,2}):(\d{2})(?::(\d{2}))?/', $s, $matches)) {
+            $seconds = $matches[3] ?? '00';
+
+            return sprintf('%02d:%02d:%s', (int) $matches[1], (int) $matches[2], $seconds);
         }
 
         if (strlen($s) === 5) {
@@ -92,22 +99,71 @@ final class ServiceEmployeeSchedule
     }
 
     /**
+     * Format a stored time value for API responses (HH:MM).
+     */
+    public static function formatTimeForApi(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        $normalized = self::normalizeTimeString($value);
+
+        return substr($normalized, 0, 5);
+    }
+
+    /**
+     * @return array{0: string, 1: string} H:i:s strings for DB time columns
+     */
+    private static function normalizedEmployeeInterval(string $startsAt, string $endsAt): array
+    {
+        return [
+            self::normalizeTimeString($startsAt),
+            self::normalizeTimeString($endsAt),
+        ];
+    }
+
+    private static function hasValidServiceWindow(mixed $openTime, mixed $closeTime): bool
+    {
+        if ($openTime === null || $closeTime === null) {
+            return false;
+        }
+
+        if (trim((string) $openTime) === '' || trim((string) $closeTime) === '') {
+            return false;
+        }
+
+        $openCarbon = Carbon::parse('1970-01-01 '.self::normalizeTimeString($openTime));
+        $closeCarbon = Carbon::parse('1970-01-01 '.self::normalizeTimeString($closeTime));
+
+        return $openCarbon->lessThan($closeCarbon);
+    }
+
+    /**
      * Clamp employee interval to service open/close (same for every service day).
      *
      * @return array{0: string, 1: string} H:i or H:i:s strings for DB time columns
      */
     public static function clampEmployeeIntervalToService(Service $service, string $startsAt, string $endsAt): array
     {
+        if (! self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
+            return self::normalizedEmployeeInterval($startsAt, $endsAt);
+        }
+
         $open = Carbon::parse('1970-01-01 '.self::normalizeTimeString($service->openTime));
         $close = Carbon::parse('1970-01-01 '.self::normalizeTimeString($service->closeTime));
         $a = Carbon::parse('1970-01-01 '.self::normalizeTimeString($startsAt));
         $b = Carbon::parse('1970-01-01 '.self::normalizeTimeString($endsAt));
 
+        if ($a->greaterThanOrEqualTo($b)) {
+            return self::normalizedEmployeeInterval($startsAt, $endsAt);
+        }
+
         $start = $a->greaterThan($open) ? $a : $open;
         $end = $b->lessThan($close) ? $b : $close;
 
-        if ($start >= $end) {
-            return [$open->format('H:i:s'), $close->format('H:i:s')];
+        if ($start->greaterThanOrEqualTo($end)) {
+            return self::normalizedEmployeeInterval($startsAt, $endsAt);
         }
 
         return [$start->format('H:i:s'), $end->format('H:i:s')];
