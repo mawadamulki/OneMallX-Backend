@@ -71,6 +71,38 @@ final class WorkingWeekday
     }
 
     /**
+     * @param  list<array{weekday: int, startsAt: string, endsAt: string}>  $workingDays
+     */
+    public static function syncScheduleForEmployee(Employee $employee, array $workingDays): void
+    {
+        $employee->loadMissing('service');
+        $service = $employee->service;
+        if (! $service) {
+            return;
+        }
+
+        $employee->workingDays()->delete();
+
+        foreach ($workingDays as $row) {
+            $iso = (int) ($row['weekday'] ?? 0);
+            if ($iso < 1 || $iso > 7) {
+                continue;
+            }
+
+            $startsAt = $row['startsAt'] ?? $service->openTime ?? '09:00:00';
+            $endsAt = $row['endsAt'] ?? $service->closeTime ?? '18:00:00';
+
+            [$startsAt, $endsAt] = ServiceEmployeeSchedule::clampEmployeeIntervalToService($service, $startsAt, $endsAt);
+
+            $employee->workingDays()->create([
+                'weekday' => $iso,
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+            ]);
+        }
+    }
+
+    /**
      * @param  list<int>  $isoWeekdays
      * @param  string|null  $startsAt  time string; defaults to parent service openTime
      * @param  string|null  $endsAt  time string; defaults to parent service closeTime
@@ -86,20 +118,20 @@ final class WorkingWeekday
         $startsAt = $startsAt ?? $service->openTime ?? '09:00:00';
         $endsAt = $endsAt ?? $service->closeTime ?? '18:00:00';
 
-        [$startsAt, $endsAt] = ServiceEmployeeSchedule::clampEmployeeIntervalToService($service, $startsAt, $endsAt);
-
-        $employee->workingDays()->delete();
+        $schedule = [];
         foreach (array_unique($isoWeekdays) as $iso) {
             $iso = (int) $iso;
             if ($iso < 1 || $iso > 7) {
                 continue;
             }
-            $employee->workingDays()->create([
+            $schedule[] = [
                 'weekday' => $iso,
-                'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
-            ]);
+                'startsAt' => $startsAt,
+                'endsAt' => $endsAt,
+            ];
         }
+
+        self::syncScheduleForEmployee($employee, $schedule);
     }
 
     public static function syncServiceFromLegacyCsv(Service $service, ?string $csv): void

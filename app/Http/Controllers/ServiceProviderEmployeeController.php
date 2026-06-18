@@ -23,17 +23,35 @@ class ServiceProviderEmployeeController extends Controller
         return response()->json($result);
     }
 
+    public function show($employeeId)
+    {
+        $result = $this->ServiceProviderEmployeeService->showForProvider((int) Auth::id(), (int) $employeeId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'weekdays' => 'sometimes|array|min:1',
-            'weekdays.*' => 'integer|min:1|max:7',
-            'startsAt' => 'nullable|date_format:H:i',
-            'endsAt' => 'nullable|date_format:H:i',
+            'phoneNumber' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'workingDays' => 'required|array|min:1',
+            'workingDays.*.weekday' => 'required|integer|min:1|max:7',
+            'workingDays.*.startsAt' => 'required|date_format:H:i',
+            'workingDays.*.endsAt' => 'required|date_format:H:i',
+            'photo' => 'nullable|image|max:5120',
         ]);
 
-        $result = $this->ServiceProviderEmployeeService->createForProvider((int) Auth::id(), $validated);
+        $result = $this->ServiceProviderEmployeeService->createForProvider(
+            (int) Auth::id(),
+            $validated,
+            $request->file('photo')
+        );
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
@@ -45,10 +63,22 @@ class ServiceProviderEmployeeController extends Controller
     public function update(Request $request, $employeeId)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|string|max:255',
+            'phoneNumber' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'workingDays' => 'sometimes|array|min:1',
+            'workingDays.*.weekday' => 'required_with:workingDays|integer|min:1|max:7',
+            'workingDays.*.startsAt' => 'required_with:workingDays|date_format:H:i',
+            'workingDays.*.endsAt' => 'required_with:workingDays|date_format:H:i',
+            'photo' => 'nullable|image|max:5120',
         ]);
 
-        $result = $this->ServiceProviderEmployeeService->updateForProvider((int) Auth::id(), (int) $employeeId, $validated);
+        $result = $this->ServiceProviderEmployeeService->updateForProvider(
+            (int) Auth::id(),
+            (int) $employeeId,
+            $validated,
+            $request->file('photo')
+        );
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
@@ -71,13 +101,17 @@ class ServiceProviderEmployeeController extends Controller
     public function syncWorkingDays(Request $request, $employeeId)
     {
         $validated = $request->validate([
-            'weekdays' => 'required|array|min:1',
-            'weekdays.*' => 'integer|min:1|max:7',
-            'startsAt' => 'nullable|date_format:H:i',
-            'endsAt' => 'nullable|date_format:H:i',
+            'workingDays' => 'required|array|min:1',
+            'workingDays.*.weekday' => 'required|integer|min:1|max:7',
+            'workingDays.*.startsAt' => 'required|date_format:H:i',
+            'workingDays.*.endsAt' => 'required|date_format:H:i',
         ]);
 
-        $result = $this->ServiceProviderEmployeeService->syncWorkingDaysForProvider((int) Auth::id(), (int) $employeeId, $validated);
+        $result = $this->ServiceProviderEmployeeService->syncWorkingDaysForProvider(
+            (int) Auth::id(),
+            (int) $employeeId,
+            $validated
+        );
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
@@ -85,5 +119,37 @@ class ServiceProviderEmployeeController extends Controller
 
         return response()->json($result);
     }
-}
 
+    public function storePhoto(Request $request, $employeeId)
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->ServiceProviderEmployeeService->uploadPhotoForProvider(
+            (int) Auth::id(),
+            (int) $employeeId,
+            $validated['photo']
+        );
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result, $result['http_status'] ?? 201);
+    }
+
+    public function destroyPhoto($employeeId)
+    {
+        $result = $this->ServiceProviderEmployeeService->deletePhotoForProvider(
+            (int) Auth::id(),
+            (int) $employeeId
+        );
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+}

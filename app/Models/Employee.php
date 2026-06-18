@@ -15,12 +15,25 @@ class Employee extends Model
 
     protected $fillable = [
         'name',
+        'phoneNumber',
+        'email',
         'serviceID',
     ];
 
     public function service()
     {
         return $this->belongsTo(Service::class, 'serviceID');
+    }
+
+    public function serviceItems()
+    {
+        return $this->belongsToMany(ServiceItem::class, 'employee_service_item', 'employeeID', 'serviceItemID')
+            ->withPivot('price');
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');
     }
 
     public function bookings()

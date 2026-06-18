@@ -18,7 +18,13 @@ interface ServiceProviderEmployeeInterface
     public function delete(Employee $employee): bool;
 
     /**
+     * @param  list<array{weekday: int, startsAt: string, endsAt: string}>  $workingDays
+     */
+    public function syncWorkingDaySchedule(Employee $employee, array $workingDays): Employee;
+
+    /**
      * @param  list<int>  $isoWeekdays
+     * @deprecated Use syncWorkingDaySchedule for per-day times.
      */
     public function syncWorkingDays(Employee $employee, array $isoWeekdays, ?string $startsAt, ?string $endsAt): Employee;
 

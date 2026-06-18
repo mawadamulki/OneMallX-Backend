@@ -12,7 +12,10 @@ class ServiceProviderEmployeeClass implements ServiceProviderEmployeeInterface
     {
         return Employee::query()
             ->where('serviceID', $serviceId)
-            ->with(['workingDays'])
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'serviceItems' => fn ($q) => $q->orderBy('name'),
+            ])
             ->orderBy('name')
             ->get();
     }
@@ -22,7 +25,12 @@ class ServiceProviderEmployeeClass implements ServiceProviderEmployeeInterface
         return Employee::query()
             ->whereKey($employeeId)
             ->where('serviceID', $serviceId)
-            ->with(['workingDays', 'service'])
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'workingDays',
+                'serviceItems' => fn ($q) => $q->orderBy('name'),
+                'service',
+            ])
             ->first();
     }
 
@@ -38,12 +46,23 @@ class ServiceProviderEmployeeClass implements ServiceProviderEmployeeInterface
     {
         $employee->update($data);
 
-        return $employee->fresh(['workingDays']);
+        return $employee->fresh([
+            'media',
+            'workingDays',
+            'serviceItems',
+        ]);
     }
 
     public function delete(Employee $employee): bool
     {
         return (bool) $employee->delete();
+    }
+
+    public function syncWorkingDaySchedule(Employee $employee, array $workingDays): Employee
+    {
+        WorkingWeekday::syncScheduleForEmployee($employee, $workingDays);
+
+        return $employee->fresh(['workingDays']);
     }
 
     public function syncWorkingDays(Employee $employee, array $isoWeekdays, ?string $startsAt, ?string $endsAt): Employee

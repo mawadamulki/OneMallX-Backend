@@ -300,10 +300,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/serviceProviderItemMedia/{mediaId}', [ServiceProviderItemController::class, 'destroyMedia']);
 
         Route::get('/serviceProviderEmployees', [ServiceProviderEmployeeController::class, 'index']);
+        Route::get('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'show']);
         Route::post('/serviceProviderEmployees', [ServiceProviderEmployeeController::class, 'store']);
         Route::put('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'update']);
         Route::delete('/serviceProviderEmployees/{employeeId}', [ServiceProviderEmployeeController::class, 'destroy']);
-        Route::put('/serviceProviderEmployees/{employeeId}/workingDays', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
+        Route::put('/serviceProviderEmployees/workingDays/{employeeId}', [ServiceProviderEmployeeController::class, 'syncWorkingDays']);
+        Route::post('/serviceProviderEmployees/{employeeId}/photo', [ServiceProviderEmployeeController::class, 'storePhoto']);
+        Route::delete('/serviceProviderEmployees/{employeeId}/photo', [ServiceProviderEmployeeController::class, 'destroyPhoto']);
 
         Route::get('/serviceAds', [AdvertisementController::class, 'serviceAdsIndex']);
         Route::get('/serviceAds/items', [AdvertisementController::class, 'serviceAdsItems']);
