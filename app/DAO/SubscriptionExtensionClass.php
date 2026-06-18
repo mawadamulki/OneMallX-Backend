@@ -19,6 +19,7 @@ class SubscriptionExtensionClass implements SubscriptionExtensionInterface
         $q = StoreSubscriptionExtensionRequest::query()
             ->with([
                 'subscription.store',
+                'subscription.storeSubscriptionPlan',
                 'subscription.planPrice',
                 'requestedBy',
                 'reviewer',

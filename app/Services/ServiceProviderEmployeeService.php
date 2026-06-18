@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DAO\ServiceProviderEmployeeInterface;
+use App\DAO\ServiceProviderItemInterface;
 use App\DAO\ServiceProviderInterface;
 use App\Models\Employee;
 use App\Models\Media;
@@ -16,6 +17,7 @@ class ServiceProviderEmployeeService
     public function __construct(
         protected ServiceProviderInterface $serviceProviderClass,
         protected ServiceProviderEmployeeInterface $serviceProviderEmployeeClass,
+        protected ServiceProviderItemInterface $serviceProviderItemClass,
     ) {}
 
     public function listForProvider(int $userId): array
@@ -78,6 +80,13 @@ class ServiceProviderEmployeeService
 
         $employee = $this->serviceProviderEmployeeClass->syncWorkingDaySchedule($employee, $workingDays);
 
+        if (array_key_exists('serviceItemIds', $payload)) {
+            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $payload['serviceItemIds']);
+            if ($itemError !== null) {
+                return $itemError;
+            }
+        }
+
         if ($photo !== null) {
             $this->attachPhoto($employee, $photo);
             $employee = $this->serviceProviderEmployeeClass->findForService((int) $employee->id, (int) $service->id);
@@ -121,7 +130,12 @@ class ServiceProviderEmployeeService
             }
         }
 
-        if ($data === [] && $workingDays === null && $photo === null) {
+        $serviceItemIds = null;
+        if (array_key_exists('serviceItemIds', $payload)) {
+            $serviceItemIds = $payload['serviceItemIds'];
+        }
+
+        if ($data === [] && $workingDays === null && $serviceItemIds === null && $photo === null) {
             return $this->fail('No fields to update.', 422);
         }
 
@@ -131,6 +145,13 @@ class ServiceProviderEmployeeService
 
         if ($workingDays !== null) {
             $employee = $this->serviceProviderEmployeeClass->syncWorkingDaySchedule($employee, $workingDays);
+        }
+
+        if ($serviceItemIds !== null) {
+            $itemError = $this->syncServiceItemsForEmployee($employee, (int) $service->id, $serviceItemIds);
+            if ($itemError !== null) {
+                return $itemError;
+            }
         }
 
         if ($photo !== null) {
@@ -408,6 +429,30 @@ class ServiceProviderEmployeeService
         }
 
         return $this->attachPhoto($employee, $file);
+    }
+
+    /** @param  mixed  $raw */
+    private function syncServiceItemsForEmployee(Employee $employee, int $serviceId, mixed $raw): ?array
+    {
+        if (! is_array($raw)) {
+            return $this->fail('serviceItemIds must be an array.', 422);
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $raw)));
+        $ids = array_values(array_filter($ids, fn (int $id) => $id > 0));
+
+        if (! $this->serviceProviderItemClass->allBelongToService($serviceId, $ids)) {
+            return $this->fail('One or more service items do not belong to your service.', 422);
+        }
+
+        $sync = [];
+        foreach ($ids as $id) {
+            $sync[$id] = ['price' => null];
+        }
+
+        $employee->serviceItems()->sync($sync);
+
+        return null;
     }
 
     private function mapMedia(Media $media): array

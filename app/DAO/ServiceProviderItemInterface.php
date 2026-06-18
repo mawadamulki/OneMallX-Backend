@@ -9,6 +9,8 @@ interface ServiceProviderItemInterface
 {
     public function listForService(int $serviceId): Collection;
 
+    public function listNamesForService(int $serviceId): Collection;
+
     public function findForService(int $itemId, int $serviceId): ?ServiceItem;
 
     public function createForService(int $serviceId, array $data): ServiceItem;
@@ -21,4 +23,7 @@ interface ServiceProviderItemInterface
      * @param  array<int, array{employeeID: int, price?: int|null}>  $employees
      */
     public function syncEmployees(ServiceItem $item, array $employees): ServiceItem;
+
+    /** @param  int[]  $itemIds */
+    public function allBelongToService(int $serviceId, array $itemIds): bool;
 }

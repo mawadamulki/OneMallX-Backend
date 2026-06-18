@@ -44,6 +44,8 @@ class ServiceProviderEmployeeController extends Controller
             'workingDays.*.weekday' => 'required|integer|min:1|max:7',
             'workingDays.*.startsAt' => 'required|date_format:H:i',
             'workingDays.*.endsAt' => 'required|date_format:H:i',
+            'serviceItemIds' => 'sometimes|array',
+            'serviceItemIds.*' => 'integer|min:1',
             'photo' => 'nullable|image|max:5120',
         ]);
 
@@ -70,6 +72,8 @@ class ServiceProviderEmployeeController extends Controller
             'workingDays.*.weekday' => 'required_with:workingDays|integer|min:1|max:7',
             'workingDays.*.startsAt' => 'required_with:workingDays|date_format:H:i',
             'workingDays.*.endsAt' => 'required_with:workingDays|date_format:H:i',
+            'serviceItemIds' => 'sometimes|array',
+            'serviceItemIds.*' => 'integer|min:1',
             'photo' => 'nullable|image|max:5120',
         ]);
 

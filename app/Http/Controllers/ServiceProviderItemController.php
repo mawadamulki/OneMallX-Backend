@@ -23,6 +23,17 @@ class ServiceProviderItemController extends Controller
         return response()->json($result);
     }
 
+    public function names()
+    {
+        $result = $this->ServiceProviderItemService->listNamesForProvider((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function show($itemId)
     {
         $result = $this->ServiceProviderItemService->showForProvider((int) Auth::id(), (int) $itemId);

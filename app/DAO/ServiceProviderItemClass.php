@@ -20,6 +20,14 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
             ->get();
     }
 
+    public function listNamesForService(int $serviceId): Collection
+    {
+        return ServiceItem::query()
+            ->where('serviceID', $serviceId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
     public function findForService(int $itemId, int $serviceId): ?ServiceItem
     {
         return ServiceItem::query()
@@ -90,5 +98,19 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
         }
 
         $item->employees()->sync($sync);
+    }
+
+    public function allBelongToService(int $serviceId, array $itemIds): bool
+    {
+        if ($itemIds === []) {
+            return true;
+        }
+
+        $count = ServiceItem::query()
+            ->where('serviceID', $serviceId)
+            ->whereIn('id', $itemIds)
+            ->count();
+
+        return $count === count(array_unique($itemIds));
     }
 }

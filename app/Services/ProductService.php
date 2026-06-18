@@ -512,7 +512,7 @@ class ProductService
             'name' => $product->name,
             'status' => $product->status,
             'publishedAt' => $product->publishedAt,
-            'media' => $this->mapMediaUrlCollection($product),
+            'media' => $this->mapMediaCollection($product),
             'priceRange' => $prices->isEmpty()
                 ? null
                 : [
@@ -535,7 +535,7 @@ class ProductService
             'id' => $product->id,
             'name' => $product->name,
             'detail' => $product->detail,
-            'media' => $this->mapMediaUrlCollection($product),
+            'media' => $this->mapMediaCollection($product),
             'categories' => $product->relationLoaded('categories')
                 ? $product->categories->map(fn ($category) => [
                     'id' => $category->id,
@@ -652,16 +652,6 @@ class ProductService
             ->map(fn ($value) => (string) $value->value)
             ->filter(fn (string $part) => $part !== '')
             ->implode(' / ');
-    }
-
-    /** @return array<int, string> */
-    private function mapMediaUrlCollection(Product $product): array
-    {
-        if (! $product->relationLoaded('media')) {
-            return [];
-        }
-
-        return $product->media->map(fn (Media $media) => $media->url)->values()->all();
     }
 
     private function mapMediaCollection(Product $product): array

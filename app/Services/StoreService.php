@@ -150,7 +150,7 @@ class StoreService
         return [
             'success' => true,
             'message' => 'Photo uploaded.',
-            'url' => $media->url,
+            'media' => $this->mapMedia($media),
             'http_status' => 201,
         ];
     }
@@ -318,7 +318,7 @@ class StoreService
             'logo' => $this->resolvePublicUrl($store->logo),
             'status' => $store->status,
             'accountStatus' => $store->accountStatus,
-            'media' => $this->mapOwnerMediaUrls($store),
+            'media' => $this->mapMediaCollection($store),
         ];
     }
 
@@ -460,13 +460,13 @@ class StoreService
         ])->values()->all();
     }
 
-    private function mapOwnerMediaUrls(Store $store): array
+    private function mapMedia(Media $media): array
     {
-        if (! $store->relationLoaded('media')) {
-            return [];
-        }
-
-        return $store->media->map(fn (Media $media) => $media->url)->values()->all();
+        return [
+            'id' => $media->id,
+            'url' => $media->url,
+            'fileType' => $media->fileType,
+        ];
     }
 
     private function resolvePublicUrl(?string $stored): ?string

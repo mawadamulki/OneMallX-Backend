@@ -37,6 +37,25 @@ class ServiceProviderItemService
         ];
     }
 
+    public function listNamesForProvider(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        $items = $this->serviceProviderItemClass->listNamesForService((int) $service->id);
+
+        return [
+            'success' => true,
+            'items' => $items->map(fn (ServiceItem $item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+            ])->values()->all(),
+        ];
+    }
+
     public function showForProvider(int $userId, int $itemId): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);

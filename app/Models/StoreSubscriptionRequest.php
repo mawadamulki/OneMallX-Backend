@@ -43,7 +43,17 @@ class StoreSubscriptionRequest extends Model
         return $this->belongsTo(StoreSubscriptionPlan::class, 'storeSubscriptionPlanID');
     }
 
+    public function requestedPlan(): BelongsTo
+    {
+        return $this->belongsTo(StoreSubscriptionPlan::class, 'storeSubscriptionPlanID');
+    }
+
     public function planPrice(): BelongsTo
+    {
+        return $this->belongsTo(StorePlanPrice::class, 'planPriceID');
+    }
+
+    public function requestedPlanPrice(): BelongsTo
     {
         return $this->belongsTo(StorePlanPrice::class, 'planPriceID');
     }

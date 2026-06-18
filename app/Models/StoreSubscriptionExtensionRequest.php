@@ -9,6 +9,11 @@ class StoreSubscriptionExtensionRequest extends Model
 {
     protected $table = 'store_subscription_extension_requests';
 
+    protected $appends = [
+        'requestedPlan',
+        'requestedPlanPrice',
+    ];
+
     protected $fillable = [
         'storeSubscriptionID',
         'applicantNote',
@@ -39,5 +44,15 @@ class StoreSubscriptionExtensionRequest extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewedByUserID');
+    }
+
+    public function getRequestedPlanAttribute(): ?StoreSubscriptionPlan
+    {
+        return $this->subscription?->storeSubscriptionPlan;
+    }
+
+    public function getRequestedPlanPriceAttribute(): ?StorePlanPrice
+    {
+        return $this->subscription?->planPrice;
     }
 }

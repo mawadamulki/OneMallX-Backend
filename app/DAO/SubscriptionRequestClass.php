@@ -40,8 +40,15 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
 
     public function listStoreRequests(?string $status): Collection
     {
-        $q = StoreSubscriptionRequest::query()->orderBy('created_at');
-        if ($status !== null && $status !== '') {
+        $q = StoreSubscriptionRequest::query()
+            ->with([
+                'requestedPlan',
+                'requestedPlanPrice',
+                'reviewer',
+            ])
+            ->orderByDesc('created_at');
+
+        if ($status !== null && $status !== '' && $status !== 'all') {
             $q->where('status', $status);
         }
 
