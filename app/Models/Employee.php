@@ -17,6 +17,7 @@ class Employee extends Model
         'name',
         'phoneNumber',
         'email',
+        'status',
         'serviceID',
     ];
 

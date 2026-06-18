@@ -3,10 +3,14 @@
 namespace App\Services;
 
 use App\DAO\ServiceProviderInterface;
+use App\Models\Location;
 use App\Models\Media;
 use App\Models\Service;
+use App\Models\ServiceSubscription;
 use App\Support\WorkingWeekday;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ServiceProviderService
@@ -29,6 +33,25 @@ class ServiceProviderService
         ];
     }
 
+    public function planForOwner(int $userId): array
+    {
+        $subscription = ServiceSubscription::query()
+            ->with(['serviceSubscriptionPlan.floor', 'servicePlanPrice'])
+            ->whereHas('service', fn ($q) => $q->where('serviceOwnerID', $userId))
+            ->orderByDesc('endDate')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($subscription === null) {
+            return $this->fail('No subscription found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'plan' => $this->toOwnerPlanArray($subscription),
+        ];
+    }
+
     public function updateForOwner(int $userId, array $payload): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
@@ -39,17 +62,36 @@ class ServiceProviderService
 
         $data = [];
 
-        foreach (['name', 'description', 'openTime', 'closeTime', 'locationID', 'paymentAccount'] as $field) {
+        foreach (['name', 'description', 'openTime', 'closeTime', 'paymentAccount'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
         }
 
-        if ($data === []) {
+        $hasLocation = array_key_exists('location', $payload);
+
+        if ($data === [] && ! $hasLocation) {
             return $this->fail('No fields to update.', 422);
         }
 
-        $updated = $this->serviceProviderClass->updateService($service, $data);
+        $updated = DB::transaction(function () use ($service, $data, $payload, $hasLocation, $userId) {
+            if ($hasLocation && $payload['location'] !== null) {
+                if ($service->locationID !== null && $service->location !== null) {
+                    $service->location->update(['location' => $payload['location']]);
+                } else {
+                    $location = Location::query()->create([
+                        'location' => $payload['location'],
+                    ]);
+                    $data['locationID'] = $location->id;
+                }
+            }
+
+            if ($data !== []) {
+                $this->serviceProviderClass->updateService($service, $data);
+            }
+
+            return $this->serviceProviderClass->findServiceByProviderId($userId);
+        });
 
         return [
             'success' => true,
@@ -106,6 +148,49 @@ class ServiceProviderService
         ];
     }
 
+    public function attachLogoForOwner(int $userId, UploadedFile $file): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        if ($service->logo) {
+            Storage::disk('public')->delete($service->logo);
+        }
+
+        $path = $file->store("services/{$service->id}/logo", 'public');
+        $updated = $this->serviceProviderClass->updateService($service, ['logo' => $path]);
+
+        return [
+            'success' => true,
+            'message' => 'Logo uploaded.',
+            'logo' => $this->resolvePublicUrl($updated->logo),
+            'http_status' => 201,
+        ];
+    }
+
+    public function deleteLogoForOwner(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        if ($service->logo) {
+            Storage::disk('public')->delete($service->logo);
+            $this->serviceProviderClass->updateService($service, ['logo' => null]);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Logo deleted.',
+            'deleted' => true,
+        ];
+    }
+
     public function deleteMediaForOwner(int $userId, int $mediaId): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
@@ -144,6 +229,7 @@ class ServiceProviderService
             'id' => $service->id,
             'name' => $service->name,
             'description' => $service->description,
+            'logo' => $this->resolvePublicUrl($service->logo),
             'areaID' => $service->areaID,
             'locationID' => $service->locationID,
             'openTime' => $service->openTime,
@@ -180,6 +266,41 @@ class ServiceProviderService
         ];
     }
 
+    private function toOwnerPlanArray(ServiceSubscription $subscription): array
+    {
+        $plan = $subscription->serviceSubscriptionPlan;
+        $price = $subscription->servicePlanPrice;
+        $floor = $plan?->floor;
+
+        return [
+            'id' => $plan?->id,
+            'name' => $plan?->name,
+            'serviceSpace' => $plan?->serviceSpace,
+            'adsNumber' => $plan?->adsNumber,
+            'startDate' => $this->formatSubscriptionDate($subscription->startDate),
+            'endDate' => $this->formatSubscriptionDate($subscription->endDate),
+            'autoRenew' => (bool) $subscription->autoRenew,
+            'durationMonths' => $price ? (int) $price->duration : null,
+            'price' => $price?->price,
+            'floor' => $floor
+                ? [
+                    'id' => $floor->id,
+                    'name' => $floor->name,
+                    'number' => $floor->number,
+                ]
+                : null,
+        ];
+    }
+
+    private function formatSubscriptionDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return Carbon::parse($value)->toDateString();
+    }
+
     private function mapMediaCollection(Service $service): array
     {
         if (! $service->relationLoaded('media')) {
@@ -196,6 +317,15 @@ class ServiceProviderService
             'url' => $media->url,
             'fileType' => $media->fileType,
         ];
+    }
+
+    private function resolvePublicUrl(?string $stored): ?string
+    {
+        if ($stored === null || $stored === '') {
+            return null;
+        }
+
+        return (new Media(['url' => $stored]))->url;
     }
 
     /** @return array{success: false, message: string, http_status: int} */

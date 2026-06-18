@@ -17,6 +17,7 @@ class Service extends Model
         'price',
         'areaID',
         'description',
+        'logo',
         'paymentAccount',
         'openTime',
         'closeTime',

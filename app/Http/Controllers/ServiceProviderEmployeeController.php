@@ -46,6 +46,7 @@ class ServiceProviderEmployeeController extends Controller
             'workingDays.*.endsAt' => 'required|date_format:H:i',
             'serviceItemIds' => 'sometimes|array',
             'serviceItemIds.*' => 'integer|min:1',
+            'status' => 'nullable|string|in:active,inactive',
             'photo' => 'nullable|image|max:5120',
         ]);
 
@@ -74,6 +75,7 @@ class ServiceProviderEmployeeController extends Controller
             'workingDays.*.endsAt' => 'required_with:workingDays|date_format:H:i',
             'serviceItemIds' => 'sometimes|array',
             'serviceItemIds.*' => 'integer|min:1',
+            'status' => 'sometimes|string|in:active,inactive',
             'photo' => 'nullable|image|max:5120',
         ]);
 

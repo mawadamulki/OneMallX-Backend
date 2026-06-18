@@ -76,6 +76,7 @@ class ServiceProviderEmployeeService
             'name' => $payload['name'],
             'phoneNumber' => $payload['phoneNumber'] ?? null,
             'email' => $payload['email'] ?? null,
+            'status' => $payload['status'] ?? 'active',
         ]);
 
         $employee = $this->serviceProviderEmployeeClass->syncWorkingDaySchedule($employee, $workingDays);
@@ -116,7 +117,7 @@ class ServiceProviderEmployeeService
 
         $data = [];
 
-        foreach (['name', 'phoneNumber', 'email'] as $field) {
+        foreach (['name', 'phoneNumber', 'email', 'status'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
@@ -336,6 +337,8 @@ class ServiceProviderEmployeeService
             'name' => $employee->name,
             'phoneNumber' => $employee->phoneNumber,
             'email' => $employee->email,
+            'status' => $employee->status ?? 'active',
+            'created_at' => $employee->created_at,
             'image' => $this->profileImageUrl($employee),
             'serviceItems' => $employee->relationLoaded('serviceItems')
                 ? $employee->serviceItems->map(fn ($item) => [
@@ -353,6 +356,8 @@ class ServiceProviderEmployeeService
             'name' => $employee->name,
             'phoneNumber' => $employee->phoneNumber,
             'email' => $employee->email,
+            'status' => $employee->status ?? 'active',
+            'created_at' => $employee->created_at,
             'image' => $this->profileImageUrl($employee),
             'serviceItems' => $employee->relationLoaded('serviceItems')
                 ? $employee->serviceItems->map(fn ($item) => [

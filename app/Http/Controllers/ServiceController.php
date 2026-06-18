@@ -73,6 +73,17 @@ class ServiceController extends Controller
         return response()->json($result);
     }
 
+    public function planForOwner()
+    {
+        $result = $this->serviceProviderService->planForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function updateForOwner(Request $request)
     {
         $validated = $request->validate([
@@ -80,7 +91,7 @@ class ServiceController extends Controller
             'description' => 'nullable|string',
             'openTime' => 'nullable|date_format:H:i',
             'closeTime' => 'nullable|date_format:H:i',
-            'locationID' => 'nullable|integer|exists:locations,id',
+            'location' => 'nullable|string|max:1000',
             'paymentAccount' => 'nullable|string|max:255',
         ]);
 
@@ -122,6 +133,32 @@ class ServiceController extends Controller
         }
 
         return response()->json($result, $result['http_status'] ?? 201);
+    }
+
+    public function storeLogo(Request $request)
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        $result = $this->serviceProviderService->attachLogoForOwner((int) Auth::id(), $validated['photo']);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result, $result['http_status'] ?? 201);
+    }
+
+    public function destroyLogo()
+    {
+        $result = $this->serviceProviderService->deleteLogoForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
     }
 
     public function destroyMedia($mediaId)

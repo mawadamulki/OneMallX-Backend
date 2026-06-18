@@ -6,7 +6,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
-use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\ServiceProviderEmployeeController;
 use App\Http\Controllers\ServiceProviderItemController;
 use App\Http\Controllers\ServiceController;
@@ -279,16 +278,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // ___________________ Service Catalog Routes ___________________
     Route::middleware(['permission:manage service catalog'])->group(function () {
         Route::get('/service', [ServiceController::class, 'showForOwner']);
+        Route::get('/servicePlan', [ServiceController::class, 'planForOwner']);
         Route::put('/service', [ServiceController::class, 'updateForOwner']);
         Route::put('/service/workingDays', [ServiceController::class, 'syncWorkingDays']);
         Route::post('/serviceMedia', [ServiceController::class, 'storeMedia']);
         Route::delete('/serviceMedia/{mediaId}', [ServiceController::class, 'destroyMedia']);
-
-        Route::get('/serviceProvider', [ServiceProviderController::class, 'show']);
-        Route::put('/serviceProvider', [ServiceProviderController::class, 'update']);
-        Route::put('/serviceProvider/workingDays', [ServiceProviderController::class, 'syncWorkingDays']);
-        Route::post('/serviceProviderMedia', [ServiceProviderController::class, 'storeMedia']);
-        Route::delete('/serviceProviderMedia/{mediaId}', [ServiceProviderController::class, 'destroyMedia']);
+        Route::post('/serviceLogo', [ServiceController::class, 'storeLogo']);
+        Route::delete('/serviceLogo', [ServiceController::class, 'destroyLogo']);
 
         Route::get('/serviceProviderItems', [ServiceProviderItemController::class, 'index']);
         Route::get('/serviceProviderItems/names', [ServiceProviderItemController::class, 'names']);
@@ -296,7 +292,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/serviceProviderItems', [ServiceProviderItemController::class, 'store']);
         Route::put('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'update']);
         Route::delete('/serviceProviderItems/{itemId}', [ServiceProviderItemController::class, 'destroy']);
-        Route::put('/serviceProviderItems/{itemId}/employees', [ServiceProviderItemController::class, 'syncEmployees']);
+        Route::put('/serviceProviderItems/employees/{itemId}', [ServiceProviderItemController::class, 'syncEmployees']);
         Route::post('/serviceProviderItems/{itemId}/media', [ServiceProviderItemController::class, 'storeMedia']);
         Route::delete('/serviceProviderItemMedia/{mediaId}', [ServiceProviderItemController::class, 'destroyMedia']);
 
