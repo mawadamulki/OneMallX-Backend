@@ -4,6 +4,7 @@ use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BasketController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ServiceProviderEmployeeController;
@@ -184,6 +185,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:view service bookings'])->group(function () {
         Route::get('/serviceBookings/{serviceId}', [BookingController::class, 'serviceBookings']);
+    });
+
+    // ___________________ Basket Routes ___________________
+    Route::middleware(['permission:manage basket'])->group(function () {
+        Route::get('/basket', [BasketController::class, 'show']);
+        Route::post('/basket/items', [BasketController::class, 'storeItem']);
+        Route::put('/basket/items/{id}', [BasketController::class, 'updateItem']);
+        Route::delete('/basket/items/{id}', [BasketController::class, 'destroyItem']);
+        Route::delete('/basket', [BasketController::class, 'clear']);
     });
 
 

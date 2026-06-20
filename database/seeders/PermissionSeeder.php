@@ -34,6 +34,7 @@ class PermissionSeeder extends Seeder
             'manage rates',
             'book services',
             'view service bookings',
+            'manage basket',
         ];
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
