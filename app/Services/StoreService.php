@@ -333,6 +333,8 @@ class StoreService
             'name' => $plan?->name,
             'storeSpace' => $plan?->storeSpace,
             'adsNumber' => $plan?->adsNumber,
+            'adsDuration' => $plan?->adsDuration,
+            'adsPlacement' => $plan?->adsPlacement,
             'startDate' => $this->formatSubscriptionDate($subscription->startDate),
             'endDate' => $this->formatSubscriptionDate($subscription->endDate),
             'autoRenew' => (bool) $subscription->autoRenew,
