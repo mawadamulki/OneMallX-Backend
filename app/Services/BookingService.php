@@ -57,7 +57,7 @@ class BookingService
                     return $this->fail('Employee does not belong to this service', 422);
                 }
 
-                $newStart = Carbon::parse($data['date'].' '.$data['time']);
+                $newStart = ServiceEmployeeSchedule::parseAppointmentDateTime($data['date'], $data['time']);
                 if ($newStart->isPast()) {
                     return $this->fail('Cannot book in the past', 422);
                 }
@@ -90,7 +90,7 @@ class BookingService
                     if ($this->timesOverlap(
                         $newStart,
                         $newEnd,
-                        Carbon::parse($booking->date.' '.$booking->time),
+                        ServiceEmployeeSchedule::parseAppointmentDateTime($booking->date, $booking->time),
                         (int) ($booking->serviceItem?->duration ?? $item->duration)
                     )) {
                         return $this->fail('Time overlaps with another booking', 409);
@@ -154,7 +154,7 @@ class BookingService
                 return $this->fail('Forbidden', 403);
             }
 
-            $bookingDateTime = Carbon::parse($booking->date.' '.$booking->time);
+            $bookingDateTime = ServiceEmployeeSchedule::parseAppointmentDateTime($booking->date, $booking->time);
             $now = Carbon::now();
 
             if ($now->diffInHours($bookingDateTime, false) < 24) {

@@ -43,11 +43,11 @@ class ServiceItemService
                 $slots = [];
 
                 foreach ($times as $time) {
-                    $slotStart = Carbon::parse($date.' '.$time);
+                    $slotStart = ServiceEmployeeSchedule::parseAppointmentDateTime($date, $time);
                     $slotEnd = (clone $slotStart)->addMinutes((int) $item->duration);
 
                     $isBooked = $employeeBookings->contains(function ($booking) use ($slotStart, $slotEnd) {
-                        $existingStart = Carbon::parse($booking->date.' '.$booking->time);
+                        $existingStart = ServiceEmployeeSchedule::parseAppointmentDateTime($booking->date, $booking->time);
                         $existingEnd = (clone $existingStart)
                             ->addMinutes((int) ($booking->serviceItem?->duration ?? 0));
 

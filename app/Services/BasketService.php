@@ -181,7 +181,7 @@ class BasketService
                 return $this->fail('Employee not assigned to this service item', 422);
             }
 
-            $newStart = Carbon::parse($data['date'].' '.$data['time']);
+            $newStart = ServiceEmployeeSchedule::parseAppointmentDateTime($data['date'], $data['time']);
             if ($newStart->isPast()) {
                 return $this->fail('Cannot add a past appointment to the basket', 422);
             }
@@ -310,7 +310,7 @@ class BasketService
 
     private function slotTakenByBooking(int $employeeId, string $date, string $time, int $duration): bool
     {
-        $newStart = Carbon::parse($date.' '.$time);
+        $newStart = ServiceEmployeeSchedule::parseAppointmentDateTime($date, $time);
         $newEnd = (clone $newStart)->addMinutes($duration);
 
         $bookings = Booking::with('serviceItem')
@@ -323,7 +323,7 @@ class BasketService
             if ($this->timesOverlap(
                 $newStart,
                 $newEnd,
-                Carbon::parse($booking->date.' '.$booking->time),
+                ServiceEmployeeSchedule::parseAppointmentDateTime($booking->date, $booking->time),
                 (int) ($booking->serviceItem?->duration ?? $duration)
             )) {
                 return true;
@@ -335,7 +335,7 @@ class BasketService
 
     private function slotTakenInBasket(Basket $basket, int $employeeId, string $date, string $time, int $duration): bool
     {
-        $newStart = Carbon::parse($date.' '.$time);
+        $newStart = ServiceEmployeeSchedule::parseAppointmentDateTime($date, $time);
         $newEnd = (clone $newStart)->addMinutes($duration);
 
         $items = $basket->items()
@@ -349,9 +349,9 @@ class BasketService
             /** @var ServiceItem|null $serviceItem */
             $serviceItem = $line->item instanceof ServiceItem ? $line->item : null;
             $lineDuration = (int) ($serviceItem?->duration ?? $duration);
-            $existingStart = Carbon::parse(
-                $line->scheduledDate->format('Y-m-d').' '.
-                ServiceEmployeeSchedule::normalizeTimeString($line->scheduledTime)
+            $existingStart = ServiceEmployeeSchedule::parseAppointmentDateTime(
+                $line->scheduledDate,
+                $line->scheduledTime
             );
             $existingEnd = (clone $existingStart)->addMinutes($lineDuration);
 

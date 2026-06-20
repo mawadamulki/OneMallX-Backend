@@ -150,7 +150,7 @@ final class ServiceEmployeeSchedule
 
         [$windowStart, $windowEnd] = $intersection;
 
-        $bookingStart = Carbon::parse($dateYmd.' '.self::normalizeTimeString($timeHi));
+        $bookingStart = self::parseAppointmentDateTime($dateYmd, $timeHi);
         $bookingEnd = (clone $bookingStart)->addMinutes($durationMinutes);
 
         if ($bookingStart < $windowStart) {
@@ -213,6 +213,40 @@ final class ServiceEmployeeSchedule
         $normalized = self::normalizeTimeString($value);
 
         return substr($normalized, 0, 5);
+    }
+
+    /**
+     * Calendar date as Y-m-d (handles Carbon/date-cast models and datetime strings).
+     */
+    public static function normalizeDateString(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $s = trim((string) $value);
+        if ($s === '') {
+            return Carbon::today()->toDateString();
+        }
+
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $s, $matches)) {
+            return $matches[1];
+        }
+
+        return Carbon::parse($s)->toDateString();
+    }
+
+    /**
+     * Combine date + time without "2026-06-22 00:00:00 09:00:00" double-time bugs.
+     */
+    public static function parseAppointmentDateTime(mixed $date, mixed $time): Carbon
+    {
+        return Carbon::parse(self::appointmentDateTimeString($date, $time));
+    }
+
+    public static function appointmentDateTimeString(mixed $date, mixed $time): string
+    {
+        return self::normalizeDateString($date).' '.self::normalizeTimeString($time);
     }
 
     /**
