@@ -36,7 +36,9 @@ class ServiceItemController extends Controller
         $result = $this->service->getAvailableDays((int) $id);
 
         if (isset($result['error'])) {
-            return response()->json(['message' => $result['error']], 404);
+            $status = $result['error'] === 'Item not found' ? 404 : 422;
+
+            return response()->json(['message' => $result['error']], $status);
         }
 
         return response()->json($result);

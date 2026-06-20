@@ -106,7 +106,7 @@ class ServiceItemService
     private function generateTimeSlotsForEmployeeOnDate(ServiceItem $item, Employee $employee, string $dateYmd): array
     {
         $date = Carbon::parse($dateYmd);
-        $intersection = ServiceEmployeeSchedule::intersectionForDate($item->service, $employee, $date);
+        $intersection = ServiceEmployeeSchedule::intersectionForBooking($item->service, $employee, $date);
         if ($intersection === null) {
             return [];
         }
@@ -136,19 +136,37 @@ class ServiceItemService
             return ['error' => 'Item not found'];
         }
 
+        if ($item->employees->isEmpty()) {
+            return ['error' => 'No employees assigned to this service item'];
+        }
+
+        if (! ServiceEmployeeSchedule::hasValidServiceWindowForService($item->service)) {
+            return ['error' => 'Service opening hours are not configured'];
+        }
+
         $days = [];
+        $duration = (int) $item->duration;
 
         for ($i = 0; $i < 7; $i++) {
             $date = Carbon::today()->addDays($i);
             $dayName = strtolower($date->format('D'));
             $iso = (int) $date->dayOfWeekIso;
 
-            if (! $item->service->isOpenOnWeekdayForDisplay($iso)) {
+            if (! $item->service->allowsBookingOnWeekday($iso)) {
                 continue;
             }
 
-            $hasEmployee = $item->employees->first(function ($emp) use ($item, $date) {
-                return $emp->canOfferServiceOnDate($item->service, $date);
+            $hasEmployee = $item->employees->first(function ($emp) use ($item, $date, $duration) {
+                if (($emp->status ?? 'active') !== 'active') {
+                    return false;
+                }
+
+                return ServiceEmployeeSchedule::hasBookableWindowOnDate(
+                    $item->service,
+                    $emp,
+                    $date,
+                    $duration
+                );
             });
 
             if ($hasEmployee) {
@@ -158,6 +176,10 @@ class ServiceItemService
                     'weekday' => $iso,
                 ];
             }
+        }
+
+        if ($days === [] && ! $item->service->hasWorkingDaySchedule()) {
+            return ['error' => 'Service working days are not configured'];
         }
 
         return $days;

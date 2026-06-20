@@ -48,7 +48,26 @@ final class ServiceEmployeeSchedule
 
     public static function canOfferOnDate(Service $service, Employee $employee, Carbon $date): bool
     {
-        return self::intersectionForDate($service, $employee, $date) !== null;
+        return self::intersectionForBooking($service, $employee, $date) !== null;
+    }
+
+    /**
+     * True when at least one slot of $durationMinutes fits on this day.
+     */
+    public static function hasBookableWindowOnDate(
+        Service $service,
+        Employee $employee,
+        Carbon $date,
+        int $durationMinutes
+    ): bool {
+        $intersection = self::intersectionForBooking($service, $employee, $date);
+        if ($intersection === null || $durationMinutes <= 0) {
+            return false;
+        }
+
+        [$windowStart, $windowEnd] = $intersection;
+
+        return $windowStart->copy()->addMinutes($durationMinutes) <= $windowEnd;
     }
 
     /**
@@ -205,6 +224,11 @@ final class ServiceEmployeeSchedule
             self::normalizeTimeString($startsAt),
             self::normalizeTimeString($endsAt),
         ];
+    }
+
+    public static function hasValidServiceWindowForService(Service $service): bool
+    {
+        return self::hasValidServiceWindow($service->openTime, $service->closeTime);
     }
 
     private static function hasValidServiceWindow(mixed $openTime, mixed $closeTime): bool
