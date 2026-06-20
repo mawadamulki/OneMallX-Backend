@@ -121,25 +121,35 @@ class ServiceProviderItemService
             return $this->fail('Service item not found.', 404);
         }
 
+        $currentStatus = $item->status ?? ServiceItem::STATUS_ACTIVE;
         $data = [];
 
-        if (array_key_exists('status', $payload)) {
+        if (array_key_exists('status', $payload) && $payload['status'] !== $currentStatus) {
             if ($payload['status'] === ServiceItem::STATUS_INACTIVE) {
                 $data['status'] = ServiceItem::STATUS_INACTIVE;
                 $data['name'] = '0';
             } else {
                 $data['status'] = ServiceItem::STATUS_ACTIVE;
-                if (array_key_exists('name', $payload)) {
-                    $data['name'] = $payload['name'];
-                } elseif ($item->status === ServiceItem::STATUS_INACTIVE || $item->name === '0') {
+                if ($this->hasValidItemName($payload)) {
+                    $data['name'] = trim((string) $payload['name']);
+                } else {
                     return $this->fail('Name is required when activating a service item.', 422);
                 }
             }
-        } elseif (array_key_exists('name', $payload)) {
-            if ($item->status === ServiceItem::STATUS_INACTIVE) {
+        }
+
+        if (array_key_exists('name', $payload) && ! array_key_exists('name', $data)) {
+            $effectiveStatus = $data['status'] ?? $currentStatus;
+
+            if ($effectiveStatus === ServiceItem::STATUS_INACTIVE) {
                 return $this->fail('Cannot update name of an inactive service item. Activate it first.', 422);
             }
-            $data['name'] = $payload['name'];
+
+            if (! $this->hasValidItemName($payload)) {
+                return $this->fail('Service item name is required.', 422);
+            }
+
+            $data['name'] = trim((string) $payload['name']);
         }
 
         foreach (['price', 'duration'] as $field) {
@@ -343,6 +353,18 @@ class ServiceProviderItemService
             'url' => $media->url,
             'fileType' => $media->fileType,
         ];
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    private function hasValidItemName(array $payload): bool
+    {
+        if (! array_key_exists('name', $payload)) {
+            return false;
+        }
+
+        $name = trim((string) $payload['name']);
+
+        return $name !== '' && $name !== '0';
     }
 
     /** @return array{success: false, message: string, http_status: int} */

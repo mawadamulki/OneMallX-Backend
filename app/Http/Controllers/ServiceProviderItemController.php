@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ServiceProviderItemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ServiceProviderItemController extends Controller
 {
@@ -67,12 +68,14 @@ class ServiceProviderItemController extends Controller
 
     public function update(Request $request, $itemId)
     {
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+        $input = $this->normalizeItemUpdatePayload($request);
+
+        $validated = validator($input, [
+            'name' => ['sometimes', 'string', 'max:255', Rule::notIn(['0'])],
             'price' => 'sometimes|integer|min:0',
             'duration' => 'sometimes|integer|min:1',
             'status' => 'sometimes|string|in:active,inactive',
-        ]);
+        ])->validate();
 
         $result = $this->ServiceProviderItemService->updateForProvider((int) Auth::id(), (int) $itemId, $validated);
 
@@ -81,6 +84,22 @@ class ServiceProviderItemController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /** @return array<string, mixed> */
+    private function normalizeItemUpdatePayload(Request $request): array
+    {
+        $input = $request->only(['name', 'price', 'duration', 'status']);
+
+        if (isset($input['price']) && is_array($input['price'])) {
+            $input['price'] = $input['price']['min'] ?? $input['price']['max'] ?? null;
+        }
+
+        if (array_key_exists('name', $input)) {
+            $input['name'] = trim((string) $input['name']);
+        }
+
+        return $input;
     }
 
     public function destroy($itemId)
