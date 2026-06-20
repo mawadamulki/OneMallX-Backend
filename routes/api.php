@@ -299,6 +299,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/storeAds/{adId}', [AdvertisementController::class, 'storeAdsDestroy']);
     });
 
+    Route::middleware(['permission:view store orders'])->group(function () {
+        Route::get('/storeOrders', [OrderController::class, 'storeOrders']);
+        Route::get('/storeOrders/{orderId}', [OrderController::class, 'storeOrderShow']);
+    });
+
 
     // ___________________ Service Catalog Routes ___________________
     Route::middleware(['permission:manage service catalog'])->group(function () {

@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Services\CheckoutService;
+use App\Services\StoreOrderService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function __construct(private CheckoutService $service) {}
+    public function __construct(
+        private CheckoutService $service,
+        private StoreOrderService $storeOrderService,
+    ) {}
 
     public function checkout(Request $request)
     {
@@ -26,6 +30,16 @@ class OrderController extends Controller
     public function show($id)
     {
         return $this->respond($this->service->getOrder((int) $id));
+    }
+
+    public function storeOrders()
+    {
+        return $this->respond($this->storeOrderService->getStoreOrders());
+    }
+
+    public function storeOrderShow($id)
+    {
+        return $this->respond($this->storeOrderService->getStoreOrder((int) $id));
     }
 
     private function respond(array $result)

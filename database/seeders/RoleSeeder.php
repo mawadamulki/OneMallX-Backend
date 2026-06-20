@@ -52,6 +52,7 @@ class RoleSeeder extends Seeder
             'manage store subscriptions',
             'manage store products',
             'view store ratings',
+            'view store orders',
             'report rates',
         ]);
 
