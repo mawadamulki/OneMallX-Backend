@@ -32,7 +32,7 @@ class StoreOrderService
             }])
             ->orderByDesc('id')
             ->get()
-            ->map(fn (Order $order) => $this->formatStoreOrderSummary($order, $store));
+            ->map(fn (Order $order) => $this->formatStoreOrderSummary($order));
 
         return $this->success('OK', [
             'store' => [
@@ -83,23 +83,20 @@ class StoreOrderService
             ->first();
     }
 
-    private function formatStoreOrderSummary(Order $order, Store $store): array
+    private function formatStoreOrderSummary(Order $order): array
     {
         $items = $order->items;
-        $storeSubtotal = (int) $items->sum('lineTotal');
 
         return [
             'id' => $order->id,
             'status' => $order->status,
-            'store_subtotal' => $storeSubtotal,
+            'store_subtotal' => (int) $items->sum('lineTotal'),
             'item_count' => $items->count(),
-            'order_total_price' => (int) $order->totalPrice,
             'created_at' => $order->created_at?->toIso8601String(),
             'customer' => [
                 'id' => $order->user?->id,
                 'name' => $order->user?->name,
             ],
-            'items' => $items->map(fn (OrderItem $item) => $this->formatOrderItem($item))->values(),
         ];
     }
 
@@ -114,7 +111,6 @@ class StoreOrderService
             'store_id' => $store->id,
             'store_name' => $store->name,
             'store_subtotal' => $storeSubtotal,
-            'order_total_price' => (int) $order->totalPrice,
             'item_count' => $items->count(),
             'created_at' => $order->created_at?->toIso8601String(),
             'customer' => [
