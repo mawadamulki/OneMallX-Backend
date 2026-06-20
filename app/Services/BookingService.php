@@ -44,6 +44,10 @@ class BookingService
                     return $this->fail('Service item does not belong to this service', 422);
                 }
 
+                if (! $item->isActive()) {
+                    return $this->fail('Service item is not available', 422);
+                }
+
                 $employee = Employee::with('workingDays')->find($data['employee_id']);
                 if (! $employee) {
                     return $this->fail('Employee not found', 404);
@@ -62,14 +66,16 @@ class BookingService
                     return $this->fail('Employee not assigned to this service item', 422);
                 }
 
-                if (! ServiceEmployeeSchedule::bookingFitsWindow(
+                $rejection = ServiceEmployeeSchedule::bookingRejectionReason(
                     $service,
                     $employee,
                     $data['date'],
                     $data['time'],
                     (int) $item->duration
-                )) {
-                    return $this->fail('Outside working hours', 422);
+                );
+
+                if ($rejection !== null) {
+                    return $this->fail($rejection, 422);
                 }
 
                 $newEnd = (clone $newStart)->addMinutes((int) $item->duration);

@@ -58,6 +58,11 @@ class RateController extends Controller
         return $this->respond($this->rateService->report((int) Auth::id(), $id), 201);
     }
 
+    public function unreport(int $id)
+    {
+        return $this->respond($this->rateService->unreport((int) Auth::id(), $id));
+    }
+
     public function storeRates(Request $request)
     {
         $perPage = min(max((int) $request->query('per_page', 10), 1), 50);

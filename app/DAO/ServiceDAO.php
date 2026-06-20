@@ -23,8 +23,7 @@ class ServiceDAO
             'rates',
             'employees',
             'workingDays',
-            'serviceItems.media',
-            'serviceItems.rates',
+            'serviceItems' => fn ($q) => $q->active()->with(['media', 'rates']),
         ])->find($id);
     }
 

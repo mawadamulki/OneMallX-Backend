@@ -8,7 +8,7 @@ class ServiceItemDAO
 {
     public function findWithEmployees($id)
     {
-        return ServiceItem::with([
+        return ServiceItem::active()->with([
             'media',
             'rates',
             'service.workingDays',
@@ -19,7 +19,7 @@ class ServiceItemDAO
 
     public function getByService($serviceId)
     {
-        return ServiceItem::with(['media', 'rates', 'employees'])
+        return ServiceItem::active()->with(['media', 'rates', 'employees'])
             ->where('serviceID', $serviceId)
             ->get();
     }

@@ -451,8 +451,8 @@ class ServiceProviderEmployeeService
 
         $ids = array_keys($sync);
 
-        if (! $this->serviceProviderItemClass->allBelongToService($serviceId, $ids)) {
-            return $this->fail('One or more service items do not belong to your service.', 422);
+        if (! $this->serviceProviderItemClass->allBelongToService($serviceId, $ids, true)) {
+            return $this->fail('One or more service items are invalid or inactive.', 422);
         }
 
         $employee->serviceItems()->sync($sync);

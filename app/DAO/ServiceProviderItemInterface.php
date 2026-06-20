@@ -20,5 +20,5 @@ interface ServiceProviderItemInterface
     public function delete(ServiceItem $item): bool;
 
     /** @param  int[]  $itemIds */
-    public function allBelongToService(int $serviceId, array $itemIds): bool;
+    public function allBelongToService(int $serviceId, array $itemIds, bool $activeOnly = false): bool;
 }

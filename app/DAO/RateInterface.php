@@ -44,6 +44,10 @@ interface RateInterface
 
     public function createReport(int $rateId, int $reporterUserId): RateReport;
 
+    public function findReportByRateAndReporter(int $rateId, int $reporterUserId): ?RateReport;
+
+    public function deleteReport(RateReport $report): bool;
+
     public function paginateReportsAdmin(int $perPage, ?string $status = null): LengthAwarePaginator;
 
     public function findReport(int $reportId): ?RateReport;

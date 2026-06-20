@@ -71,6 +71,7 @@ class ServiceProviderItemController extends Controller
             'name' => 'sometimes|string|max:255',
             'price' => 'sometimes|integer|min:0',
             'duration' => 'sometimes|integer|min:1',
+            'status' => 'sometimes|string|in:active,inactive',
         ]);
 
         $result = $this->ServiceProviderItemService->updateForProvider((int) Auth::id(), (int) $itemId, $validated);

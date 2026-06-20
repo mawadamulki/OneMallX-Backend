@@ -24,6 +24,7 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
     {
         return ServiceItem::query()
             ->where('serviceID', $serviceId)
+            ->active()
             ->orderBy('name')
             ->get(['id', 'name', 'price']);
     }
@@ -91,17 +92,20 @@ class ServiceProviderItemClass implements ServiceProviderItemInterface
         $item->employees()->sync($sync);
     }
 
-    public function allBelongToService(int $serviceId, array $itemIds): bool
+    public function allBelongToService(int $serviceId, array $itemIds, bool $activeOnly = false): bool
     {
         if ($itemIds === []) {
             return true;
         }
 
-        $count = ServiceItem::query()
+        $query = ServiceItem::query()
             ->where('serviceID', $serviceId)
-            ->whereIn('id', $itemIds)
-            ->count();
+            ->whereIn('id', $itemIds);
 
-        return $count === count(array_unique($itemIds));
+        if ($activeOnly) {
+            $query->active();
+        }
+
+        return $query->count() === count(array_unique($itemIds));
     }
 }

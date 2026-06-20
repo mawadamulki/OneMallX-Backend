@@ -9,12 +9,27 @@ class ServiceItem extends Model
 {
     use SoftDeletes;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'serviceID',
         'name',
         'price',
         'duration',
+        'status',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
 
     public function service()
     {

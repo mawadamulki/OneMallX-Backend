@@ -196,6 +196,19 @@ class RateClass implements RateInterface
         ]);
     }
 
+    public function findReportByRateAndReporter(int $rateId, int $reporterUserId): ?RateReport
+    {
+        return RateReport::query()
+            ->where('rateID', $rateId)
+            ->where('reporterUserID', $reporterUserId)
+            ->first();
+    }
+
+    public function deleteReport(RateReport $report): bool
+    {
+        return (bool) $report->delete();
+    }
+
     public function paginateReportsAdmin(int $perPage, ?string $status = null): LengthAwarePaginator
     {
         $query = RateReport::query()

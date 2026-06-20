@@ -52,6 +52,100 @@ final class ServiceEmployeeSchedule
     }
 
     /**
+     * Booking validation window (more permissive than display when schedules are missing).
+     *
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    public static function intersectionForBooking(Service $service, Employee $employee, Carbon $date): ?array
+    {
+        $iso = (int) $date->dayOfWeekIso;
+
+        if (! $service->allowsBookingOnWeekday($iso)) {
+            return null;
+        }
+
+        if ($employee->hasWorkingDaySchedule() && ! $employee->worksOnIsoWeekday($iso)) {
+            return null;
+        }
+
+        if (! self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
+            return null;
+        }
+
+        $day = $date->format('Y-m-d');
+
+        $serviceStart = Carbon::parse($day.' '.self::normalizeTimeString($service->openTime));
+        $serviceEnd = Carbon::parse($day.' '.self::normalizeTimeString($service->closeTime));
+
+        if (! $employee->hasWorkingDaySchedule()) {
+            return [$serviceStart, $serviceEnd];
+        }
+
+        $empDay = $employee->workingDays->firstWhere('weekday', $iso);
+        if ($empDay === null) {
+            return null;
+        }
+
+        $empStart = Carbon::parse($day.' '.self::normalizeTimeString($empDay->starts_at));
+        $empEnd = Carbon::parse($day.' '.self::normalizeTimeString($empDay->ends_at));
+
+        $start = $serviceStart->greaterThan($empStart) ? $serviceStart : $empStart;
+        $end = $serviceEnd->lessThan($empEnd) ? $serviceEnd : $empEnd;
+
+        if ($start >= $end) {
+            return null;
+        }
+
+        return [$start, $end];
+    }
+
+    /**
+     * Human-readable reason when a booking slot is rejected.
+     */
+    public static function bookingRejectionReason(
+        Service $service,
+        Employee $employee,
+        string $dateYmd,
+        string $timeHi,
+        int $durationMinutes
+    ): ?string {
+        $date = Carbon::parse($dateYmd);
+        $iso = (int) $date->dayOfWeekIso;
+
+        if (! $service->allowsBookingOnWeekday($iso)) {
+            return 'Service is closed on this day';
+        }
+
+        if ($employee->hasWorkingDaySchedule() && ! $employee->worksOnIsoWeekday($iso)) {
+            return 'Employee is not working on this day';
+        }
+
+        if (! self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
+            return 'Service opening hours are not configured';
+        }
+
+        $intersection = self::intersectionForBooking($service, $employee, $date);
+        if ($intersection === null) {
+            return 'No overlapping working hours for this employee on this day';
+        }
+
+        [$windowStart, $windowEnd] = $intersection;
+
+        $bookingStart = Carbon::parse($dateYmd.' '.self::normalizeTimeString($timeHi));
+        $bookingEnd = (clone $bookingStart)->addMinutes($durationMinutes);
+
+        if ($bookingStart < $windowStart) {
+            return 'Booking starts before working hours (opens at '.$windowStart->format('H:i').')';
+        }
+
+        if ($bookingEnd > $windowEnd) {
+            return 'Booking ends after working hours (closes at '.$windowEnd->format('H:i').')';
+        }
+
+        return null;
+    }
+
+    /**
      * True if booking fits fully inside the intersected window for that employee on that date.
      */
     public static function bookingFitsWindow(
@@ -61,17 +155,7 @@ final class ServiceEmployeeSchedule
         string $timeHi,
         int $durationMinutes
     ): bool {
-        $intersection = self::intersectionForDate($service, $employee, Carbon::parse($dateYmd));
-        if ($intersection === null) {
-            return false;
-        }
-
-        [$windowStart, $windowEnd] = $intersection;
-
-        $bookingStart = Carbon::parse($dateYmd.' '.self::normalizeTimeString($timeHi));
-        $bookingEnd = (clone $bookingStart)->addMinutes($durationMinutes);
-
-        return $bookingStart >= $windowStart && $bookingEnd <= $windowEnd;
+        return self::bookingRejectionReason($service, $employee, $dateYmd, $timeHi, $durationMinutes) === null;
     }
 
     public static function normalizeTimeString(mixed $value): string

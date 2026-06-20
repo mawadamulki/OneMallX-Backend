@@ -254,6 +254,30 @@ class RateService
         ];
     }
 
+    public function unreport(int $reporterUserId, int $rateId): array
+    {
+        $rate = $this->rateDAO->findById($rateId);
+        if ($rate === null) {
+            return $this->fail('Rating not found.', 404);
+        }
+
+        $report = $this->rateDAO->findReportByRateAndReporter($rateId, $reporterUserId);
+        if ($report === null) {
+            return $this->fail('You have not reported this rating.', 422);
+        }
+
+        if ($report->status !== RateReport::STATUS_PENDING) {
+            return $this->fail('This report can no longer be withdrawn.', 422);
+        }
+
+        $this->rateDAO->deleteReport($report);
+
+        return [
+            'success' => true,
+            'message' => 'Rating report withdrawn.',
+        ];
+    }
+
     public function adminListRates(int $perPage, ?string $typeAlias, ?int $rateableId, ?int $userId): array
     {
         $rateableClass = $typeAlias !== null ? RateableType::resolveClass($typeAlias) : null;

@@ -95,6 +95,7 @@ class ServiceProviderItemService
             'name' => $payload['name'],
             'price' => (int) $payload['price'],
             'duration' => (int) $payload['duration'],
+            'status' => ServiceItem::STATUS_ACTIVE,
             'employees' => $employees,
         ]);
 
@@ -122,7 +123,26 @@ class ServiceProviderItemService
 
         $data = [];
 
-        foreach (['name', 'price', 'duration'] as $field) {
+        if (array_key_exists('status', $payload)) {
+            if ($payload['status'] === ServiceItem::STATUS_INACTIVE) {
+                $data['status'] = ServiceItem::STATUS_INACTIVE;
+                $data['name'] = '0';
+            } else {
+                $data['status'] = ServiceItem::STATUS_ACTIVE;
+                if (array_key_exists('name', $payload)) {
+                    $data['name'] = $payload['name'];
+                } elseif ($item->status === ServiceItem::STATUS_INACTIVE || $item->name === '0') {
+                    return $this->fail('Name is required when activating a service item.', 422);
+                }
+            }
+        } elseif (array_key_exists('name', $payload)) {
+            if ($item->status === ServiceItem::STATUS_INACTIVE) {
+                return $this->fail('Cannot update name of an inactive service item. Activate it first.', 422);
+            }
+            $data['name'] = $payload['name'];
+        }
+
+        foreach (['price', 'duration'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = (int) $payload[$field];
             }
@@ -254,6 +274,7 @@ class ServiceProviderItemService
             'name' => $item->name,
             'price' => $this->priceRangeForItem($item),
             'duration' => (int) $item->duration,
+            'status' => $item->status ?? ServiceItem::STATUS_ACTIVE,
             'employeeCount' => $item->relationLoaded('employees') ? $item->employees->count() : 0,
             'media' => $this->mapMediaCollection($item),
         ];
@@ -267,6 +288,7 @@ class ServiceProviderItemService
             'name' => $item->name,
             'price' => $this->priceRangeForItem($item),
             'duration' => (int) $item->duration,
+            'status' => $item->status ?? ServiceItem::STATUS_ACTIVE,
             'media' => $this->mapMediaCollection($item),
             'employees' => $item->relationLoaded('employees')
                 ? $item->employees->map(fn ($employee) => [

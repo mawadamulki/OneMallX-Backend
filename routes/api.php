@@ -179,7 +179,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/book', [BookingController::class, 'store']);
         Route::get('/myBookings', [BookingController::class, 'myBookings']);
         Route::get('/bookings/{id}', [BookingController::class, 'show']);
-        Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+        Route::post('/bookings/cancel/{id}', [BookingController::class, 'cancel']);
     });
 
     Route::middleware(['permission:view service bookings'])->group(function () {
@@ -197,6 +197,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:report rates'])->group(function () {
         Route::post('/rates/report/{id}', [RateController::class, 'report']);
+        Route::delete('/rates/report/{id}', [RateController::class, 'unreport']);
     });
 
     Route::middleware(['permission:view store ratings'])->group(function () {
