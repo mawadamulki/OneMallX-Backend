@@ -14,43 +14,52 @@ use Illuminate\Support\Facades\DB;
 
 class BookingService
 {
-    public function createBooking($data)
+    public function createBooking(array $data): array
     {
-        return DB::transaction(function () use ($data) {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
 
-            //  Lock (منع race condition)
+        return DB::transaction(function () use ($data, $userId) {
             $lockKey = "booking_lock_{$data['employee_id']}_{$data['date']}_{$data['time']}";
             $lock = Cache::lock($lockKey, 10);
 
             if (! $lock->get()) {
-                return ['error' => 'Someone is booking this slot, try again'];
+                return $this->fail('Someone is booking this slot, try again', 409);
             }
 
             try {
-
                 $service = Service::with('workingDays')->find($data['service_id']);
                 if (! $service) {
-                    return ['error' => 'Service not found'];
+                    return $this->fail('Service not found', 404);
                 }
 
                 $item = ServiceItem::with(['employees', 'service.workingDays'])->find($data['service_item_id']);
                 if (! $item) {
-                    return ['error' => 'Service item not found'];
+                    return $this->fail('Service item not found', 404);
+                }
+
+                if ((int) $item->serviceID !== (int) $service->id) {
+                    return $this->fail('Service item does not belong to this service', 422);
                 }
 
                 $employee = Employee::with('workingDays')->find($data['employee_id']);
                 if (! $employee) {
-                    return ['error' => 'Employee not found'];
+                    return $this->fail('Employee not found', 404);
                 }
 
-                //  منع الماضي
-                if (Carbon::parse($data['date'])->isPast()) {
-                    return ['error' => 'Cannot book in the past'];
+                if ((int) $employee->serviceID !== (int) $service->id) {
+                    return $this->fail('Employee does not belong to this service', 422);
                 }
 
-                // تحقق employee مرتبط بالـ item
+                $newStart = Carbon::parse($data['date'].' '.$data['time']);
+                if ($newStart->isPast()) {
+                    return $this->fail('Cannot book in the past', 422);
+                }
+
                 if (! $item->employees->contains('id', $employee->id)) {
-                    return ['error' => 'Employee not assigned to this service'];
+                    return $this->fail('Employee not assigned to this service item', 422);
                 }
 
                 if (! ServiceEmployeeSchedule::bookingFitsWindow(
@@ -60,44 +69,41 @@ class BookingService
                     $data['time'],
                     (int) $item->duration
                 )) {
-                    return ['error' => 'Outside working hours'];
+                    return $this->fail('Outside working hours', 422);
                 }
 
-                //  overlap logic
-                $newStart = Carbon::parse($data['date'].' '.$data['time']);
-                $newEnd = (clone $newStart)->addMinutes($item->duration);
+                $newEnd = (clone $newStart)->addMinutes((int) $item->duration);
 
-                $bookings = Booking::where('employeeID', $data['employee_id'])
+                $bookings = Booking::with('serviceItem')
+                    ->where('employeeID', $data['employee_id'])
                     ->where('date', $data['date'])
+                    ->where('status', '!=', 'cancelled')
                     ->get();
 
                 foreach ($bookings as $booking) {
-
-                    $existingStart = Carbon::parse($booking->date.' '.$booking->time);
-                    $existingEnd = (clone $existingStart)
-                        ->addMinutes($booking->serviceItem->duration);
-
-                    if ($newStart < $existingEnd && $newEnd > $existingStart) {
-                        return ['error' => 'Time overlaps with another booking'];
+                    if ($this->timesOverlap(
+                        $newStart,
+                        $newEnd,
+                        Carbon::parse($booking->date.' '.$booking->time),
+                        (int) ($booking->serviceItem?->duration ?? $item->duration)
+                    )) {
+                        return $this->fail('Time overlaps with another booking', 409);
                     }
                 }
 
-                //  duplicate user
-                $userId = Auth::id() ?? 1;
-
-                $duplicate = Booking::where([
-                    'customerID' => $userId,
-                    'date' => $data['date'],
-                    'time' => $data['time'],
-                ])->exists();
+                $duplicate = Booking::query()
+                    ->where('customerID', $userId)
+                    ->where('date', $data['date'])
+                    ->where('time', $data['time'])
+                    ->where('status', '!=', 'cancelled')
+                    ->exists();
 
                 if ($duplicate) {
-                    return ['error' => 'You already have booking at this time'];
+                    return $this->fail('You already have a booking at this time', 409);
                 }
 
                 $linePrice = $item->priceForEmployee((int) $employee->id);
 
-                //  create
                 $booking = Booking::create([
                     'serviceID' => $service->id,
                     'serviceItemID' => $item->id,
@@ -109,70 +115,192 @@ class BookingService
                     'totalPrice' => $linePrice,
                 ]);
 
-                // 🧹 cache clear
                 Cache::forget("availability_{$item->id}_{$data['date']}");
 
-                return [
-                    'message' => 'Booked successfully',
-                    'booking' => $booking,
-                ];
-
+                return $this->success('Booked successfully', [
+                    'booking' => $this->formatBooking($booking->load(['employee', 'serviceItem', 'service'])),
+                ], 201);
             } finally {
-                $lock->release(); //  unlock
+                $lock->release();
             }
-
         });
     }
 
-    public function cancelBooking($id)
+    public function cancelBooking(int $id): array
     {
-        return DB::transaction(function () use ($id) {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
 
-            $booking = Booking::find($id);
+        return DB::transaction(function () use ($id, $userId) {
+            $booking = Booking::with('service')->find($id);
 
             if (! $booking) {
-                return ['error' => 'Booking not found'];
+                return $this->fail('Booking not found', 404);
+            }
+
+            if ($booking->status === 'cancelled') {
+                return $this->fail('Booking is already cancelled', 422);
+            }
+
+            if (! $this->userCanManageBooking($userId, $booking)) {
+                return $this->fail('Forbidden', 403);
             }
 
             $bookingDateTime = Carbon::parse($booking->date.' '.$booking->time);
             $now = Carbon::now();
 
             if ($now->diffInHours($bookingDateTime, false) < 24) {
-                return ['error' => 'Cannot cancel booking within 24 hours'];
+                return $this->fail('Cannot cancel booking within 24 hours', 422);
             }
 
             $booking->update(['status' => 'cancelled']);
 
-            //  clear cache
             Cache::forget("availability_{$booking->serviceItemID}_{$booking->date}");
 
-            return ['message' => 'Booking cancelled successfully'];
+            return $this->success('Booking cancelled successfully');
         });
     }
 
-    public function getServiceBookings($serviceId)
+    public function getMyBookings(): array
     {
-        return Booking::with(['employee', 'serviceItem'])
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $bookings = Booking::with(['employee', 'serviceItem', 'service'])
+            ->where('customerID', $userId)
+            ->orderByDesc('date')
+            ->orderByDesc('time')
+            ->get()
+            ->map(fn (Booking $booking) => $this->formatBooking($booking));
+
+        return $this->success('OK', ['bookings' => $bookings]);
+    }
+
+    public function getBooking(int $id): array
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $booking = Booking::with(['employee', 'serviceItem', 'service'])->find($id);
+
+        if (! $booking) {
+            return $this->fail('Booking not found', 404);
+        }
+
+        if (! $this->userCanManageBooking($userId, $booking)) {
+            return $this->fail('Forbidden', 403);
+        }
+
+        return $this->success('OK', [
+            'booking' => $this->formatBooking($booking),
+        ]);
+    }
+
+    public function getServiceBookings(int $serviceId): array
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $service = Service::find($serviceId);
+        if (! $service) {
+            return $this->fail('Service not found', 404);
+        }
+
+        if ((int) $service->serviceOwnerID !== $userId) {
+            return $this->fail('Forbidden', 403);
+        }
+
+        $bookings = Booking::with(['employee', 'serviceItem', 'customer'])
             ->where('serviceID', $serviceId)
             ->where('status', '!=', 'cancelled')
             ->orderBy('date')
             ->orderBy('time')
             ->get()
-            ->map(function ($booking) {
-                return [
-                    'booking_id' => $booking->id,
-                    'date' => $booking->date,
-                    'time' => $booking->time,
-                    'employee' => [
-                        'id' => $booking->employee?->id,
-                        'name' => $booking->employee?->name,
-                    ],
-                    'service_item' => [
-                        'id' => $booking->serviceItem?->id,
-                        'name' => $booking->serviceItem?->name,
-                    ],
-                    'status' => $booking->status,
-                ];
-            });
+            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true));
+
+        return $this->success('OK', ['bookings' => $bookings]);
+    }
+
+    private function userCanManageBooking(int $userId, Booking $booking): bool
+    {
+        if ((int) $booking->customerID === $userId) {
+            return true;
+        }
+
+        $service = $booking->relationLoaded('service')
+            ? $booking->service
+            : Service::find($booking->serviceID);
+
+        return $service !== null && (int) $service->serviceOwnerID === $userId;
+    }
+
+    private function timesOverlap(Carbon $newStart, Carbon $newEnd, Carbon $existingStart, int $existingDurationMinutes): bool
+    {
+        $existingEnd = (clone $existingStart)->addMinutes($existingDurationMinutes);
+
+        return $newStart < $existingEnd && $newEnd > $existingStart;
+    }
+
+    private function formatBooking(Booking $booking, bool $includeCustomer = false): array
+    {
+        $payload = [
+            'id' => $booking->id,
+            'service_id' => $booking->serviceID,
+            'service_item_id' => $booking->serviceItemID,
+            'date' => $booking->date instanceof Carbon
+                ? $booking->date->toDateString()
+                : (string) $booking->date,
+            'time' => ServiceEmployeeSchedule::formatTimeForApi($booking->time),
+            'status' => $booking->status,
+            'payment_status' => $booking->paymentStatus,
+            'total_price' => (int) $booking->totalPrice,
+            'employee' => [
+                'id' => $booking->employee?->id,
+                'name' => $booking->employee?->name,
+            ],
+            'service_item' => [
+                'id' => $booking->serviceItem?->id,
+                'name' => $booking->serviceItem?->name,
+            ],
+            'service' => [
+                'id' => $booking->service?->id,
+                'name' => $booking->service?->name,
+            ],
+        ];
+
+        if ($includeCustomer) {
+            $payload['customer'] = [
+                'id' => $booking->customer?->id,
+                'name' => $booking->customer?->name,
+            ];
+        }
+
+        return $payload;
+    }
+
+    private function success(string $message, array $extra = [], int $httpStatus = 200): array
+    {
+        return array_merge([
+            'success' => true,
+            'message' => $message,
+            'http_status' => $httpStatus,
+        ], $extra);
+    }
+
+    private function fail(string $message, int $httpStatus = 422): array
+    {
+        return [
+            'success' => false,
+            'message' => $message,
+            'http_status' => $httpStatus,
+        ];
     }
 }

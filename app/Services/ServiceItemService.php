@@ -23,8 +23,10 @@ class ServiceItemService
                 return ['error' => 'Item not found'];
             }
 
-            $bookings = \App\Models\Booking::where('serviceItemID', $item->id)
+            $bookings = \App\Models\Booking::with('serviceItem')
+                ->where('serviceItemID', $item->id)
                 ->where('date', $date)
+                ->where('status', '!=', 'cancelled')
                 ->get()
                 ->groupBy('employeeID');
 
@@ -38,9 +40,16 @@ class ServiceItemService
                 $slots = [];
 
                 foreach ($times as $time) {
-                    $isBooked = $employeeBookings
-                        ->where('time', $time)
-                        ->isNotEmpty();
+                    $slotStart = Carbon::parse($date.' '.$time);
+                    $slotEnd = (clone $slotStart)->addMinutes((int) $item->duration);
+
+                    $isBooked = $employeeBookings->contains(function ($booking) use ($slotStart, $slotEnd) {
+                        $existingStart = Carbon::parse($booking->date.' '.$booking->time);
+                        $existingEnd = (clone $existingStart)
+                            ->addMinutes((int) ($booking->serviceItem?->duration ?? 0));
+
+                        return $slotStart < $existingEnd && $slotEnd > $existingStart;
+                    });
 
                     $slots[] = [
                         'time' => $time,

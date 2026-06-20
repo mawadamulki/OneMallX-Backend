@@ -2,32 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Services\ServiceItemService;
+use Illuminate\Http\Request;
 
 class ServiceItemController extends Controller
 {
     public function __construct(private ServiceItemService $service) {}
 
-    public function show($id, Request $request)
+    public function getAvailability($id, Request $request)
     {
-        $date = $request->get('date');
+        $request->validate([
+            'date' => 'required|date|after_or_equal:today',
+        ]);
 
+        $result = $this->service->getItemWithAvailability((int) $id, $request->get('date'));
+
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['error']], 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function getItemsInService($serviceId)
+    {
         return response()->json(
-            $this->service->getItemWithAvailability($id, $date)
+            $this->service->getItemsByService((int) $serviceId)
         );
     }
 
-    public function index($serviceId)
-{
-    return response()->json(
-        $this->service->getItemsByService($serviceId)
-    );
-}
-public function days($id)
-{
-    return response()->json(
-        $this->service->getAvailableDays($id)
-    );
-}
+    public function days($id)
+    {
+        $result = $this->service->getAvailableDays((int) $id);
+
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['error']], 404);
+        }
+
+        return response()->json($result);
+    }
 }

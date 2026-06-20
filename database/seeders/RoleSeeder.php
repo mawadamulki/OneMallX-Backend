@@ -42,6 +42,7 @@ class RoleSeeder extends Seeder
             'manage service subscriptions',
             'manage service catalog',
             'view service ratings',
+            'view service bookings',
             'report rates',
         ]);
 
@@ -59,6 +60,7 @@ class RoleSeeder extends Seeder
             'show floors and areas',
             'rate entities',
             'report rates',
+            'book services',
         ]);
     }
 }

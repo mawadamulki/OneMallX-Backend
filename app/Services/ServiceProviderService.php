@@ -275,7 +275,7 @@ class ServiceProviderService
         return [
             'id' => $plan?->id,
             'name' => $plan?->name,
-            'storeSpace' => $plan?->serviceSpace,
+            'serviceSpace' => $plan?->serviceSpace,
             'adsNumber' => $plan?->adsNumber,
             'adsDuration' => $plan?->adsDuration,
             'adsPlacement' => $plan?->adsPlacement,

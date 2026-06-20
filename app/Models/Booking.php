@@ -37,4 +37,16 @@ class Booking extends Model
     {
         return $this->belongsTo(Employee::class, 'employeeID');
     }
+
+    public function serviceItem()
+    {
+        return $this->belongsTo(ServiceItem::class, 'serviceItemID');
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+        ];
+    }
 }

@@ -49,13 +49,7 @@ Route::get('/getServicesByArea/{areaID}', [ServiceController::class, 'index']);
 Route::get('/serviceDetails/{id}', [ServiceController::class, 'getServiceDetails']);
 Route::get('/serviceItemsInService/{serviceID}', [ServiceItemController::class, 'getItemsInService']);
 Route::get('/serviceItemAvailability/{id}', [ServiceItemController::class, 'getAvailability']);
-// Booking
-Route::post('/book', [BookingController::class, 'store']);
-Route::get('/serviceBookings/{serviceId}', [BookingController::class, 'serviceBookings']);
-// Days
 Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
-// cancel booking
-Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
 
 // ___________________ Stores Mobile Routes ___________________
 Route::get('/stores', [StoreController::class, 'index']);
@@ -179,6 +173,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // ___________________ User Profile Routes ___________________
     Route::get('/user/me', [UserController::class, 'me']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
+
+    // ___________________ Booking Routes ___________________
+    Route::middleware(['permission:book services'])->group(function () {
+        Route::post('/book', [BookingController::class, 'store']);
+        Route::get('/myBookings', [BookingController::class, 'myBookings']);
+        Route::get('/bookings/{id}', [BookingController::class, 'show']);
+        Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+    });
+
+    Route::middleware(['permission:view service bookings'])->group(function () {
+        Route::get('/serviceBookings/{serviceId}', [BookingController::class, 'serviceBookings']);
+    });
 
 
     // ___________________ Rates Routes ___________________
