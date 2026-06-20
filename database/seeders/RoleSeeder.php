@@ -62,6 +62,7 @@ class RoleSeeder extends Seeder
             'report rates',
             'book services',
             'manage basket',
+            'place orders',
         ]);
     }
 }

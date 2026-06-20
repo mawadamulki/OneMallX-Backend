@@ -5,6 +5,7 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BasketController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ServiceProviderEmployeeController;
@@ -194,6 +195,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/basket/items/{id}', [BasketController::class, 'updateItem']);
         Route::delete('/basket/items/{id}', [BasketController::class, 'destroyItem']);
         Route::delete('/basket', [BasketController::class, 'clear']);
+    });
+
+    // ___________________ Checkout & Orders ___________________
+    Route::middleware(['permission:place orders'])->group(function () {
+        Route::post('/checkout', [OrderController::class, 'checkout']);
+        Route::get('/myOrders', [OrderController::class, 'myOrders']);
+        Route::get('/orders/{id}', [OrderController::class, 'show']);
     });
 
 
