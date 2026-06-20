@@ -23,12 +23,17 @@ class ServiceItem extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', self::STATUS_ACTIVE);
+        return $query->where(function ($query) {
+            $query->where('status', self::STATUS_ACTIVE)
+                ->orWhereNull('status');
+        });
     }
 
     public function isActive(): bool
     {
-        return $this->status === self::STATUS_ACTIVE;
+        $status = $this->status ?? self::STATUS_ACTIVE;
+
+        return $status === self::STATUS_ACTIVE;
     }
 
     public function service()

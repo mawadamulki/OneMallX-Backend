@@ -15,13 +15,12 @@ class ServiceItemService
 
     public function getItemWithAvailability($id, $date)
     {
-        return Cache::remember("availability_{$id}_{$date}", 60, function () use ($id, $date) {
+        $item = $this->resolveBookableItem($id);
+        if (isset($item['error'])) {
+            return $item;
+        }
 
-            $item = $this->dao->findWithEmployees($id);
-
-            if (! $item) {
-                return ['error' => 'Item not found'];
-            }
+        return Cache::remember("availability_{$id}_{$date}", 60, function () use ($item, $date) {
 
             $bookings = \App\Models\Booking::with('serviceItem')
                 ->where('serviceItemID', $item->id)
@@ -33,6 +32,10 @@ class ServiceItemService
             $result = [];
 
             foreach ($item->employees as $employee) {
+                if (($employee->status ?? 'active') !== 'active') {
+                    continue;
+                }
+
                 $times = $this->generateTimeSlotsForEmployeeOnDate($item, $employee, $date);
 
                 $employeeBookings = $bookings[$employee->id] ?? collect();
@@ -130,10 +133,9 @@ class ServiceItemService
 
     public function getAvailableDays($itemId)
     {
-        $item = $this->dao->findWithEmployees($itemId);
-
-        if (! $item) {
-            return ['error' => 'Item not found'];
+        $item = $this->resolveBookableItem($itemId);
+        if (isset($item['error'])) {
+            return $item;
         }
 
         if ($item->employees->isEmpty()) {
@@ -183,5 +185,23 @@ class ServiceItemService
         }
 
         return $days;
+    }
+
+    /**
+     * @return ServiceItem|array{error: string}
+     */
+    private function resolveBookableItem(int $id): ServiceItem|array
+    {
+        $item = $this->dao->findWithEmployees($id);
+
+        if (! $item) {
+            return ['error' => 'Item not found'];
+        }
+
+        if (! $item->isActive()) {
+            return ['error' => 'This service item is not available for booking'];
+        }
+
+        return $item;
     }
 }

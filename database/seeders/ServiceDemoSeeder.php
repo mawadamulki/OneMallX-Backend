@@ -112,6 +112,7 @@ class ServiceDemoSeeder extends Seeder
                             'name' => $tpl['name'].' #'.($idx + 1),
                             'price' => $tpl['price'],
                             'duration' => $tpl['duration'],
+                            'status' => ServiceItem::STATUS_ACTIVE,
                         ]);
                         $items[] = $item;
                         $itemCount++;

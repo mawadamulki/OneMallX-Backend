@@ -8,7 +8,7 @@ class ServiceItemDAO
 {
     public function findWithEmployees($id)
     {
-        return ServiceItem::active()->with([
+        return ServiceItem::with([
             'media',
             'rates',
             'service.workingDays',
