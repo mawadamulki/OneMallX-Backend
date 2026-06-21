@@ -37,6 +37,9 @@ class ServiceItemService
                 }
 
                 $times = $this->generateTimeSlotsForEmployeeOnDate($item, $employee, $date);
+                $unavailableReason = $times === []
+                    ? $this->employeeUnavailableReasonOnDate($item, $employee, $date)
+                    : null;
 
                 $employeeBookings = $bookings[$employee->id] ?? collect();
 
@@ -65,6 +68,7 @@ class ServiceItemService
                     'employee_name' => $employee->name,
                     'price' => $item->priceForEmployee((int) $employee->id),
                     'slots' => $slots,
+                    'unavailable_reason' => $unavailableReason,
                 ];
             }
 
@@ -129,6 +133,35 @@ class ServiceItemService
         }
 
         return $times;
+    }
+
+    private function employeeUnavailableReasonOnDate(ServiceItem $item, Employee $employee, string $dateYmd): string
+    {
+        $date = Carbon::parse($dateYmd);
+        $duration = (int) $item->duration;
+
+        if ($duration <= 0) {
+            return 'Service item duration is not configured';
+        }
+
+        $sampleTime = ServiceEmployeeSchedule::formatTimeForApi($item->service->openTime ?? '09:00');
+        $reason = ServiceEmployeeSchedule::bookingRejectionReason(
+            $item->service,
+            $employee,
+            $dateYmd,
+            $sampleTime,
+            $duration
+        );
+
+        if ($reason !== null) {
+            return $reason;
+        }
+
+        if (! ServiceEmployeeSchedule::hasBookableWindowOnDate($item->service, $employee, $date, $duration)) {
+            return 'Working window is too short for this service duration';
+        }
+
+        return 'No available slots';
     }
 
     public function getAvailableDays($itemId)

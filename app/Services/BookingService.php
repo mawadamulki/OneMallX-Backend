@@ -213,26 +213,33 @@ class BookingService
         ]);
     }
 
-    public function getServiceBookingsByDay(string $date): array
+    public function getServiceBookingsByDay(int $serviceItemId, string $date): array
     {
         $userId = Auth::id();
         if ($userId === null) {
             return $this->fail('Unauthenticated', 401);
         }
 
-        $service = $this->findOwnedService((int) $userId);
-        if ($service === null) {
-            return $this->fail('Service not found for this account.', 404);
+        $item = $this->resolveOwnedServiceItem((int) $userId, $serviceItemId);
+        if (isset($item['error'])) {
+            return $item['error'];
         }
+        $item = $item['item'];
 
         $day = Carbon::parse($date)->toDateString();
-        $items = $this->loadServiceItems($service->id);
-        $bookings = $this->loadProviderBookings($service->id, $day, $day);
+        $bookings = $this->loadProviderBookings((int) $item->serviceID, $day, $day, $item->id)
+            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+            ->values();
 
         return $this->success('OK', [
             'date' => $day,
-            'service' => $this->formatServiceSummary($service),
-            'items' => $this->groupBookingsByServiceItem($items, $bookings),
+            'service' => $this->formatServiceSummary($item->service),
+            'service_item' => [
+                'service_item_id' => $item->id,
+                'service_item_name' => $item->name,
+                'booking_count' => $bookings->count(),
+                'bookings' => $bookings,
+            ],
         ]);
     }
 
@@ -326,6 +333,26 @@ class BookingService
         return $this->serviceProviderClass->findServiceByProviderId($userId);
     }
 
+    private function resolveOwnedServiceItem(int $userId, int $serviceItemId): array
+    {
+        $service = $this->findOwnedService($userId);
+        if ($service === null) {
+            return ['error' => $this->fail('Service not found for this account.', 404)];
+        }
+
+        $item = ServiceItem::query()
+            ->whereKey($serviceItemId)
+            ->where('serviceID', $service->id)
+            ->with('service')
+            ->first();
+
+        if ($item === null) {
+            return ['error' => $this->fail('Service item not found.', 404)];
+        }
+
+        return ['item' => $item];
+    }
+
     private function loadServiceItems(int $serviceId)
     {
         return ServiceItem::query()
@@ -334,10 +361,11 @@ class BookingService
             ->get();
     }
 
-    private function loadProviderBookings(int $serviceId, string $fromDate, string $toDate)
+    private function loadProviderBookings(int $serviceId, string $fromDate, string $toDate, ?int $serviceItemId = null)
     {
         return Booking::with(['employee', 'serviceItem', 'customer'])
             ->where('serviceID', $serviceId)
+            ->when($serviceItemId !== null, fn ($query) => $query->where('serviceItemID', $serviceItemId))
             ->where('status', '!=', 'cancelled')
             ->whereDate('date', '>=', $fromDate)
             ->whereDate('date', '<=', $toDate)
