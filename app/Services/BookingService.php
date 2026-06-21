@@ -213,7 +213,30 @@ class BookingService
         ]);
     }
 
-    public function getServiceBookingsByDay(int $serviceItemId, string $date): array
+    public function getServiceBookingsByDay(string $date): array
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $service = $this->findOwnedService((int) $userId);
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        $day = Carbon::parse($date)->toDateString();
+        $items = $this->loadServiceItems($service->id);
+        $bookings = $this->loadProviderBookings($service->id, $day, $day);
+
+        return $this->success('OK', [
+            'date' => $day,
+            'service' => $this->formatServiceSummary($service),
+            'items' => $this->groupBookingsByServiceItem($items, $bookings),
+        ]);
+    }
+
+    public function getServiceBookingsByDayForItem(int $serviceItemId, string $date): array
     {
         $userId = Auth::id();
         if ($userId === null) {

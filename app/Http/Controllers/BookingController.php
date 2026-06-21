@@ -37,13 +37,22 @@ class BookingController extends Controller
         return $this->respond($this->service->getBooking((int) $id));
     }
 
+    public function serviceBookingsDay(Request $request)
+    {
+        $data = $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        return $this->respond($this->service->getServiceBookingsByDay($data['date']));
+    }
+
     public function serviceBookingsByDay(Request $request, $serviceItemId)
     {
         $data = $request->validate([
             'date' => 'required|date',
         ]);
 
-        return $this->respond($this->service->getServiceBookingsByDay((int) $serviceItemId, $data['date']));
+        return $this->respond($this->service->getServiceBookingsByDayForItem((int) $serviceItemId, $data['date']));
     }
 
     public function serviceBookingsByWeek(Request $request, $serviceItemId)
