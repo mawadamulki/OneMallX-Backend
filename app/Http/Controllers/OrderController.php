@@ -17,6 +17,7 @@ class OrderController extends Controller
     {
         $data = $request->validate([
             'payment_method_id' => 'nullable|integer',
+            'location' => 'required|string|max:1000',
         ]);
 
         return $this->respond($this->service->checkout($data));
@@ -32,9 +33,11 @@ class OrderController extends Controller
         return $this->respond($this->service->getOrder((int) $id));
     }
 
-    public function storeOrders()
+    public function storeOrders(Request $request)
     {
-        return $this->respond($this->storeOrderService->getStoreOrders());
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
+
+        return $this->respond($this->storeOrderService->getStoreOrders($perPage));
     }
 
     public function storeOrderShow($id)

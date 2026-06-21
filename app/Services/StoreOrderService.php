@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class StoreOrderService
 {
-    public function getStoreOrders(): array
+    public function getStoreOrders(int $perPage): array
     {
         $userId = Auth::id();
         if ($userId === null) {
@@ -26,13 +26,13 @@ class StoreOrderService
                 $query->where('storeID', $store->id)
                     ->where('lineType', OrderItem::LINE_TYPE_PRODUCT);
             })
-            ->with(['user', 'items' => function ($query) use ($store) {
+            ->with(['user', 'location', 'items' => function ($query) use ($store) {
                 $query->where('storeID', $store->id)
                     ->where('lineType', OrderItem::LINE_TYPE_PRODUCT);
             }])
             ->orderByDesc('id')
-            ->get()
-            ->map(fn (Order $order) => $this->formatStoreOrderSummary($order));
+            ->paginate($perPage)
+            ->through(fn (Order $order) => $this->formatStoreOrderSummary($order));
 
         return $this->success('OK', [
             'store' => [
@@ -61,7 +61,7 @@ class StoreOrderService
                 $query->where('storeID', $store->id)
                     ->where('lineType', OrderItem::LINE_TYPE_PRODUCT);
             })
-            ->with(['user', 'items' => function ($query) use ($store) {
+            ->with(['user', 'location', 'items' => function ($query) use ($store) {
                 $query->where('storeID', $store->id)
                     ->where('lineType', OrderItem::LINE_TYPE_PRODUCT);
             }])
@@ -93,6 +93,7 @@ class StoreOrderService
             'store_subtotal' => (int) $items->sum('lineTotal'),
             'item_count' => $items->count(),
             'created_at' => $order->created_at?->toIso8601String(),
+            'location' => $this->formatLocation($order),
             'customer' => [
                 'id' => $order->user?->id,
                 'name' => $order->user?->name,
@@ -113,6 +114,7 @@ class StoreOrderService
             'store_subtotal' => $storeSubtotal,
             'item_count' => $items->count(),
             'created_at' => $order->created_at?->toIso8601String(),
+            'location' => $this->formatLocation($order),
             'customer' => [
                 'id' => $order->user?->id,
                 'name' => $order->user?->name,
@@ -135,6 +137,18 @@ class StoreOrderService
             'sku' => $item->sku,
             'product_variant_id' => $item->itemID,
             'store_id' => $item->storeID,
+        ];
+    }
+
+    private function formatLocation(Order $order): ?array
+    {
+        if ($order->location === null) {
+            return null;
+        }
+
+        return [
+            'id' => $order->location->id,
+            'location' => $order->location->location,
         ];
     }
 

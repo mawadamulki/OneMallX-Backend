@@ -6,6 +6,7 @@ use App\Models\Basket;
 use App\Models\BasketItem;
 use App\Models\Booking;
 use App\Models\CustomerPayment;
+use App\Models\Location;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PaymentMethod;
@@ -53,6 +54,14 @@ class CheckoutService
                 return $this->fail($validationError, 422);
             }
 
+            $locationText = trim((string) ($data['location'] ?? ''));
+
+            if ($locationText === '') {
+                return $this->fail('Delivery location is required', 422);
+            }
+
+            $locationId = Location::query()->create(['location' => $locationText])->id;
+
             $paymentMethodId = isset($data['payment_method_id'])
                 ? (int) $data['payment_method_id']
                 : null;
@@ -75,6 +84,7 @@ class CheckoutService
                 'userID' => $userId,
                 'status' => $orderStatus,
                 'totalPrice' => (int) $basket->totalPrice,
+                'locationID' => $locationId,
             ]);
 
             foreach ($basket->items as $line) {
@@ -103,6 +113,7 @@ class CheckoutService
             $basket->update(['status' => 'ordered']);
 
             $order->load([
+                'location',
                 'items.store',
                 'items.service',
                 'items.employee',
@@ -124,7 +135,7 @@ class CheckoutService
 
         $orders = Order::query()
             ->where('userID', $userId)
-            ->with(['items.store', 'items.service', 'items.employee'])
+            ->with(['location', 'items.store', 'items.service', 'items.employee'])
             ->orderByDesc('id')
             ->get()
             ->map(fn (Order $order) => $this->formatOrderSummary($order));
@@ -142,7 +153,7 @@ class CheckoutService
         $order = Order::query()
             ->where('id', $orderId)
             ->where('userID', $userId)
-            ->with(['items.store', 'items.service', 'items.employee', 'customerPayment.method'])
+            ->with(['location', 'items.store', 'items.service', 'items.employee', 'customerPayment.method'])
             ->first();
 
         if ($order === null) {
@@ -346,6 +357,7 @@ class CheckoutService
             'total_price' => (int) $order->totalPrice,
             'item_count' => $order->items->count(),
             'created_at' => $order->created_at?->toIso8601String(),
+            'location' => $this->formatLocation($order),
         ];
     }
 
@@ -360,6 +372,7 @@ class CheckoutService
             'total_price' => (int) $order->totalPrice,
             'item_count' => $items->count(),
             'created_at' => $order->created_at?->toIso8601String(),
+            'location' => $this->formatLocation($order),
             'payment' => $order->relationLoaded('customerPayment') && $order->customerPayment
                 ? [
                     'method_id' => $order->customerPayment->methodID,
@@ -445,6 +458,18 @@ class CheckoutService
             })
             ->values()
             ->all();
+    }
+
+    private function formatLocation(Order $order): ?array
+    {
+        if ($order->location === null) {
+            return null;
+        }
+
+        return [
+            'id' => $order->location->id,
+            'location' => $order->location->location,
+        ];
     }
 
     private function success(string $message, array $extra = [], int $httpStatus = 200): array

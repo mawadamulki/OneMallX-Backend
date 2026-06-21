@@ -14,6 +14,7 @@ class Order extends Model
         'userID',
         'status',
         'totalPrice',
+        'locationID',
     ];
 
     public function basket()
@@ -24,6 +25,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'userID');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class, 'locationID');
     }
 
     public function items()
