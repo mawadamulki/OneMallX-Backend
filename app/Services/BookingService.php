@@ -244,24 +244,24 @@ class BookingService
         ]);
     }
 
-    public function getServiceBookingsByWeek(string $date): array
+    public function getServiceBookingsByWeek(int $serviceItemId, string $date): array
     {
         $userId = Auth::id();
         if ($userId === null) {
             return $this->fail('Unauthenticated', 401);
         }
 
-        $service = $this->findOwnedService((int) $userId);
-        if ($service === null) {
-            return $this->fail('Service not found for this account.', 404);
+        $item = $this->resolveOwnedServiceItem((int) $userId, $serviceItemId);
+        if (isset($item['error'])) {
+            return $item['error'];
         }
+        $item = $item['item'];
 
         $anchor = Carbon::parse($date);
-        $weekStart = $anchor->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
-        $weekEnd = $anchor->copy()->endOfWeek(Carbon::MONDAY)->toDateString();
+        $weekStart = $anchor->copy()->startOfWeek(Carbon::SUNDAY)->toDateString();
+        $weekEnd = $anchor->copy()->endOfWeek(Carbon::SATURDAY)->toDateString();
 
-        $items = $this->loadServiceItems($service->id);
-        $bookings = $this->loadProviderBookings($service->id, $weekStart, $weekEnd)
+        $bookings = $this->loadProviderBookings((int) $item->serviceID, $weekStart, $weekEnd, $item->id)
             ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
                 ? $booking->date->toDateString()
                 : (string) $booking->date);
@@ -272,11 +272,14 @@ class BookingService
 
         while ($cursor->lte($end)) {
             $dayKey = $cursor->toDateString();
-            $dayBookings = $bookings->get($dayKey, collect());
+            $dayBookings = ($bookings->get($dayKey, collect()))
+                ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+                ->values();
 
             $days[] = [
                 'date' => $dayKey,
-                'items' => $this->groupBookingsByServiceItem($items, $dayBookings),
+                'booking_count' => $dayBookings->count(),
+                'bookings' => $dayBookings,
             ];
 
             $cursor->addDay();
@@ -285,7 +288,12 @@ class BookingService
         return $this->success('OK', [
             'week_start' => $weekStart,
             'week_end' => $weekEnd,
-            'service' => $this->formatServiceSummary($service),
+            'service' => $this->formatServiceSummary($item->service),
+            'service_item' => [
+                'service_item_id' => $item->id,
+                'service_item_name' => $item->name,
+                'service_item_duration' => $item->duration,
+            ],
             'days' => $days,
         ]);
     }

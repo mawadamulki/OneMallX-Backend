@@ -341,7 +341,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:view service bookings'])->group(function () {
         Route::get('/serviceBookings/{serviceItemId}/day', [BookingController::class, 'serviceBookingsByDay']);
-        Route::get('/serviceBookings/week', [BookingController::class, 'serviceBookingsByWeek']);
+        Route::get('/serviceBookings/{serviceItemId}/week', [BookingController::class, 'serviceBookingsByWeek']);
         Route::get('/serviceBookings/month', [BookingController::class, 'serviceBookingsByMonth']);
     });
 
