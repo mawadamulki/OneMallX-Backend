@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DAO\ServiceProviderInterface;
 use App\Models\Booking;
 use App\Models\Employee;
 use App\Models\Service;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class BookingService
 {
+    public function __construct(
+        protected ServiceProviderInterface $serviceProviderClass,
+    ) {}
+
     public function createBooking(array $data): array
     {
         $userId = Auth::id();
@@ -217,7 +222,7 @@ class BookingService
 
         $service = $this->findOwnedService((int) $userId);
         if ($service === null) {
-            return $this->fail('Service not found', 404);
+            return $this->fail('Service not found for this account.', 404);
         }
 
         $day = Carbon::parse($date)->toDateString();
@@ -240,7 +245,7 @@ class BookingService
 
         $service = $this->findOwnedService((int) $userId);
         if ($service === null) {
-            return $this->fail('Service not found', 404);
+            return $this->fail('Service not found for this account.', 404);
         }
 
         $anchor = Carbon::parse($date);
@@ -286,7 +291,7 @@ class BookingService
 
         $service = $this->findOwnedService((int) $userId);
         if ($service === null) {
-            return $this->fail('Service not found', 404);
+            return $this->fail('Service not found for this account.', 404);
         }
 
         $monthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString();
@@ -318,9 +323,7 @@ class BookingService
 
     private function findOwnedService(int $userId): ?Service
     {
-        return Service::query()
-            ->where('serviceOwnerID', $userId)
-            ->first();
+        return $this->serviceProviderClass->findServiceByProviderId($userId);
     }
 
     private function loadServiceItems(int $serviceId)
