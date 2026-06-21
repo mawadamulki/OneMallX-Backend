@@ -237,6 +237,7 @@ class BookingService
             'service_item' => [
                 'service_item_id' => $item->id,
                 'service_item_name' => $item->name,
+                'service_item_duration' => $item->duration,
                 'booking_count' => $bookings->count(),
                 'bookings' => $bookings,
             ],
