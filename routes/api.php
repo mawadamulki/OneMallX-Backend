@@ -184,9 +184,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bookings/cancel/{id}', [BookingController::class, 'cancel']);
     });
 
-    Route::middleware(['permission:view service bookings'])->group(function () {
-        Route::get('/serviceBookings/{serviceId}', [BookingController::class, 'serviceBookings']);
-    });
 
     // ___________________ Basket Routes ___________________
     Route::middleware(['permission:manage basket'])->group(function () {
@@ -340,6 +337,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/serviceAds', [AdvertisementController::class, 'serviceAdsStore']);
         Route::put('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsUpdate']);
         Route::delete('/serviceAds/{adId}', [AdvertisementController::class, 'serviceAdsDestroy']);
+    });
+
+    Route::middleware(['permission:view service bookings'])->group(function () {
+        Route::get('/serviceBookings/day', [BookingController::class, 'serviceBookingsByDay']);
+        Route::get('/serviceBookings/week', [BookingController::class, 'serviceBookingsByWeek']);
+        Route::get('/serviceBookings/month', [BookingController::class, 'serviceBookingsByMonth']);
     });
 
 });

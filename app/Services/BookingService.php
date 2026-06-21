@@ -208,31 +208,165 @@ class BookingService
         ]);
     }
 
-    public function getServiceBookings(int $serviceId): array
+    public function getServiceBookingsByDay(string $date): array
     {
         $userId = Auth::id();
         if ($userId === null) {
             return $this->fail('Unauthenticated', 401);
         }
 
-        $service = Service::find($serviceId);
-        if (! $service) {
+        $service = $this->findOwnedService((int) $userId);
+        if ($service === null) {
             return $this->fail('Service not found', 404);
         }
 
-        if ((int) $service->serviceOwnerID !== $userId) {
-            return $this->fail('Forbidden', 403);
+        $day = Carbon::parse($date)->toDateString();
+        $items = $this->loadServiceItems($service->id);
+        $bookings = $this->loadProviderBookings($service->id, $day, $day);
+
+        return $this->success('OK', [
+            'date' => $day,
+            'service' => $this->formatServiceSummary($service),
+            'items' => $this->groupBookingsByServiceItem($items, $bookings),
+        ]);
+    }
+
+    public function getServiceBookingsByWeek(string $date): array
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
         }
 
-        $bookings = Booking::with(['employee', 'serviceItem', 'customer'])
+        $service = $this->findOwnedService((int) $userId);
+        if ($service === null) {
+            return $this->fail('Service not found', 404);
+        }
+
+        $anchor = Carbon::parse($date);
+        $weekStart = $anchor->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $weekEnd = $anchor->copy()->endOfWeek(Carbon::MONDAY)->toDateString();
+
+        $items = $this->loadServiceItems($service->id);
+        $bookings = $this->loadProviderBookings($service->id, $weekStart, $weekEnd)
+            ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
+                ? $booking->date->toDateString()
+                : (string) $booking->date);
+
+        $days = [];
+        $cursor = Carbon::parse($weekStart);
+        $end = Carbon::parse($weekEnd);
+
+        while ($cursor->lte($end)) {
+            $dayKey = $cursor->toDateString();
+            $dayBookings = $bookings->get($dayKey, collect());
+
+            $days[] = [
+                'date' => $dayKey,
+                'items' => $this->groupBookingsByServiceItem($items, $dayBookings),
+            ];
+
+            $cursor->addDay();
+        }
+
+        return $this->success('OK', [
+            'week_start' => $weekStart,
+            'week_end' => $weekEnd,
+            'service' => $this->formatServiceSummary($service),
+            'days' => $days,
+        ]);
+    }
+
+    public function getServiceBookingsByMonth(int $year, int $month): array
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $service = $this->findOwnedService((int) $userId);
+        if ($service === null) {
+            return $this->fail('Service not found', 404);
+        }
+
+        $monthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString();
+        $monthEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
+
+        $countsByEmployee = $this->loadProviderBookings($service->id, $monthStart, $monthEnd)
+            ->countBy(fn (Booking $booking) => (int) $booking->employeeID);
+
+        $employees = Employee::query()
+            ->where('serviceID', $service->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Employee $employee) => [
+                'employee_id' => $employee->id,
+                'employee_name' => $employee->name,
+                'booking_count' => (int) ($countsByEmployee[$employee->id] ?? 0),
+            ])
+            ->values();
+
+        return $this->success('OK', [
+            'year' => $year,
+            'month' => $month,
+            'month_start' => $monthStart,
+            'month_end' => $monthEnd,
+            'service' => $this->formatServiceSummary($service),
+            'employees' => $employees,
+        ]);
+    }
+
+    private function findOwnedService(int $userId): ?Service
+    {
+        return Service::query()
+            ->where('serviceOwnerID', $userId)
+            ->first();
+    }
+
+    private function loadServiceItems(int $serviceId)
+    {
+        return ServiceItem::query()
+            ->where('serviceID', $serviceId)
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function loadProviderBookings(int $serviceId, string $fromDate, string $toDate)
+    {
+        return Booking::with(['employee', 'serviceItem', 'customer'])
             ->where('serviceID', $serviceId)
             ->where('status', '!=', 'cancelled')
+            ->whereDate('date', '>=', $fromDate)
+            ->whereDate('date', '<=', $toDate)
             ->orderBy('date')
             ->orderBy('time')
-            ->get()
-            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true));
+            ->get();
+    }
 
-        return $this->success('OK', ['bookings' => $bookings]);
+    private function groupBookingsByServiceItem($items, $bookings): array
+    {
+        $bookingsByItem = collect($bookings)->groupBy('serviceItemID');
+
+        return $items->map(function (ServiceItem $item) use ($bookingsByItem) {
+            $itemBookings = $bookingsByItem->get($item->id, collect())
+                ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+                ->values();
+
+            return [
+                'service_item_id' => $item->id,
+                'service_item_name' => $item->name,
+                'booking_count' => $itemBookings->count(),
+                'bookings' => $itemBookings,
+            ];
+        })->values()->all();
+    }
+
+    private function formatServiceSummary(Service $service): array
+    {
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+        ];
     }
 
     private function userCanManageBooking(int $userId, Booking $booking): bool
