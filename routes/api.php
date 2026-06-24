@@ -233,8 +233,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/adminRates/reportedUsers', [RateController::class, 'adminReportedUsers']);
         Route::get('/adminRates/{id}', [RateController::class, 'adminShow']);
         Route::delete('/adminRates/{id}', [RateController::class, 'adminDestroy']);
-        Route::get('/adminRateReports', [RateController::class, 'adminReports']);
-        Route::get('/adminRateReports/{id}', [RateController::class, 'adminShowReport']);
+        Route::get('/adminRateReports/{status}', [RateController::class, 'adminReports'])
+            ->whereIn('status', ['all', 'pending', 'dismissed', 'action_taken']);
+        Route::get('/adminRateReports/{id}', [RateController::class, 'adminShowReport'])
+            ->whereNumber('id');
         Route::post('/adminRateReports/dismiss/{id}', [RateController::class, 'adminDismissReport']);
         Route::post('/adminRateReports/takeAction/{id}', [RateController::class, 'adminTakeActionOnReport']);
     });

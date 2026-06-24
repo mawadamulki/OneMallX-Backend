@@ -113,11 +113,11 @@ class RateController extends Controller
         return $this->respond($this->rateService->adminDeleteRate($id));
     }
 
-    public function adminReports(Request $request)
+    public function adminReports(Request $request, string $status)
     {
         $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
-        return $this->respond($this->rateService->adminListReports($perPage, $request->query('status')));
+        return $this->respond($this->rateService->adminListReports($perPage, $status));
     }
 
     public function adminShowReport(int $id)

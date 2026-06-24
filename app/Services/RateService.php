@@ -322,9 +322,10 @@ class RateService
         ];
     }
 
-    public function adminListReports(int $perPage, ?string $status): array
+    public function adminListReports(int $perPage, string $status): array
     {
-        if ($status !== null && ! in_array($status, [
+        if (! in_array($status, [
+            'all',
             RateReport::STATUS_PENDING,
             RateReport::STATUS_DISMISSED,
             RateReport::STATUS_ACTION_TAKEN,
@@ -332,9 +333,11 @@ class RateService
             return $this->fail('Invalid report status.', 422);
         }
 
+        $filterStatus = $status === 'all' ? null : $status;
+
         return [
             'success' => true,
-            'reports' => $this->rateDAO->paginateReportsAdmin($perPage, $status)
+            'reports' => $this->rateDAO->paginateReportsAdmin($perPage, $filterStatus)
                 ->through(fn (RateReport $report) => $this->formatReport($report)),
         ];
     }
