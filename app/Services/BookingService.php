@@ -226,65 +226,36 @@ class BookingService
         }
 
         $day = Carbon::parse($date)->toDateString();
-        $items = $this->loadServiceItems($service->id);
-        $bookings = $this->loadProviderBookings($service->id, $day, $day);
-
-        return $this->success('OK', [
-            'date' => $day,
-            'service' => $this->formatServiceSummary($service),
-            'items' => $this->groupBookingsByServiceItem($items, $bookings),
-        ]);
-    }
-
-    public function getServiceBookingsByDayForItem(int $serviceItemId, string $date): array
-    {
-        $userId = Auth::id();
-        if ($userId === null) {
-            return $this->fail('Unauthenticated', 401);
-        }
-
-        $item = $this->resolveOwnedServiceItem((int) $userId, $serviceItemId);
-        if (isset($item['error'])) {
-            return $item['error'];
-        }
-        $item = $item['item'];
-
-        $day = Carbon::parse($date)->toDateString();
-        $bookings = $this->loadProviderBookings((int) $item->serviceID, $day, $day, $item->id)
+        $bookings = $this->loadProviderBookings($service->id, $day, $day)
             ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
             ->values();
 
         return $this->success('OK', [
             'date' => $day,
-            'service' => $this->formatServiceSummary($item->service),
-            'service_item' => [
-                'service_item_id' => $item->id,
-                'service_item_name' => $item->name,
-                'service_item_duration' => $item->duration,
-                'booking_count' => $bookings->count(),
-                'bookings' => $bookings,
-            ],
+            'service' => $this->formatServiceSummary($service),
+            'booking_count' => $bookings->count(),
+            'bookings' => $bookings,
         ]);
     }
 
-    public function getServiceBookingsByWeek(int $serviceItemId, string $date): array
+    public function getServiceBookingsByWeek(string $date): array
     {
         $userId = Auth::id();
         if ($userId === null) {
             return $this->fail('Unauthenticated', 401);
         }
 
-        $item = $this->resolveOwnedServiceItem((int) $userId, $serviceItemId);
-        if (isset($item['error'])) {
-            return $item['error'];
+        $service = $this->findOwnedService((int) $userId);
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
         }
-        $item = $item['item'];
 
         $anchor = Carbon::parse($date);
         $weekStart = $anchor->copy()->startOfWeek(Carbon::SUNDAY)->toDateString();
         $weekEnd = $anchor->copy()->endOfWeek(Carbon::SATURDAY)->toDateString();
 
-        $bookings = $this->loadProviderBookings((int) $item->serviceID, $weekStart, $weekEnd, $item->id)
+        $items = $this->loadServiceItems($service->id);
+        $bookings = $this->loadProviderBookings($service->id, $weekStart, $weekEnd)
             ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
                 ? $booking->date->toDateString()
                 : (string) $booking->date);
@@ -295,14 +266,11 @@ class BookingService
 
         while ($cursor->lte($end)) {
             $dayKey = $cursor->toDateString();
-            $dayBookings = ($bookings->get($dayKey, collect()))
-                ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
-                ->values();
+            $dayBookings = $bookings->get($dayKey, collect());
 
             $days[] = [
                 'date' => $dayKey,
-                'booking_count' => $dayBookings->count(),
-                'bookings' => $dayBookings,
+                'items' => $this->groupBookingsByServiceItem($items, $dayBookings),
             ];
 
             $cursor->addDay();
@@ -311,12 +279,7 @@ class BookingService
         return $this->success('OK', [
             'week_start' => $weekStart,
             'week_end' => $weekEnd,
-            'service' => $this->formatServiceSummary($item->service),
-            'service_item' => [
-                'service_item_id' => $item->id,
-                'service_item_name' => $item->name,
-                'service_item_duration' => $item->duration,
-            ],
+            'service' => $this->formatServiceSummary($service),
             'days' => $days,
         ]);
     }
@@ -363,26 +326,6 @@ class BookingService
     private function findOwnedService(int $userId): ?Service
     {
         return $this->serviceProviderClass->findServiceByProviderId($userId);
-    }
-
-    private function resolveOwnedServiceItem(int $userId, int $serviceItemId): array
-    {
-        $service = $this->findOwnedService($userId);
-        if ($service === null) {
-            return ['error' => $this->fail('Service not found for this account.', 404)];
-        }
-
-        $item = ServiceItem::query()
-            ->whereKey($serviceItemId)
-            ->where('serviceID', $service->id)
-            ->with('service')
-            ->first();
-
-        if ($item === null) {
-            return ['error' => $this->fail('Service item not found.', 404)];
-        }
-
-        return ['item' => $item];
     }
 
     private function loadServiceItems(int $serviceId)
