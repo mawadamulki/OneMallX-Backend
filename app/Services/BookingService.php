@@ -254,7 +254,7 @@ class BookingService
         $weekStart = $anchor->copy()->startOfWeek(Carbon::SUNDAY)->toDateString();
         $weekEnd = $anchor->copy()->endOfWeek(Carbon::SATURDAY)->toDateString();
 
-        $items = $this->loadServiceItems($service->id);
+        $employees = $this->loadServiceEmployees($service->id);
         $bookings = $this->loadProviderBookings($service->id, $weekStart, $weekEnd)
             ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
                 ? $booking->date->toDateString()
@@ -270,7 +270,7 @@ class BookingService
 
             $days[] = [
                 'date' => $dayKey,
-                'items' => $this->groupBookingsByServiceItem($items, $dayBookings),
+                'employees' => $this->groupBookingsByEmployee($employees, $dayBookings),
             ];
 
             $cursor->addDay();
@@ -328,9 +328,9 @@ class BookingService
         return $this->serviceProviderClass->findServiceByProviderId($userId);
     }
 
-    private function loadServiceItems(int $serviceId)
+    private function loadServiceEmployees(int $serviceId)
     {
-        return ServiceItem::query()
+        return Employee::query()
             ->where('serviceID', $serviceId)
             ->orderBy('name')
             ->get();
@@ -349,20 +349,20 @@ class BookingService
             ->get();
     }
 
-    private function groupBookingsByServiceItem($items, $bookings): array
+    private function groupBookingsByEmployee($employees, $bookings): array
     {
-        $bookingsByItem = collect($bookings)->groupBy('serviceItemID');
+        $bookingsByEmployee = collect($bookings)->groupBy('employeeID');
 
-        return $items->map(function (ServiceItem $item) use ($bookingsByItem) {
-            $itemBookings = $bookingsByItem->get($item->id, collect())
+        return $employees->map(function (Employee $employee) use ($bookingsByEmployee) {
+            $employeeBookings = $bookingsByEmployee->get($employee->id, collect())
                 ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
                 ->values();
 
             return [
-                'service_item_id' => $item->id,
-                'service_item_name' => $item->name,
-                'booking_count' => $itemBookings->count(),
-                'bookings' => $itemBookings,
+                'employee_id' => $employee->id,
+                'employee_name' => $employee->name,
+                'booking_count' => $employeeBookings->count(),
+                'bookings' => $employeeBookings,
             ];
         })->values()->all();
     }
