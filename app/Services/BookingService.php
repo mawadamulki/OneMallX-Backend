@@ -250,37 +250,52 @@ class BookingService
             return $this->fail('Service not found for this account.', 404);
         }
 
+        $service->loadMissing('workingDays');
+
         $anchor = Carbon::parse($date);
-        $weekStart = $anchor->copy()->startOfWeek(Carbon::SUNDAY)->toDateString();
-        $weekEnd = $anchor->copy()->endOfWeek(Carbon::SATURDAY)->toDateString();
+        $weekStart = $anchor->copy()->startOfWeek(Carbon::SUNDAY);
+        $weekEnd = $anchor->copy()->endOfWeek(Carbon::SATURDAY);
 
         $employees = $this->loadServiceEmployees($service->id);
-        $bookings = $this->loadProviderBookings($service->id, $weekStart, $weekEnd)
-            ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
-                ? $booking->date->toDateString()
-                : (string) $booking->date);
+        $bookingsByEmployee = $this->loadProviderBookings(
+            $service->id,
+            $weekStart->toDateString(),
+            $weekEnd->toDateString()
+        )->groupBy(fn (Booking $booking) => (int) $booking->employeeID);
 
-        $days = [];
-        $cursor = Carbon::parse($weekStart);
-        $end = Carbon::parse($weekEnd);
+        $employeeRows = $employees->map(function (Employee $employee) use (
+            $service,
+            $weekStart,
+            $weekEnd,
+            $bookingsByEmployee
+        ) {
+            $employeeBookings = $bookingsByEmployee->get($employee->id, collect())
+                ->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
+                    ? $booking->date->toDateString()
+                    : (string) $booking->date);
 
-        while ($cursor->lte($end)) {
-            $dayKey = $cursor->toDateString();
-            $dayBookings = $bookings->get($dayKey, collect());
+            $days = [];
+            $cursor = $weekStart->copy();
 
-            $days[] = [
-                'date' => $dayKey,
-                'employees' => $this->groupBookingsByEmployee($employees, $dayBookings),
+            while ($cursor->lte($weekEnd)) {
+                $dayKey = $cursor->toDateString();
+                $dayBookings = $employeeBookings->get($dayKey, collect());
+                $days[] = $this->formatEmployeeWeekDay($service, $employee, $cursor->copy(), $dayBookings);
+                $cursor->addDay();
+            }
+
+            return [
+                'id' => $employee->id,
+                'name' => $employee->name,
+                'days' => $days,
             ];
-
-            $cursor->addDay();
-        }
+        })->values();
 
         return $this->success('OK', [
-            'week_start' => $weekStart,
-            'week_end' => $weekEnd,
+            'week_start' => $weekStart->toDateString(),
+            'week_end' => $weekEnd->toDateString(),
             'service' => $this->formatServiceSummary($service),
-            'days' => $days,
+            'employees' => $employeeRows,
         ]);
     }
 
@@ -344,6 +359,7 @@ class BookingService
     {
         return Employee::query()
             ->where('serviceID', $serviceId)
+            ->with('workingDays')
             ->orderBy('name')
             ->get();
     }
@@ -361,22 +377,49 @@ class BookingService
             ->get();
     }
 
-    private function groupBookingsByEmployee($employees, $bookings): array
-    {
-        $bookingsByEmployee = collect($bookings)->groupBy('employeeID');
+    private function formatEmployeeWeekDay(
+        Service $service,
+        Employee $employee,
+        Carbon $date,
+        $dayBookings
+    ): array {
+        $intersection = ServiceEmployeeSchedule::intersectionForBooking($service, $employee, $date);
+        $isWorking = $intersection !== null;
+        $availableMinutes = 0;
+        $startTime = null;
+        $endTime = null;
 
-        return $employees->map(function (Employee $employee) use ($bookingsByEmployee) {
-            $employeeBookings = $bookingsByEmployee->get($employee->id, collect())
-                ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
-                ->values();
+        if ($isWorking) {
+            [$windowStart, $windowEnd] = $intersection;
+            $startTime = ServiceEmployeeSchedule::formatTimeForApi($windowStart);
+            $endTime = ServiceEmployeeSchedule::formatTimeForApi($windowEnd);
+            $availableMinutes = $windowStart->diffInMinutes($windowEnd);
+        }
 
-            return [
-                'employee_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'booking_count' => $employeeBookings->count(),
-                'bookings' => $employeeBookings,
-            ];
-        })->values()->all();
+        $bookedMinutes = collect($dayBookings)->sum(
+            fn (Booking $booking) => (int) ($booking->serviceItem?->duration ?? 0)
+        );
+
+        $bookingCount = collect($dayBookings)->count();
+        $utilization = $availableMinutes > 0
+            ? (int) round(($bookedMinutes / $availableMinutes) * 100)
+            : 0;
+
+        $formattedBookings = collect($dayBookings)
+            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+            ->values();
+
+        return [
+            'date' => $date->toDateString(),
+            'isWorking' => $isWorking,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            'bookingCount' => $bookingCount,
+            'bookedMinutes' => $bookedMinutes,
+            'availableMinutes' => $availableMinutes,
+            'utilization' => $utilization,
+            'bookings' => $formattedBookings,
+        ];
     }
 
     private function formatServiceSummary(Service $service): array
