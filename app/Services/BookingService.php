@@ -296,30 +296,42 @@ class BookingService
             return $this->fail('Service not found for this account.', 404);
         }
 
-        $monthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString();
-        $monthEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
+        $monthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $monthEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth();
 
-        $countsByEmployee = $this->loadProviderBookings($service->id, $monthStart, $monthEnd)
-            ->countBy(fn (Booking $booking) => (int) $booking->employeeID);
+        $bookingsByDay = $this->loadProviderBookings(
+            $service->id,
+            $monthStart->toDateString(),
+            $monthEnd->toDateString()
+        )->groupBy(fn (Booking $booking) => $booking->date instanceof Carbon
+            ? $booking->date->toDateString()
+            : (string) $booking->date);
 
-        $employees = Employee::query()
-            ->where('serviceID', $service->id)
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Employee $employee) => [
-                'employee_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'booking_count' => (int) ($countsByEmployee[$employee->id] ?? 0),
-            ])
-            ->values();
+        $days = [];
+        $cursor = $monthStart->copy();
+        $totalBookings = 0;
+
+        while ($cursor->lte($monthEnd)) {
+            $dayKey = $cursor->toDateString();
+            $dayCount = ($bookingsByDay->get($dayKey, collect()))->count();
+            $totalBookings += $dayCount;
+
+            $days[] = [
+                'date' => $dayKey,
+                'booking_count' => $dayCount,
+            ];
+
+            $cursor->addDay();
+        }
 
         return $this->success('OK', [
             'year' => $year,
             'month' => $month,
-            'month_start' => $monthStart,
-            'month_end' => $monthEnd,
+            'month_start' => $monthStart->toDateString(),
+            'month_end' => $monthEnd->toDateString(),
             'service' => $this->formatServiceSummary($service),
-            'employees' => $employees,
+            'total_bookings' => $totalBookings,
+            'days' => $days,
         ]);
     }
 
