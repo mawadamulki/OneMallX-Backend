@@ -13,6 +13,7 @@ use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\Store;
 use App\Models\StoreSubscription;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +28,29 @@ class AdvertisementService
         protected ServiceProviderInterface $serviceProviderClass,
         protected ServiceProviderItemInterface $serviceProviderItemClass,
     ) {}
+
+    public function listForAdmin(
+        int $perPage,
+        ?string $ownerType = null,
+        ?string $status = null,
+        ?string $placement = null,
+    ): LengthAwarePaginator {
+        if ($ownerType !== null && ! in_array($ownerType, ['store', 'service'], true)) {
+            abort(422, 'Invalid owner type. Allowed values: store, service.');
+        }
+
+        if ($status !== null && ! in_array($status, ['all', 'active', 'scheduled', 'expired'], true)) {
+            abort(422, 'Invalid status. Allowed values: all, active, scheduled, expired.');
+        }
+
+        if ($placement !== null && ! in_array($placement, ['home', 'deals'], true)) {
+            abort(422, 'Invalid placement. Allowed values: home, deals.');
+        }
+
+        return $this->advertisementClass
+            ->paginateAllForAdmin($perPage, $ownerType, $status, $placement)
+            ->through(fn (Advertisement $ad) => $this->toAdminArray($ad));
+    }
 
     public function listPublic(?string $placement): array
     {
@@ -465,6 +489,28 @@ class AdvertisementService
             'success' => true,
             'message' => 'Advertisement deleted.',
             'deleted' => true,
+        ];
+    }
+
+    private function toAdminArray(Advertisement $ad): array
+    {
+        $ownerType = $ad->storeID !== null ? 'store' : 'service';
+        $owner = $ad->storeID !== null ? $ad->store : $ad->service;
+
+        return [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'image' => $this->resolvePublicUrl($ad->image),
+            'targetType' => $ad->targetType,
+            'targetID' => $ad->targetID,
+            'placement' => $ad->placement,
+            'startDate' => $ad->startDate?->toDateString(),
+            'endDate' => $ad->endDate?->toDateString(),
+            'status' => $this->resolveStatus($ad),
+            'ownerType' => $ownerType,
+            'ownerID' => $owner?->id,
+            'ownerName' => $owner?->name,
+            'ownerAccountStatus' => $owner?->accountStatus,
         ];
     }
 

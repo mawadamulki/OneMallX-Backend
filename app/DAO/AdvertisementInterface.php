@@ -3,10 +3,18 @@
 namespace App\DAO;
 
 use App\Models\Advertisement;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface AdvertisementInterface
 {
+    public function paginateAllForAdmin(
+        int $perPage,
+        ?string $ownerType = null,
+        ?string $status = null,
+        ?string $placement = null,
+    ): LengthAwarePaginator;
+
     public function listForStore(int $storeId): Collection;
 
     public function listForService(int $serviceId): Collection;

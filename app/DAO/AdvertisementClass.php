@@ -3,11 +3,52 @@
 namespace App\DAO;
 
 use App\Models\Advertisement;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class AdvertisementClass implements AdvertisementInterface
 {
+    public function paginateAllForAdmin(
+        int $perPage,
+        ?string $ownerType = null,
+        ?string $status = null,
+        ?string $placement = null,
+    ): LengthAwarePaginator {
+        $query = Advertisement::query()
+            ->with([
+                'store:id,name,accountStatus',
+                'service:id,name,accountStatus',
+            ])
+            ->orderByDesc('startDate')
+            ->orderByDesc('id');
+
+        if ($ownerType === 'store') {
+            $query->whereNotNull('storeID');
+        } elseif ($ownerType === 'service') {
+            $query->whereNotNull('serviceID');
+        }
+
+        if ($placement !== null && in_array($placement, ['home', 'deals'], true)) {
+            $query->where('placement', $placement);
+        }
+
+        if ($status !== null && $status !== 'all') {
+            $today = Carbon::today()->toDateString();
+
+            if ($status === 'active') {
+                $query->whereDate('startDate', '<=', $today)
+                    ->whereDate('endDate', '>=', $today);
+            } elseif ($status === 'scheduled') {
+                $query->whereDate('startDate', '>', $today);
+            } elseif ($status === 'expired') {
+                $query->whereDate('endDate', '<', $today);
+            }
+        }
+
+        return $query->paginate($perPage);
+    }
+
     public function listForStore(int $storeId): Collection
     {
         return Advertisement::query()

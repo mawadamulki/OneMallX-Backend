@@ -19,6 +19,20 @@ class AdvertisementController extends Controller
         );
     }
 
+    public function adminAdsIndex(Request $request)
+    {
+        $perPage = min(max((int) $request->query('per_page', 20), 1), 50);
+
+        return response()->json(
+            $this->advertisementService->listForAdmin(
+                $perPage,
+                $request->query('ownerType'),
+                $request->query('status'),
+                $request->query('placement'),
+            )
+        );
+    }
+
     public function storeAdsIndex()
     {
         $result = $this->advertisementService->listForStoreOwner((int) Auth::id());

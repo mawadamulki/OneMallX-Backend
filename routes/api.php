@@ -155,6 +155,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/adminStoreDetails/{storeId}', [StoreController::class, 'adminStoreDetails']);
         Route::get('/adminStoreProducts/{storeId}', [StoreController::class, 'adminStoreProducts']);
         Route::get('/adminProductDetails/{productId}', [StoreController::class, 'adminProductDetails']);
+        Route::get('/getAdminAds', [AdvertisementController::class, 'adminAdsIndex']);
     });
 
     Route::middleware(['permission:manage services'])->group(function () {
