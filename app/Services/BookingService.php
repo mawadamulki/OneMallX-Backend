@@ -225,9 +225,11 @@ class BookingService
             return $this->fail('Service not found for this account.', 404);
         }
 
+        $service->loadMissing('workingDays');
+
         $day = Carbon::parse($date)->toDateString();
         $bookings = $this->loadProviderBookings($service->id, $day, $day)
-            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true, service: $service))
             ->values();
 
         return $this->success('OK', [
@@ -366,7 +368,7 @@ class BookingService
 
     private function loadProviderBookings(int $serviceId, string $fromDate, string $toDate, ?int $serviceItemId = null)
     {
-        return Booking::with(['employee', 'serviceItem', 'customer'])
+        return Booking::with(['employee.workingDays', 'serviceItem', 'customer'])
             ->where('serviceID', $serviceId)
             ->when($serviceItemId !== null, fn ($query) => $query->where('serviceItemID', $serviceItemId))
             ->where('status', '!=', 'cancelled')
@@ -406,7 +408,7 @@ class BookingService
             : 0;
 
         $formattedBookings = collect($dayBookings)
-            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true))
+            ->map(fn (Booking $booking) => $this->formatBooking($booking, includeCustomer: true, service: $service))
             ->values();
 
         return [
@@ -450,26 +452,38 @@ class BookingService
         return $newStart < $existingEnd && $newEnd > $existingStart;
     }
 
-    private function formatBooking(Booking $booking, bool $includeCustomer = false): array
+    private function formatBooking(Booking $booking, bool $includeCustomer = false, ?Service $service = null): array
     {
+        $dateString = $booking->date instanceof Carbon
+            ? $booking->date->toDateString()
+            : (string) $booking->date;
+
+        $employeePayload = [
+            'id' => $booking->employee?->id,
+            'name' => $booking->employee?->name,
+        ];
+
+        if ($service !== null && $booking->employee !== null) {
+            $employeePayload = array_merge(
+                $employeePayload,
+                $this->employeeShiftTimesForDate($service, $booking->employee, $dateString)
+            );
+        }
+
         $payload = [
             'id' => $booking->id,
             'service_id' => $booking->serviceID,
             'service_item_id' => $booking->serviceItemID,
-            'date' => $booking->date instanceof Carbon
-                ? $booking->date->toDateString()
-                : (string) $booking->date,
+            'date' => $dateString,
             'time' => ServiceEmployeeSchedule::formatTimeForApi($booking->time),
             'status' => $booking->status,
             'payment_status' => $booking->paymentStatus,
             'total_price' => (int) $booking->totalPrice,
-            'employee' => [
-                'id' => $booking->employee?->id,
-                'name' => $booking->employee?->name,
-            ],
+            'employee' => $employeePayload,
             'service_item' => [
                 'id' => $booking->serviceItem?->id,
                 'name' => $booking->serviceItem?->name,
+                'duration' => (int) ($booking->serviceItem?->duration ?? 0),
             ],
             'service' => [
                 'id' => $booking->service?->id,
@@ -485,6 +499,29 @@ class BookingService
         }
 
         return $payload;
+    }
+
+    private function employeeShiftTimesForDate(Service $service, Employee $employee, string $dateYmd): array
+    {
+        $intersection = ServiceEmployeeSchedule::intersectionForBooking(
+            $service,
+            $employee,
+            Carbon::parse($dateYmd)
+        );
+
+        if ($intersection === null) {
+            return [
+                'startTime' => null,
+                'endTime' => null,
+            ];
+        }
+
+        [$windowStart, $windowEnd] = $intersection;
+
+        return [
+            'startTime' => ServiceEmployeeSchedule::formatTimeForApi($windowStart),
+            'endTime' => ServiceEmployeeSchedule::formatTimeForApi($windowEnd),
+        ];
     }
 
     private function success(string $message, array $extra = [], int $httpStatus = 200): array
