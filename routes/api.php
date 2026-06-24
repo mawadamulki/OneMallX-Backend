@@ -231,14 +231,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['permission:manage rates'])->group(function () {
         Route::get('/adminRates', [RateController::class, 'adminIndex']);
         Route::get('/adminRates/reportedUsers', [RateController::class, 'adminReportedUsers']);
-        Route::get('/adminRates/{id}', [RateController::class, 'adminShow']);
-        Route::delete('/adminRates/{id}', [RateController::class, 'adminDestroy']);
+        Route::get('/adminRates/{id}', [RateController::class, 'adminShow'])
+            ->whereNumber('id');
+        Route::delete('/adminRates/{id}', [RateController::class, 'adminDestroy'])
+            ->whereNumber('id');
         Route::get('/adminRateReports/{status}', [RateController::class, 'adminReports'])
             ->whereIn('status', ['all', 'pending', 'dismissed', 'action_taken']);
         Route::get('/adminRateReports/{id}', [RateController::class, 'adminShowReport'])
             ->whereNumber('id');
-        Route::post('/adminRateReports/dismiss/{id}', [RateController::class, 'adminDismissReport']);
-        Route::post('/adminRateReports/takeAction/{id}', [RateController::class, 'adminTakeActionOnReport']);
+        Route::post('/adminRateReports/dismiss/{id}', [RateController::class, 'adminDismissReport'])
+            ->whereNumber('id');
+        Route::post('/adminRateReports/takeAction/{id}', [RateController::class, 'adminTakeActionOnReport'])
+            ->whereNumber('id');
     });
 
 
