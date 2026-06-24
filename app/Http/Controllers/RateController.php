@@ -140,9 +140,9 @@ class RateController extends Controller
         return $this->respond($this->rateService->adminReportedUsers());
     }
 
-    public function adminDeleteUser(int $userId)
+    public function adminDeactivateUser(int $userId)
     {
-        return $this->respond($this->rateService->adminDeleteUser($userId));
+        return $this->respond($this->rateService->adminDeactivateUser($userId));
     }
 
     private function respond(array $result, int $successStatus = 200)

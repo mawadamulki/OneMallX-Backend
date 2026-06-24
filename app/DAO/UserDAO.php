@@ -73,6 +73,14 @@ class UserDAO implements UserDAOInterface
         return $user;
     }
 
+    public function deactivateUser(User $user): User
+    {
+        $user->update(['status' => 'inactive']);
+        $user->tokens()->delete();
+
+        return $user->fresh();
+    }
+
     public function deleteUser(User $user): bool
     {
         return $user->delete();

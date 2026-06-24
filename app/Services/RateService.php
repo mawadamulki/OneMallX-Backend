@@ -427,7 +427,7 @@ class RateService
         ];
     }
 
-    public function adminDeleteUser(int $userId): array
+    public function adminDeactivateUser(int $userId): array
     {
         $user = User::query()->with('roles')->find($userId);
         if ($user === null) {
@@ -435,14 +435,24 @@ class RateService
         }
 
         if ($user->hasRole('Admin')) {
-            return $this->fail('Admin accounts cannot be deleted through this endpoint.', 422);
+            return $this->fail('Admin accounts cannot be deactivated through this endpoint.', 422);
         }
 
-        $this->userDAO->deleteUser($user);
+        if ($user->status === 'inactive') {
+            return $this->fail('User account is already inactive.', 422);
+        }
+
+        $deactivated = $this->userDAO->deactivateUser($user);
 
         return [
             'success' => true,
-            'message' => 'User account deleted.',
+            'message' => 'User account deactivated.',
+            'user' => [
+                'id' => $deactivated->id,
+                'name' => $deactivated->name,
+                'email' => $deactivated->email,
+                'status' => $deactivated->status,
+            ],
         ];
     }
 

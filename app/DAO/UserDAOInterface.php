@@ -15,6 +15,8 @@ interface UserDAOInterface
 
     public function updateUser(User $user, array $data): User;
 
+    public function deactivateUser(User $user): User;
+
     public function deleteUser(User $user): bool;
 
     public function paginateAllUsersForAdmin(int $perPage): LengthAwarePaginator;

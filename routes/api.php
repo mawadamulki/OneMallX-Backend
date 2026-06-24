@@ -170,7 +170,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/getAdminStoreOwners', [UserController::class, 'adminStoreOwners']);
         Route::get('/getAdminServiceProviders', [UserController::class, 'adminServiceProviders']);
         Route::get('/getAdminCustomers', [UserController::class, 'adminCustomers']);
-        Route::delete('/adminUsers/{userId}', [RateController::class, 'adminDeleteUser']);
+        Route::post('/adminUsers/deactivate/{userId}', [RateController::class, 'adminDeactivateUser'])
+            ->whereNumber('userId');
     });
 
     // ___________________ User Profile Routes ___________________
