@@ -67,6 +67,8 @@ class ServiceService
                 'id' => $service->id,
                 'name' => $service->name,
                 'media' => $service->media->first()?->url,
+                'created_at' => $service->created_at,
+                'updated_at' => $service->updated_at,
             ]);
     }
 
@@ -126,6 +128,8 @@ class ServiceService
                 'id' => $serviceItem->id,
                 'name' => $serviceItem->name,
                 'media' => $serviceItem->media->first()?->url,
+                'created_at' => $serviceItem->created_at,
+                'updated_at' => $serviceItem->updated_at,
             ];
         });
     }
