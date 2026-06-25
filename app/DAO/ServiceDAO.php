@@ -64,7 +64,6 @@ class ServiceDAO
                 'service.owner',
                 'service.area.floor',
                 'employees.workingDays',
-                'bookings.employee',
             ])
             ->first();
     }

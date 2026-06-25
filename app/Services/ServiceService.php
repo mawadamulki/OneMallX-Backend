@@ -189,32 +189,53 @@ class ServiceService
             return ['error' => 'Service item not found'];
         }
 
+        $service = $serviceItem->service;
+
         return [
             'id' => $serviceItem->id,
             'name' => $serviceItem->name,
-            'media' => $serviceItem->media->first()?->url,
+            'price' => $serviceItem->price,
+            'duration' => $serviceItem->duration,
+            'status' => $serviceItem->status,
+            'media' => $serviceItem->media->map(fn ($m) => [
+                'id' => $m->id,
+                'url' => $m->url,
+                'fileType' => $m->fileType,
+            ])->values()->all(),
             'service' => [
-                'id' => $serviceItem->service->id,
-                'name' => $serviceItem->service->name,
+                'id' => $service->id,
+                'name' => $service->name,
+                'description' => $service->description,
+                'owner' => $service->relationLoaded('owner') && $service->owner
+                    ? [
+                        'id' => $service->owner->id,
+                        'name' => $service->owner->name,
+                        'email' => $service->owner->email,
+                        'phoneNumber' => $service->owner->phoneNumber,
+                    ]
+                    : null,
+                'area' => $service->relationLoaded('area') && $service->area
+                    ? [
+                        'id' => $service->area->id,
+                        'name' => $service->area->name,
+                        'number' => $service->area->number,
+                        'floor' => $service->area->relationLoaded('floor') && $service->area->floor
+                            ? [
+                                'id' => $service->area->floor->id,
+                                'name' => $service->area->floor->name,
+                                'number' => $service->area->floor->number,
+                            ]
+                            : null,
+                    ]
+                    : null,
             ],
             'employees' => $serviceItem->employees->map(function ($employee) {
                 return [
                     'id' => $employee->id,
                     'name' => $employee->name,
+                    'price' => $employee->pivot->price ?? null,
                 ];
             }),
-            'bookings' => $serviceItem->bookings->map(function ($booking) {
-                return [
-                    'id' => $booking->id,
-                    'date' => $booking->date,
-                    'time' => $booking->time,
-                    'employee' => [
-                        'id' => $booking->employee->id,
-                        'name' => $booking->employee->name,
-                    ],
-                ];
-            }),
-
         ];
     }
 }
