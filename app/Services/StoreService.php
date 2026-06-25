@@ -70,6 +70,34 @@ class StoreService
         return $this->toAdminProductFullArray($product);
     }
 
+    public function getStoreRate(int $storeId): array
+    {
+        $summary = $this->storeClass->getStoreRateSummary($storeId);
+
+        if ($summary === null) {
+            return $this->fail('Store not found.', 404);
+        }
+
+        return [
+            'success' => true,
+            'summary' => $summary,
+        ];
+    }
+
+    public function getProductRate(int $productId): array
+    {
+        $summary = $this->storeClass->getProductRateSummary($productId);
+
+        if ($summary === null) {
+            return $this->fail('Product not found.', 404);
+        }
+
+        return [
+            'success' => true,
+            'summary' => $summary,
+        ];
+    }
+
     public function showForOwner(int $userId): array
     {
         $store = $this->storeClass->findStoreByOwnerId($userId);
@@ -361,16 +389,9 @@ class StoreService
 
     private function toAdminProductSummaryArray(Product $product): array
     {
-        $defaultVariant = $product->relationLoaded('defaultVariant') ? $product->defaultVariant : null;
-
         return [
             'id' => $product->id,
             'name' => $product->name,
-            'slug' => $product->slug,
-            'status' => $product->status,
-            'sku' => $defaultVariant?->sku,
-            'price' => $defaultVariant?->price,
-            'quantity' => $defaultVariant?->quantity,
             'media' => $this->mapMediaCollection($product),
         ];
     }

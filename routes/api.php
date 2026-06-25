@@ -155,6 +155,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/adminStoreDetails/{storeId}', [StoreController::class, 'adminStoreDetails']);
         Route::get('/adminStoreProducts/{storeId}', [StoreController::class, 'adminStoreProducts']);
         Route::get('/adminProductDetails/{productId}', [StoreController::class, 'adminProductDetails']);
+        Route::get('/adminStoreRate/{storeId}', [StoreController::class, 'adminStoreRate']);
+        Route::get('/adminProductRate/{productId}', [StoreController::class, 'adminProductRate']);
         Route::get('/getAdminAds', [AdvertisementController::class, 'adminAdsIndex']);
     });
 
@@ -163,6 +165,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/adminServiceDetails/{serviceId}', [ServiceController::class, 'adminServiceDetails']);
         Route::get('/adminServiceItems/{serviceId}', [ServiceController::class, 'adminServiceItems']);
         Route::get('/adminServiceItemDetails/{serviceItemId}', [ServiceController::class, 'adminServiceItemDetails']);
+        Route::get('/adminServiceRate/{serviceId}', [ServiceController::class, 'adminServiceRate']);
+        Route::get('/adminServiceItemRate/{serviceItemId}', [ServiceController::class, 'adminServiceItemRate']);
     });
 
     Route::middleware(['permission:manage users'])->group(function () {

@@ -69,4 +69,40 @@ class ServiceDAO
             ])
             ->first();
     }
+
+    public function getServiceRateSummary(int $serviceId): ?array
+    {
+        $service = Service::query()
+            ->whereKey($serviceId)
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->first();
+
+        if (! $service) {
+            return null;
+        }
+
+        return [
+            'rating' => $service->rates_count > 0 ? round((float) $service->rates_avg_score, 1) : null,
+            'rating_count' => (int) $service->rates_count,
+        ];
+    }
+
+    public function getServiceItemRateSummary(int $serviceItemId): ?array
+    {
+        $item = ServiceItem::query()
+            ->whereKey($serviceItemId)
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->first();
+
+        if (! $item) {
+            return null;
+        }
+
+        return [
+            'rating' => $item->rates_count > 0 ? round((float) $item->rates_avg_score, 1) : null,
+            'rating_count' => (int) $item->rates_count,
+        ];
+    }
 }

@@ -23,4 +23,8 @@ interface StoreInterface
     public function findStoreByOwnerId(int $userId): ?Store;
 
     public function updateStore(Store $store, array $data): Store;
+
+    public function getStoreRateSummary(int $storeId): ?array;
+
+    public function getProductRateSummary(int $productId): ?array;
 }

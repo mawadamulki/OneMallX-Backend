@@ -62,6 +62,28 @@ class ServiceController extends Controller
         );
     }
 
+    public function adminServiceRate($serviceId)
+    {
+        $result = $this->serviceService->getServiceRate((int) $serviceId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function adminServiceItemRate($serviceItemId)
+    {
+        $result = $this->serviceService->getServiceItemRate((int) $serviceItemId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function showForOwner()
     {
         $result = $this->serviceProviderService->showForOwner((int) Auth::id());

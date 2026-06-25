@@ -124,6 +124,34 @@ class ServiceService
         });
     }
 
+    public function getServiceRate(int $serviceId): array
+    {
+        $summary = $this->serviceDAO->getServiceRateSummary($serviceId);
+
+        if ($summary === null) {
+            return ['success' => false, 'message' => 'Service not found.', 'http_status' => 404];
+        }
+
+        return [
+            'success' => true,
+            'summary' => $summary,
+        ];
+    }
+
+    public function getServiceItemRate(int $serviceItemId): array
+    {
+        $summary = $this->serviceDAO->getServiceItemRateSummary($serviceItemId);
+
+        if ($summary === null) {
+            return ['success' => false, 'message' => 'Service item not found.', 'http_status' => 404];
+        }
+
+        return [
+            'success' => true,
+            'summary' => $summary,
+        ];
+    }
+
     public function adminServiceItemDetails($serviceItemId)
     {
         $serviceItem = $this->serviceDAO->findAdminServiceItemById($serviceItemId);

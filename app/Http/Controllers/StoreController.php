@@ -88,6 +88,28 @@ class StoreController extends Controller
         return response()->json($payload);
     }
 
+    public function adminStoreRate($storeId)
+    {
+        $result = $this->storeService->getStoreRate((int) $storeId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function adminProductRate($productId)
+    {
+        $result = $this->storeService->getProductRate((int) $productId);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function showForOwner()
     {
         $result = $this->storeService->showForOwner((int) Auth::id());

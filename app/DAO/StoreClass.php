@@ -105,4 +105,40 @@ class StoreClass implements StoreInterface
 
         return $store->fresh(['media']);
     }
+
+    public function getStoreRateSummary(int $storeId): ?array
+    {
+        $store = Store::query()
+            ->whereKey($storeId)
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->first();
+
+        if (! $store) {
+            return null;
+        }
+
+        return [
+            'rating' => $store->rates_count > 0 ? round((float) $store->rates_avg_score, 1) : null,
+            'rating_count' => (int) $store->rates_count,
+        ];
+    }
+
+    public function getProductRateSummary(int $productId): ?array
+    {
+        $product = Product::query()
+            ->whereKey($productId)
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->first();
+
+        if (! $product) {
+            return null;
+        }
+
+        return [
+            'rating' => $product->rates_count > 0 ? round((float) $product->rates_avg_score, 1) : null,
+            'rating_count' => (int) $product->rates_count,
+        ];
+    }
 }
