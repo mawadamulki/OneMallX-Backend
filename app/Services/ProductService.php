@@ -607,7 +607,7 @@ class ProductService
             'reservedQuantity' => $variant->reservedQuantity,
             'availableQuantity' => $variant->availableQuantity(),
             'weight' => $variant->weight,
-            'attributeName' => $variant->attributeName,
+            'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributes' => $variant->relationLoaded('attributeValues')
