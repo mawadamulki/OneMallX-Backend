@@ -266,7 +266,7 @@ class ProductService
             $data['sku'] = $sku;
         }
 
-        foreach (['barcode', 'name', 'price', 'compareAtPrice', 'discountPercentage', 'costPrice', 'quantity', 'weight', 'isDefault', 'status'] as $field) {
+        foreach (['barcode', 'name', 'price', 'compareAtPrice', 'discountPercentage', 'costPrice', 'quantity', 'weight', 'isDefault', 'status', 'attributeName'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
@@ -470,6 +470,7 @@ class ProductService
             'weight' => isset($data['weight']) ? (int) $data['weight'] : null,
             'isDefault' => (bool) ($data['isDefault'] ?? false),
             'status' => $data['status'] ?? 'active',
+            'attributeName' => $data['attributeName'] ?? null,
             'attributeValueIds' => array_values(array_unique(array_map('intval', $data['attributeValueIds'] ?? []))),
         ];
     }
@@ -531,7 +532,6 @@ class ProductService
                 'price' => $v->price,
                 'quantity' => $v->quantity,
             'attributeName' => $v->attributeName ?: $this->formatVariantAttributeString($v),
-            'attribute_name' => $v->attributeName ?: $this->formatVariantAttributeString($v),
         ])->values()->all(),
         ];
     }
@@ -599,7 +599,6 @@ class ProductService
             'availableQuantity' => $variant->availableQuantity(),
             'weight' => $variant->weight,
             'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
-            'attribute_name' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributes' => $variant->relationLoaded('attributeValues')
@@ -631,7 +630,6 @@ class ProductService
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
-            'attribute_name' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
         ];
     }
 

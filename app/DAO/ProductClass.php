@@ -142,11 +142,14 @@ class ProductClass implements ProductInterface
 
             $this->applyDiscountLogic($data);
 
+            if (! isset($data['attributeName'])) {
+                $data['attributeName'] = $this->generateAttributeName($attributeValueIds);
+            }
+
             /** @var ProductVariant $variant */
             $variant = $product->variants()->create([
                 ...$data,
                 'storeID' => $storeId,
-                'attributeName' => $this->generateAttributeName($attributeValueIds),
             ]);
 
             if ($attributeValueIds !== []) {
@@ -170,7 +173,7 @@ class ProductClass implements ProductInterface
                     ->update(['isDefault' => false]);
             }
 
-            if ($attributeValueIds !== null) {
+            if ($attributeValueIds !== null && ! isset($data['attributeName'])) {
                 $data['attributeName'] = $this->generateAttributeName($attributeValueIds);
             }
 
@@ -286,12 +289,15 @@ class ProductClass implements ProductInterface
 
             $this->applyDiscountLogic($variantData);
 
+            if (! isset($variantData['attributeName'])) {
+                $variantData['attributeName'] = $this->generateAttributeName($attributeValueIds);
+            }
+
             /** @var ProductVariant $variant */
             $variant = $product->variants()->create([
                 ...$variantData,
                 'storeID' => $storeId,
                 'isDefault' => $isDefault,
-                'attributeName' => $this->generateAttributeName($attributeValueIds),
             ]);
 
             if ($attributeValueIds !== []) {

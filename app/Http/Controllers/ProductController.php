@@ -135,6 +135,7 @@ class ProductController extends Controller
             'weight' => 'nullable|integer|min:0',
             'isDefault' => 'sometimes|boolean',
             'status' => 'sometimes|in:active,inactive,out_of_stock',
+            'attributeName' => 'nullable|string|max:255',
             'attributeValueIds' => 'sometimes|array',
             'attributeValueIds.*' => 'integer',
         ]);
@@ -162,6 +163,7 @@ class ProductController extends Controller
             'weight' => 'nullable|integer|min:0',
             'isDefault' => 'sometimes|boolean',
             'status' => 'sometimes|in:active,inactive,out_of_stock',
+            'attributeName' => 'nullable|string|max:255',
             'attributeValueIds' => 'sometimes|array',
             'attributeValueIds.*' => 'integer',
         ]);
