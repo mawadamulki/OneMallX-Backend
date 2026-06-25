@@ -67,8 +67,6 @@ class ServiceService
                 'id' => $service->id,
                 'name' => $service->name,
                 'media' => $service->media->first()?->url,
-                'created_at' => $service->created_at,
-                'updated_at' => $service->updated_at,
             ]);
     }
 
@@ -84,6 +82,8 @@ class ServiceService
             'media' => $service->media->first()?->url,
             'openTime' => $service->openTime,
             'closeTime' => $service->closeTime,
+            'created_at' => $service->created_at,
+            'updated_at' => $service->updated_at,
             'days' => $service->workingDays
                 ->sortBy('weekday')
                 ->map(fn ($d) => WorkingWeekday::isoToAbbrev($d->weekday))
@@ -128,8 +128,6 @@ class ServiceService
                 'id' => $serviceItem->id,
                 'name' => $serviceItem->name,
                 'media' => $serviceItem->media->first()?->url,
-                'created_at' => $serviceItem->created_at,
-                'updated_at' => $serviceItem->updated_at,
             ];
         });
     }
@@ -201,6 +199,8 @@ class ServiceService
             'price' => $serviceItem->price,
             'duration' => $serviceItem->duration,
             'status' => $serviceItem->status,
+            'created_at' => $serviceItem->created_at,
+            'updated_at' => $serviceItem->updated_at,
             'media' => $serviceItem->media->map(fn ($m) => [
                 'id' => $m->id,
                 'url' => $m->url,

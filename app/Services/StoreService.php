@@ -317,8 +317,6 @@ class StoreService
             'id' => $store->id,
             'name' => $store->name,
             'media' => $this->mapMediaCollection($store),
-            'created_at' => $store->created_at,
-            'updated_at' => $store->updated_at,
         ];
     }
 
@@ -423,8 +421,6 @@ class StoreService
             'id' => $product->id,
             'name' => $product->name,
             'media' => $this->mapMediaCollection($product),
-            'created_at' => $product->created_at,
-            'updated_at' => $product->updated_at,
         ];
     }
 
