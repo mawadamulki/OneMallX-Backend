@@ -526,6 +526,13 @@ class ProductService
                     'name' => $category->name,
                 ])->values()->all()
                 : [],
+            'variants' => $variants->map(fn ($v) => [
+                'id' => $v->id,
+                'price' => $v->price,
+                'quantity' => $v->quantity,
+            'attributeName' => $v->attributeName ?: $this->formatVariantAttributeString($v),
+            'attribute_name' => $v->attributeName ?: $this->formatVariantAttributeString($v),
+        ])->values()->all(),
         ];
     }
 
@@ -544,22 +551,6 @@ class ProductService
                 : [],
             'variants' => $product->relationLoaded('variants')
                 ? $product->variants->map(fn (ProductVariant $variant) => $this->toVariantDetailArray($variant))->values()->all()
-                : [],
-            'rates' => $product->relationLoaded('rates')
-                ? $product->rates->map(fn ($rate) => [
-                    'id' => $rate->id,
-                    'score' => $rate->score,
-                    'comment' => $rate->comment,
-                    'user' => $rate->relationLoaded('user') && $rate->user
-                        ? [
-                            'id' => $rate->user->id,
-                            'name' => $rate->user->name,
-                            'image' => $rate->user->image_url,
-                        ]
-                        : null,
-                    'created_at' => $rate->created_at,
-                    'is_reported' => (bool) ($rate->is_reported ?? false),
-                ])->values()->all()
                 : [],
         ];
     }
@@ -608,6 +599,7 @@ class ProductService
             'availableQuantity' => $variant->availableQuantity(),
             'weight' => $variant->weight,
             'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
+            'attribute_name' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributes' => $variant->relationLoaded('attributeValues')
@@ -639,6 +631,7 @@ class ProductService
             'isDefault' => $variant->isDefault,
             'status' => $variant->status,
             'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
+            'attribute_name' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
         ];
     }
 

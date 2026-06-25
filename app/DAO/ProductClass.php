@@ -182,7 +182,7 @@ class ProductClass implements ProductInterface
                 $variant->attributeValues()->sync($attributeValueIds);
             }
 
-            return $variant->fresh(['attributeValues.attribute']);
+            return $variant->fresh(['attributeValues.attribute', 'product', 'media']);
         });
     }
 
