@@ -2,14 +2,20 @@
 
 namespace App\Services;
 
+use App\DAO\RateInterface;
 use App\DAO\ServiceDAO;
+use App\Models\Rate;
 use App\Models\Service;
+use App\Models\ServiceItem;
 use App\Support\WorkingWeekday;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ServiceService
 {
-    public function __construct(private ServiceDAO $serviceDAO) {}
+    public function __construct(
+        private ServiceDAO $serviceDAO,
+        private RateInterface $rateDAO
+    ) {}
 
     public function getServicesByArea($areaId)
     {
@@ -124,7 +130,7 @@ class ServiceService
         });
     }
 
-    public function getServiceRate(int $serviceId): array
+    public function getServiceRate(int $serviceId, int $perPage = 10): array
     {
         $summary = $this->serviceDAO->getServiceRateSummary($serviceId);
 
@@ -132,13 +138,16 @@ class ServiceService
             return ['success' => false, 'message' => 'Service not found.', 'http_status' => 404];
         }
 
+        $rates = $this->rateDAO->paginateForRateable(Service::class, $serviceId, $perPage);
+
         return [
             'success' => true,
             'summary' => $summary,
+            'rates' => $rates->through(fn (Rate $rate) => $this->formatRateForAdmin($rate)),
         ];
     }
 
-    public function getServiceItemRate(int $serviceItemId): array
+    public function getServiceItemRate(int $serviceItemId, int $perPage = 10): array
     {
         $summary = $this->serviceDAO->getServiceItemRateSummary($serviceItemId);
 
@@ -146,9 +155,30 @@ class ServiceService
             return ['success' => false, 'message' => 'Service item not found.', 'http_status' => 404];
         }
 
+        $rates = $this->rateDAO->paginateForRateable(ServiceItem::class, $serviceItemId, $perPage);
+
         return [
             'success' => true,
             'summary' => $summary,
+            'rates' => $rates->through(fn (Rate $rate) => $this->formatRateForAdmin($rate)),
+        ];
+    }
+
+    private function formatRateForAdmin(Rate $rate): array
+    {
+        return [
+            'id' => $rate->id,
+            'user_id' => $rate->userID,
+            'score' => (int) $rate->score,
+            'comment' => $rate->comment,
+            'created_at' => $rate->created_at,
+            'user' => $rate->relationLoaded('user') && $rate->user
+                ? [
+                    'id' => $rate->user->id,
+                    'name' => $rate->user->name,
+                    'image' => (new \App\Models\Media(['url' => $rate->user->image_url]))->url,
+                ]
+                : null,
         ];
     }
 

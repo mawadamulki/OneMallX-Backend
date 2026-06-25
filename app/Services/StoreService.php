@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\DAO\RateInterface;
 use App\DAO\StoreInterface;
 use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Rate;
 use App\Models\Store;
 use App\Models\StoreSubscription;
+use App\Support\RateableType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -16,7 +19,8 @@ use Illuminate\Support\Facades\Storage;
 class StoreService
 {
     public function __construct(
-        protected StoreInterface $storeClass
+        protected StoreInterface $storeClass,
+        protected RateInterface $rateDAO
     ) {}
 
     public function listForCustomer(int $perPage, ?int $areaId): LengthAwarePaginator
@@ -70,7 +74,7 @@ class StoreService
         return $this->toAdminProductFullArray($product);
     }
 
-    public function getStoreRate(int $storeId): array
+    public function getStoreRate(int $storeId, int $perPage = 10): array
     {
         $summary = $this->storeClass->getStoreRateSummary($storeId);
 
@@ -78,13 +82,16 @@ class StoreService
             return $this->fail('Store not found.', 404);
         }
 
+        $rates = $this->rateDAO->paginateForRateable(Store::class, $storeId, $perPage);
+
         return [
             'success' => true,
             'summary' => $summary,
+            'rates' => $rates->through(fn (Rate $rate) => $this->formatRateForAdmin($rate)),
         ];
     }
 
-    public function getProductRate(int $productId): array
+    public function getProductRate(int $productId, int $perPage = 10): array
     {
         $summary = $this->storeClass->getProductRateSummary($productId);
 
@@ -92,9 +99,30 @@ class StoreService
             return $this->fail('Product not found.', 404);
         }
 
+        $rates = $this->rateDAO->paginateForRateable(Product::class, $productId, $perPage);
+
         return [
             'success' => true,
             'summary' => $summary,
+            'rates' => $rates->through(fn (Rate $rate) => $this->formatRateForAdmin($rate)),
+        ];
+    }
+
+    private function formatRateForAdmin(Rate $rate): array
+    {
+        return [
+            'id' => $rate->id,
+            'user_id' => $rate->userID,
+            'score' => (int) $rate->score,
+            'comment' => $rate->comment,
+            'created_at' => $rate->created_at,
+            'user' => $rate->relationLoaded('user') && $rate->user
+                ? [
+                    'id' => $rate->user->id,
+                    'name' => $rate->user->name,
+                    'image' => (new \App\Models\Media(['url' => $rate->user->image_url]))->url,
+                ]
+                : null,
         ];
     }
 

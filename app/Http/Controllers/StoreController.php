@@ -88,9 +88,10 @@ class StoreController extends Controller
         return response()->json($payload);
     }
 
-    public function adminStoreRate($storeId)
+    public function adminStoreRate(Request $request, $storeId)
     {
-        $result = $this->storeService->getStoreRate((int) $storeId);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
+        $result = $this->storeService->getStoreRate((int) $storeId, $perPage);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
@@ -99,9 +100,10 @@ class StoreController extends Controller
         return response()->json($result);
     }
 
-    public function adminProductRate($productId)
+    public function adminProductRate(Request $request, $productId)
     {
-        $result = $this->storeService->getProductRate((int) $productId);
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
+        $result = $this->storeService->getProductRate((int) $productId, $perPage);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);

@@ -152,6 +152,7 @@ class RateService
         return [
             'success' => true,
             'store_id' => $store->id,
+            'summary' => $this->summaryForRateable(Store::class, (int) $store->id),
             'rates' => $this->rateDAO->paginateForStore((int) $store->id, $perPage, $userId)
                 ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
@@ -171,10 +172,15 @@ class RateService
             }
         }
 
+        $summary = $productId !== null 
+            ? $this->summaryForRateable(Product::class, $productId)
+            : null;
+
         return [
             'success' => true,
             'store_id' => $store->id,
             'product_id' => $productId,
+            'summary' => $summary,
             'rates' => $this->rateDAO->paginateForStoreProducts((int) $store->id, $perPage, $productId, $userId)
                 ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
@@ -190,6 +196,7 @@ class RateService
         return [
             'success' => true,
             'service_id' => $service->id,
+            'summary' => $this->summaryForRateable(Service::class, (int) $service->id),
             'rates' => $this->rateDAO->paginateForService((int) $service->id, $perPage, $userId)
                 ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
@@ -213,10 +220,15 @@ class RateService
             }
         }
 
+        $summary = $itemId !== null 
+            ? $this->summaryForRateable(ServiceItem::class, $itemId)
+            : null;
+
         return [
             'success' => true,
             'service_id' => $service->id,
             'service_item_id' => $itemId,
+            'summary' => $summary,
             'rates' => $this->rateDAO->paginateForServiceItems((int) $service->id, $perPage, $itemId, $userId)
                 ->through(fn (Rate $rate) => $this->formatRate($rate, false, true)),
         ];
