@@ -61,11 +61,10 @@ class ServiceDAO
             ->with([
                 'media',
                 'rates',
-                'service',
+                'service.owner',
+                'service.area.floor',
                 'employees.workingDays',
                 'bookings.employee',
-                'owner',
-                'area',
             ])
             ->first();
     }
