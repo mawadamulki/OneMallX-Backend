@@ -16,6 +16,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      - onemall
 
   nginx:
     container_name: onemall-nginx
@@ -27,6 +29,8 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
+    networks:
+      - onemall
 
   mysql:
     container_name: onemall-mysql
@@ -47,6 +51,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - onemall
 
   phpmyadmin:
     container_name: onemall-phpmyadmin
@@ -58,6 +64,12 @@ services:
       PMA_PORT: 3306
     depends_on:
       - mysql
+    networks:
+      - onemall
 
 volumes:
   onemall_mysql_data:
+
+networks:
+  onemall:
+    driver: bridge
