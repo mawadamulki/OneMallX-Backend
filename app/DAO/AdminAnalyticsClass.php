@@ -62,13 +62,19 @@ class AdminAnalyticsClass implements AdminAnalyticsInterface
 
     private function getUsersByRole(): array
     {
+        $counts = DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.model_type', User::class)
+            ->selectRaw('roles.name as role, COUNT(*) as count')
+            ->groupBy('roles.id', 'roles.name')
+            ->pluck('count', 'role');
+
         return Role::query()
-            ->withCount('users')
             ->orderBy('name')
             ->get()
             ->map(fn (Role $role) => [
                 'role' => $role->name,
-                'count' => (int) $role->users_count,
+                'count' => (int) ($counts[$role->name] ?? 0),
             ])
             ->values()
             ->all();
