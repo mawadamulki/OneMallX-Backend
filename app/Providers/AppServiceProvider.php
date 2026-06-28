@@ -16,6 +16,8 @@ use App\DAO\ProductClass;
 use App\DAO\ProductInterface;
 use App\DAO\RateClass;
 use App\DAO\RateInterface;
+use App\DAO\ServiceAnalyticsClass;
+use App\DAO\ServiceAnalyticsInterface;
 use App\DAO\ServiceProviderClass;
 use App\DAO\ServiceProviderEmployeeClass;
 use App\DAO\ServiceProviderEmployeeInterface;
@@ -57,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CategoryInterface::class, CategoryClass::class);
         $this->app->bind(ProductAttributeInterface::class, ProductAttributeClass::class);
         $this->app->bind(ServiceProviderInterface::class, ServiceProviderClass::class);
+        $this->app->bind(ServiceAnalyticsInterface::class, ServiceAnalyticsClass::class);
         $this->app->bind(ServiceProviderItemInterface::class, ServiceProviderItemClass::class);
         $this->app->bind(ServiceProviderEmployeeInterface::class, ServiceProviderEmployeeClass::class);
 

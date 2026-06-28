@@ -43,6 +43,7 @@ class RoleSeeder extends Seeder
             'manage service catalog',
             'view service ratings',
             'view service bookings',
+            'view service analytics',
             'report rates',
         ]);
 

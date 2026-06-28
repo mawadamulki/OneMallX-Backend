@@ -10,6 +10,7 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ServiceProviderEmployeeController;
 use App\Http\Controllers\ServiceProviderItemController;
+use App\Http\Controllers\ServiceAnalyticsController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceItemController;
 use App\Http\Controllers\CategoryController;
@@ -360,6 +361,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/serviceBookings/day', [BookingController::class, 'serviceBookingsDay']);
         Route::get('/serviceBookings/week', [BookingController::class, 'serviceBookingsWeek']);
         Route::get('/serviceBookings/month', [BookingController::class, 'serviceBookingsByMonth']);
+    });
+
+    Route::middleware(['permission:view service analytics'])->group(function () {
+        Route::get('/serviceAnalytics/dashboard', [ServiceAnalyticsController::class, 'dashboard']);
     });
 
 });
