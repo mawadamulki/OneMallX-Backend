@@ -5,12 +5,13 @@ namespace App\Services;
 use Barryvdh\DomPDF\Facade\Pdf;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AnalyticsExportService
 {
-    public function download(array $report, string $format): Response|StreamedResponse
+    public function download(array $report, string $format): Response|StreamedResponse|BinaryFileResponse
     {
         $filenameBase = $report['filename_base'] ?? 'analytics_report';
 
@@ -46,20 +47,31 @@ class AnalyticsExportService
         ]);
     }
 
-    private function downloadXlsx(array $report, string $filenameBase): StreamedResponse
+    private function downloadXlsx(array $report, string $filenameBase): BinaryFileResponse
     {
-        return response()->streamDownload(function () use ($report) {
-            $writer = new Writer;
-            $writer->openToFile('php://output');
+        $tempPath = tempnam(sys_get_temp_dir(), 'analytics_xlsx_');
+        if ($tempPath === false) {
+            throw new \RuntimeException('Unable to create temporary file for XLSX export.');
+        }
 
-            $this->writeSpreadsheetRows($report, function (array $row) use ($writer) {
-                $writer->addRow(Row::fromValues($row));
-            });
+        $xlsxPath = $tempPath.'.xlsx';
+        if (! rename($tempPath, $xlsxPath)) {
+            @unlink($tempPath);
+            throw new \RuntimeException('Unable to prepare temporary file for XLSX export.');
+        }
 
-            $writer->close();
-        }, "{$filenameBase}.xlsx", [
+        $writer = new Writer;
+        $writer->openToFile($xlsxPath);
+
+        $this->writeSpreadsheetRows($report, function (array $row) use ($writer) {
+            $writer->addRow(Row::fromValues($row));
+        });
+
+        $writer->close();
+
+        return response()->download($xlsxPath, "{$filenameBase}.xlsx", [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        ])->deleteFileAfterSend();
     }
 
     private function writeSpreadsheetRows(array $report, callable $writeRow): void
