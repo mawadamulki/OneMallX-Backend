@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use Barryvdh\DomPDF\Facade\Pdf;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -36,22 +36,9 @@ class AnalyticsExportService
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($handle, [$report['title'] ?? 'Analytics Report']);
-            fputcsv($handle, [$report['subtitle'] ?? '']);
-            fputcsv($handle, ['Period', $report['period_label'] ?? '']);
-            fputcsv($handle, ['Generated At', $report['generated_at'] ?? '']);
-            fputcsv($handle, []);
-
-            foreach ($report['sections'] ?? [] as $section) {
-                fputcsv($handle, [$section['title'] ?? 'Section']);
-                fputcsv($handle, $section['headers'] ?? []);
-
-                foreach ($section['rows'] ?? [] as $row) {
-                    fputcsv($handle, $row);
-                }
-
-                fputcsv($handle, []);
-            }
+            $this->writeSpreadsheetRows($report, function (array $row) use ($handle) {
+                fputcsv($handle, $row);
+            });
 
             fclose($handle);
         }, "{$filenameBase}.csv", [
@@ -62,46 +49,36 @@ class AnalyticsExportService
     private function downloadXlsx(array $report, string $filenameBase): StreamedResponse
     {
         return response()->streamDownload(function () use ($report) {
-            $spreadsheet = new Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle('Analytics');
+            $writer = new Writer;
+            $writer->openToFile('php://output');
 
-            $rowIndex = 1;
-            $sheet->setCellValue("A{$rowIndex}", $report['title'] ?? 'Analytics Report');
-            $rowIndex++;
-            $sheet->setCellValue("A{$rowIndex}", $report['subtitle'] ?? '');
-            $rowIndex++;
-            $sheet->setCellValue("A{$rowIndex}", 'Period');
-            $sheet->setCellValue("B{$rowIndex}", $report['period_label'] ?? '');
-            $rowIndex++;
-            $sheet->setCellValue("A{$rowIndex}", 'Generated At');
-            $sheet->setCellValue("B{$rowIndex}", $report['generated_at'] ?? '');
-            $rowIndex += 2;
+            $this->writeSpreadsheetRows($report, function (array $row) use ($writer) {
+                $writer->addRow(Row::fromValues($row));
+            });
 
-            foreach ($report['sections'] ?? [] as $section) {
-                $sheet->setCellValue("A{$rowIndex}", $section['title'] ?? 'Section');
-                $rowIndex++;
-
-                $headers = $section['headers'] ?? [];
-                foreach ($headers as $columnIndex => $header) {
-                    $sheet->setCellValueByColumnAndRow($columnIndex + 1, $rowIndex, $header);
-                }
-                $rowIndex++;
-
-                foreach ($section['rows'] ?? [] as $row) {
-                    foreach ($row as $columnIndex => $value) {
-                        $sheet->setCellValueByColumnAndRow($columnIndex + 1, $rowIndex, $value);
-                    }
-                    $rowIndex++;
-                }
-
-                $rowIndex++;
-            }
-
-            $writer = new Xlsx($spreadsheet);
-            $writer->save('php://output');
+            $writer->close();
         }, "{$filenameBase}.xlsx", [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    private function writeSpreadsheetRows(array $report, callable $writeRow): void
+    {
+        $writeRow([$report['title'] ?? 'Analytics Report']);
+        $writeRow([$report['subtitle'] ?? '']);
+        $writeRow(['Period', $report['period_label'] ?? '']);
+        $writeRow(['Generated At', $report['generated_at'] ?? '']);
+        $writeRow([]);
+
+        foreach ($report['sections'] ?? [] as $section) {
+            $writeRow([$section['title'] ?? 'Section']);
+            $writeRow($section['headers'] ?? []);
+
+            foreach ($section['rows'] ?? [] as $row) {
+                $writeRow($row);
+            }
+
+            $writeRow([]);
+        }
     }
 }

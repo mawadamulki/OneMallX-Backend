@@ -7,10 +7,14 @@ RUN --mount=type=cache,target=/var/cache/apk \
         icu-dev \
         oniguruma-dev \
         libzip-dev \
+        freetype-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
         linux-headers \
         git \
         unzip \
         $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         intl \
         pdo_mysql \
@@ -18,6 +22,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
         opcache \
         zip \
         pcntl \
+        gd \
     && apk del $PHPIZE_DEPS
 
 # ✅ FIX: copy composer from official image (no ":2")
