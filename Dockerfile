@@ -1,5 +1,5 @@
 # ---------- Base PHP ----------
-FROM php:8.2-fpm-alpine AS base
+FROM php:8.3-fpm-alpine AS base
 
 # Install system dependencies + PHP extensions
 RUN --mount=type=cache,target=/var/cache/apk \
