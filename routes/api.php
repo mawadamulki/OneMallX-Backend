@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
@@ -178,6 +179,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/getAdminCustomers', [UserController::class, 'adminCustomers']);
         Route::post('/adminUsers/deactivate/{userId}', [RateController::class, 'adminDeactivateUser'])
             ->whereNumber('userId');
+    });
+
+    Route::middleware(['permission:view admin analytics'])->group(function () {
+        Route::get('/adminAnalytics/dashboard', [AdminAnalyticsController::class, 'dashboard']);
     });
 
     // ___________________ User Profile Routes ___________________

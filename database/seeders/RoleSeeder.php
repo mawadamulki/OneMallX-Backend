@@ -34,6 +34,7 @@ class RoleSeeder extends Seeder
             'manage services',
             'manage users',
             'manage rates',
+            'view admin analytics',
         ]);
 
         $serviceProvider = Role::findByName('Service Provider', 'web');
