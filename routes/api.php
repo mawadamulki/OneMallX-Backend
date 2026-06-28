@@ -183,6 +183,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:view admin analytics'])->group(function () {
         Route::get('/adminAnalytics/dashboard', [AdminAnalyticsController::class, 'dashboard']);
+        Route::get('/adminAnalytics/export', [AdminAnalyticsController::class, 'export']);
     });
 
     // ___________________ User Profile Routes ___________________
@@ -322,6 +323,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:view store analytics'])->group(function () {
         Route::get('/storeAnalytics/dashboard', [StoreAnalyticsController::class, 'dashboard']);
+        Route::get('/storeAnalytics/export', [StoreAnalyticsController::class, 'export']);
     });
 
 
@@ -370,6 +372,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(['permission:view service analytics'])->group(function () {
         Route::get('/serviceAnalytics/dashboard', [ServiceAnalyticsController::class, 'dashboard']);
+        Route::get('/serviceAnalytics/export', [ServiceAnalyticsController::class, 'export']);
     });
 
 });

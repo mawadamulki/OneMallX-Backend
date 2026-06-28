@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ExportsAnalyticsDashboard;
+use App\Services\AnalyticsExportService;
 use App\Services\ServiceAnalyticsService;
+use App\Support\Analytics\AnalyticsReportBuilder;
 use Illuminate\Http\Request;
 
 class ServiceAnalyticsController extends Controller
 {
-    public function __construct(private ServiceAnalyticsService $service) {}
+    use ExportsAnalyticsDashboard;
+
+    public function __construct(
+        private ServiceAnalyticsService $service,
+        private AnalyticsExportService $exportService,
+    ) {}
 
     public function dashboard(Request $request)
     {
@@ -16,13 +24,25 @@ class ServiceAnalyticsController extends Controller
             'to' => 'nullable|date',
         ]);
 
-        return $this->respond($this->service->getDashboard(
+        return $this->respondAnalytics($this->service->getDashboard(
             $data['from'] ?? null,
             $data['to'] ?? null,
         ));
     }
 
-    private function respond(array $result)
+    public function export(Request $request)
+    {
+        $data = $this->validateAnalyticsExportRequest($request);
+
+        return $this->exportAnalyticsDashboard(
+            $request,
+            $this->service->getDashboard($data['from'] ?? null, $data['to'] ?? null),
+            fn (array $payload) => AnalyticsReportBuilder::fromService($payload),
+            $this->exportService,
+        );
+    }
+
+    protected function respondAnalytics(array $result)
     {
         $status = $result['http_status'] ?? ($result['success'] ? 200 : 422);
         unset($result['http_status'], $result['success']);
