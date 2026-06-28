@@ -16,6 +16,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RateController;
+use App\Http\Controllers\StoreAnalyticsController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscribtionPlanController;
 use App\Http\Controllers\SubscriptionExtensionController;
@@ -311,6 +312,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['permission:view store orders'])->group(function () {
         Route::get('/storeOrders', [OrderController::class, 'storeOrders']);
         Route::get('/storeOrders/{orderId}', [OrderController::class, 'storeOrderShow']);
+    });
+
+    Route::middleware(['permission:view store analytics'])->group(function () {
+        Route::get('/storeAnalytics/dashboard', [StoreAnalyticsController::class, 'dashboard']);
     });
 
 

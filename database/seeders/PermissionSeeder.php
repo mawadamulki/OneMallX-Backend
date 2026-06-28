@@ -35,6 +35,7 @@ class PermissionSeeder extends Seeder
             'book services',
             'view service bookings',
             'view store orders',
+            'view store analytics',
             'manage basket',
             'place orders',
         ];

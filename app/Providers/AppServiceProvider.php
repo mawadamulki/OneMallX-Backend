@@ -22,6 +22,8 @@ use App\DAO\ServiceProviderEmployeeInterface;
 use App\DAO\ServiceProviderInterface;
 use App\DAO\ServiceProviderItemClass;
 use App\DAO\ServiceProviderItemInterface;
+use App\DAO\StoreAnalyticsClass;
+use App\DAO\StoreAnalyticsInterface;
 use App\DAO\StoreClass;
 use App\DAO\StoreInterface;
 use App\DAO\SubscriptionExtensionClass;
@@ -49,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AreaDAOInterface::class, AreaDAO::class);
         $this->app->bind(FloorDAOInterface::class, FloorDAO::class);
         $this->app->bind(StoreInterface::class, StoreClass::class);
+        $this->app->bind(StoreAnalyticsInterface::class, StoreAnalyticsClass::class);
         $this->app->bind(RateInterface::class, RateClass::class);
         $this->app->bind(ProductInterface::class, ProductClass::class);
         $this->app->bind(CategoryInterface::class, CategoryClass::class);
