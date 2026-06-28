@@ -44,10 +44,10 @@ class ServiceAnalyticsClass implements ServiceAnalyticsInterface
     private function bookingsInPeriodQuery(int $serviceId, Carbon $from, Carbon $to, bool $excludeCancelled = false)
     {
         return Booking::query()
-            ->where('serviceID', $serviceId)
-            ->whereDate('date', '>=', $from->toDateString())
-            ->whereDate('date', '<=', $to->toDateString())
-            ->when($excludeCancelled, fn ($query) => $query->where('status', '!=', 'cancelled'));
+            ->where('bookings.serviceID', $serviceId)
+            ->whereDate('bookings.date', '>=', $from->toDateString())
+            ->whereDate('bookings.date', '<=', $to->toDateString())
+            ->when($excludeCancelled, fn ($query) => $query->where('bookings.status', '!=', 'cancelled'));
     }
 
     private function countBookings(int $serviceId, Carbon $from, Carbon $to, bool $excludeCancelled = false): int
@@ -68,14 +68,14 @@ class ServiceAnalyticsClass implements ServiceAnalyticsInterface
     private function sumRevenue(int $serviceId, Carbon $from, Carbon $to): int
     {
         return (int) $this->bookingsInPeriodQuery($serviceId, $from, $to, excludeCancelled: true)
-            ->sum('totalPrice');
+            ->sum('bookings.totalPrice');
     }
 
     private function countCustomers(int $serviceId, Carbon $from, Carbon $to): int
     {
         return (int) $this->bookingsInPeriodQuery($serviceId, $from, $to, excludeCancelled: true)
             ->distinct()
-            ->count('customerID');
+            ->count('bookings.customerID');
     }
 
     private function countActiveEmployees(int $serviceId): int
@@ -111,8 +111,8 @@ class ServiceAnalyticsClass implements ServiceAnalyticsInterface
     private function getBookingsOverTime(int $serviceId, Carbon $from, Carbon $to): array
     {
         $rows = $this->bookingsInPeriodQuery($serviceId, $from, $to, excludeCancelled: true)
-            ->selectRaw('DATE(date) as date, COUNT(*) as bookings')
-            ->groupBy('date')
+            ->selectRaw('DATE(bookings.date) as date, COUNT(*) as bookings')
+            ->groupByRaw('DATE(bookings.date)')
             ->orderBy('date')
             ->get()
             ->keyBy('date');
@@ -123,8 +123,8 @@ class ServiceAnalyticsClass implements ServiceAnalyticsInterface
     private function getRevenueOverTime(int $serviceId, Carbon $from, Carbon $to): array
     {
         $rows = $this->bookingsInPeriodQuery($serviceId, $from, $to, excludeCancelled: true)
-            ->selectRaw('DATE(date) as date, SUM(totalPrice) as revenue')
-            ->groupBy('date')
+            ->selectRaw('DATE(bookings.date) as date, SUM(bookings.totalPrice) as revenue')
+            ->groupByRaw('DATE(bookings.date)')
             ->orderBy('date')
             ->get()
             ->keyBy('date');
