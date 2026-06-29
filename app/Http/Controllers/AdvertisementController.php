@@ -12,10 +12,17 @@ class AdvertisementController extends Controller
         protected AdvertisementService $advertisementService
     ) {}
 
-    public function index(Request $request)
+    public function homeAds()
     {
         return response()->json(
-            $this->advertisementService->listPublic($request->query('placement'))
+            $this->advertisementService->listPublic('home')
+        );
+    }
+
+    public function dealAds()
+    {
+        return response()->json(
+            $this->advertisementService->listPublic('deals')
         );
     }
 

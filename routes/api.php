@@ -65,7 +65,8 @@ Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
     ->where('type', 'store|product|service|service_item');
 
 // ___________________ Advertisements (public) ___________________
-Route::get('/ads', [AdvertisementController::class, 'index']);
+Route::get('/ads/home', [AdvertisementController::class, 'homeAds']);
+Route::get('/ads/deals', [AdvertisementController::class, 'dealAds']);
 
 
 // ___________________ Subscription Web Routes ___________________
