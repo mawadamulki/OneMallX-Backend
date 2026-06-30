@@ -47,6 +47,11 @@ class Store extends Model
         return $this->hasMany(Category::class, 'storeID');
     }
 
+    public function collections()
+    {
+        return $this->hasMany(ProductCollection::class, 'storeID');
+    }
+
     public function productAttributes()
     {
         return $this->hasMany(ProductAttribute::class, 'storeID');

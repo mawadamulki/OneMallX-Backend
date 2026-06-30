@@ -15,6 +15,7 @@ use App\Http\Controllers\ServiceProviderItemController;
 use App\Http\Controllers\ServiceAnalyticsController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceItemController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
@@ -304,6 +305,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/storeCategories', [CategoryController::class, 'store']);
         Route::put('/storeCategories/{categoryId}', [CategoryController::class, 'update']);
         Route::delete('/storeCategories/{categoryId}', [CategoryController::class, 'destroy']);
+
+        Route::get('/storeCollections', [CollectionController::class, 'index']);
+        Route::get('/storeCollections/{collectionId}', [CollectionController::class, 'show']);
+        Route::post('/storeCollections', [CollectionController::class, 'store']);
+        Route::put('/storeCollections/{collectionId}', [CollectionController::class, 'update']);
+        Route::delete('/storeCollections/{collectionId}', [CollectionController::class, 'destroy']);
 
         Route::get('/storeAttributes', [ProductAttributeController::class, 'index']);
         Route::post('/storeAttributes', [ProductAttributeController::class, 'store']);

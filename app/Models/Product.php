@@ -50,6 +50,12 @@ class Product extends Model
             ->withTimestamps();
     }
 
+    public function collections()
+    {
+        return $this->belongsToMany(ProductCollection::class, 'collection_product', 'productID', 'collectionID')
+            ->withTimestamps();
+    }
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');

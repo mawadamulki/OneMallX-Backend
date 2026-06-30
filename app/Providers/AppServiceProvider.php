@@ -10,6 +10,8 @@ use App\DAO\BusinessCategoryClass;
 use App\DAO\BusinessCategoryInterface;
 use App\DAO\AreaDAO;
 use App\DAO\AreaDAOInterface;
+use App\DAO\CollectionClass;
+use App\DAO\CollectionInterface;
 use App\DAO\CategoryClass;
 use App\DAO\CategoryInterface;
 use App\DAO\FloorDAO;
@@ -62,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StoreAnalyticsInterface::class, StoreAnalyticsClass::class);
         $this->app->bind(RateInterface::class, RateClass::class);
         $this->app->bind(ProductInterface::class, ProductClass::class);
+        $this->app->bind(CollectionInterface::class, CollectionClass::class);
         $this->app->bind(CategoryInterface::class, CategoryClass::class);
         $this->app->bind(ProductAttributeInterface::class, ProductAttributeClass::class);
         $this->app->bind(ServiceProviderInterface::class, ServiceProviderClass::class);
