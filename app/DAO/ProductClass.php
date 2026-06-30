@@ -31,6 +31,28 @@ class ProductClass implements ProductInterface
             ->paginate($perPage);
     }
 
+    public function paginateVisibleProductsForStore(int $storeId, int $perPage): LengthAwarePaginator
+    {
+        return Product::query()
+            ->where('storeID', $storeId)
+            ->where('status', 'active')
+            ->whereHas('store', fn ($q) => $q->where('accountStatus', 'active'))
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'categories:id,name,slug',
+                'variants' => fn ($q) => $q
+                    ->select(['id', 'productID', 'price', 'quantity', 'attributeName', 'isDefault', 'status'])
+                    ->where('status', 'active')
+                    ->orderByDesc('isDefault'),
+            ])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->orderByDesc('isFeatured')
+            ->orderByDesc('publishedAt')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
     public function listAllProductsForStore(int $storeId): \Illuminate\Support\Collection
     {
         return Product::query()

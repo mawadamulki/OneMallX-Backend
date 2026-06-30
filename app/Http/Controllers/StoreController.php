@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\ProductService;
 use App\Services\StoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +12,8 @@ use Illuminate\Support\Facades\Auth;
 class StoreController extends Controller
 {
     public function __construct(
-        protected StoreService $storeService
+        protected StoreService $storeService,
+        protected ProductService $productService,
     ) {}
 
     // Customer: paginated list (accountStatus = active only).
@@ -50,6 +52,19 @@ class StoreController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    public function products(Request $request, $storeId)
+    {
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
+        $products = $this->productService->listForCustomerByStore((int) $storeId, $perPage);
+
+        if ($products === null) {
+            abort(404);
+        }
+
+        return response()->json($products);
     }
 
 

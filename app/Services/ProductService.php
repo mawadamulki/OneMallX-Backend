@@ -9,6 +9,7 @@ use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -40,6 +41,22 @@ class ProductService
             'storeSpace' => $this->productClass->findStoreSpaceForStore((int) $store->id),
             'products' => $paginator,
         ];
+    }
+
+    public function listForCustomerByStore(int $storeId, int $perPage): ?LengthAwarePaginator
+    {
+        $store = Store::query()
+            ->visibleToCustomers()
+            ->whereKey($storeId)
+            ->first();
+
+        if ($store === null) {
+            return null;
+        }
+
+        return $this->productClass
+            ->paginateVisibleProductsForStore((int) $store->id, $perPage)
+            ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
     }
 
     public function showForOwner(int $userId, int $productId): array
@@ -533,6 +550,44 @@ class ProductService
                 'quantity' => $v->quantity,
             'attributeName' => $v->attributeName ?: $this->formatVariantAttributeString($v),
         ])->values()->all(),
+        ];
+    }
+
+    private function toCustomerSummaryArray(Product $product): array
+    {
+        $variants = $product->relationLoaded('variants') ? $product->variants : collect();
+        $prices = $variants->pluck('price')->filter(fn ($price) => $price !== null);
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'shortDetail' => $product->shortDetail,
+            'isFeatured' => (bool) $product->isFeatured,
+            'media' => $this->mapMediaCollection($product),
+            'priceRange' => $prices->isEmpty()
+                ? null
+                : [
+                    'min' => (int) $prices->min(),
+                    'max' => (int) $prices->max(),
+                ],
+            'totalQuantity' => (int) $variants->sum('quantity'),
+            'categories' => $product->relationLoaded('categories')
+                ? $product->categories->map(fn ($category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                ])->values()->all()
+                : [],
+            'variants' => $variants->map(fn (ProductVariant $variant) => [
+                'id' => $variant->id,
+                'price' => $variant->price,
+                'quantity' => $variant->quantity,
+                'isDefault' => (bool) $variant->isDefault,
+                'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
+            ])->values()->all(),
+            'rating' => $product->rates_avg_score !== null ? round((float) $product->rates_avg_score, 1) : null,
+            'rating_count' => (int) ($product->rates_count ?? 0),
         ];
     }
 

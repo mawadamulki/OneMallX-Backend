@@ -62,6 +62,7 @@ Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
 // ___________________ Stores Mobile Routes ___________________
 Route::get('/stores', [StoreController::class, 'index']);
 Route::get('/storesInArea/{areaID}', [StoreController::class, 'listByArea']);
+Route::get('/productsInStore/{storeId}', [StoreController::class, 'products']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 
 // ___________________ Rates (public read) ___________________
