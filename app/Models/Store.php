@@ -17,10 +17,20 @@ class Store extends Model
         'areaID',
         'description',
         'logo',
+        'customization',
+        'customizationData',
         'status',
         'accountStatus',
         'paymentAccount',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'customization' => 'array',
+            'customizationData' => 'array',
+        ];
+    }
 
     public function owner()
     {

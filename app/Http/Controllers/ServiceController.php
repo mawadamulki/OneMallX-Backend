@@ -139,6 +139,22 @@ class ServiceController extends Controller
         return response()->json($result);
     }
 
+    public function updateCustomizationForOwner(Request $request)
+    {
+        $validated = $request->validate([
+            'customization' => 'sometimes|array',
+            'customizationData' => 'sometimes|array',
+        ]);
+
+        $result = $this->serviceProviderService->updateCustomizationForOwner((int) Auth::id(), $validated);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
+        }
+
+        return response()->json($result);
+    }
+
     public function syncWorkingDays(Request $request)
     {
         $validated = $request->validate([

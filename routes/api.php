@@ -294,6 +294,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/store', [StoreController::class, 'showForOwner']);
         Route::get('/storePlan', [StoreController::class, 'planForOwner']);
         Route::put('/store', [StoreController::class, 'updateForOwner']);
+        Route::put('/store/customization', [StoreController::class, 'updateCustomizationForOwner']);
         Route::post('/storeLogo', [StoreController::class, 'storeLogo']);
         Route::delete('/storeLogo', [StoreController::class, 'destroyLogo']);
         Route::post('/storeMedia', [StoreController::class, 'storeMedia']);
@@ -355,6 +356,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/service', [ServiceController::class, 'showForOwner']);
         Route::get('/servicePlan', [ServiceController::class, 'planForOwner']);
         Route::put('/service', [ServiceController::class, 'updateForOwner']);
+        Route::put('/service/customization', [ServiceController::class, 'updateCustomizationForOwner']);
         Route::put('/service/workingDays', [ServiceController::class, 'syncWorkingDays']);
         Route::post('/serviceMedia', [ServiceController::class, 'storeMedia']);
         Route::delete('/serviceMedia/{mediaId}', [ServiceController::class, 'destroyMedia']);

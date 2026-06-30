@@ -169,6 +169,36 @@ class StoreService
         ];
     }
 
+    public function updateCustomizationForOwner(int $userId, array $payload): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $data = [];
+
+        foreach (['customization', 'customizationData'] as $field) {
+            if (array_key_exists($field, $payload)) {
+                $data[$field] = $payload[$field];
+            }
+        }
+
+        if ($data === []) {
+            return $this->fail('No fields to update.', 422);
+        }
+
+        $updated = $this->storeClass->updateStore($store, $data);
+
+        return [
+            'success' => true,
+            'message' => 'Customization saved.',
+            'customization' => $updated->customization,
+            'customizationData' => $updated->customizationData,
+        ];
+    }
+
     public function planForOwner(int $userId): array
     {
         $subscription = StoreSubscription::query()
@@ -308,6 +338,8 @@ class StoreService
             'media' => $this->mapMediaCollection($store),
             'rating' => $store->rates_avg_score !== null ? round((float) $store->rates_avg_score, 1) : null,
             'rating_count' => (int) ($store->rates_count ?? 0),
+            'customization' => $store->customization,
+            'customizationData' => $store->customizationData,
         ];
     }
 
@@ -375,6 +407,8 @@ class StoreService
             'status' => $store->status,
             'accountStatus' => $store->accountStatus,
             'media' => $this->mapMediaCollection($store),
+            'customization' => $store->customization,
+            'customizationData' => $store->customizationData,
         ];
     }
 

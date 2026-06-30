@@ -19,6 +19,8 @@ class Service extends Model
         'areaID',
         'description',
         'logo',
+        'customization',
+        'customizationData',
         'paymentAccount',
         'openTime',
         'closeTime',
@@ -27,6 +29,14 @@ class Service extends Model
         'status',
         'accountStatus',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'customization' => 'array',
+            'customizationData' => 'array',
+        ];
+    }
 
     public function owner()
     {
