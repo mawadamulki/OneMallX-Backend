@@ -42,7 +42,7 @@ class ServiceDAO
     {
         return Service::query()
             ->whereKey($serviceId)
-            ->with(['media', 'rates', 'employees', 'workingDays', 'serviceItems.media', 'serviceItems.rates', 'owner', 'area', 'area.floor'])
+            ->with(['media', 'rates', 'employees', 'workingDays', 'serviceItems.media', 'serviceItems.rates', 'owner', 'area.category', 'area.floor'])
             ->firstOrFail();
     }
 

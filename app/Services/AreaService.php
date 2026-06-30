@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DAO\AreaDAOInterface;
 use App\DAO\FloorDAOInterface;
 use App\Models\Area;
+use App\Services\BusinessCategoryService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +17,8 @@ class AreaService
 
     public function __construct(
         AreaDAOInterface $areaDAO,
-        FloorDAOInterface $floorDAO
+        FloorDAOInterface $floorDAO,
+        protected BusinessCategoryService $businessCategoryService,
     ) {
         $this->areaDAO = $areaDAO;
         $this->floorDAO = $floorDAO;
@@ -51,6 +53,15 @@ class AreaService
         }
 
         $data['floorID'] = $floorId;
+
+        $categoryError = $this->businessCategoryService->validateForArea(
+            (string) $data['usageType'],
+            (int) $data['categoryID'],
+        );
+
+        if ($categoryError !== null) {
+            return ['error' => $categoryError];
+        }
 
         return $this->areaDAO->create($data);
     }

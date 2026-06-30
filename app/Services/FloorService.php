@@ -94,7 +94,7 @@ class FloorService
     {
         return $this->floorDAO->getAdminFloors()->map(function (Floor $floor) {
             $areaCategories = $floor->areas
-                ->pluck('category')
+                ->map(fn ($area) => $area->category?->name)
                 ->filter()
                 ->unique()
                 ->sort()

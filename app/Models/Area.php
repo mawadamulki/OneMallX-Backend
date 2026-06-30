@@ -15,13 +15,18 @@ class Area extends Model
         'number',
         'floorID',
         'usageType',
-        'category',
+        'categoryID',
         'maxCapacity',
     ];
 
     public function floor()
     {
         return $this->belongsTo(Floor::class, 'floorID');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'categoryID');
     }
 
     public function stores()
@@ -44,4 +49,3 @@ class Area extends Model
         return $this->morphMany(Media::class, 'mediable', 'mediableType', 'mediableID');
     }
 }
-

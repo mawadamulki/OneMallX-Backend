@@ -7,6 +7,7 @@ use App\DAO\ServiceDAO;
 use App\Models\Rate;
 use App\Models\Service;
 use App\Models\ServiceItem;
+use App\Support\BusinessCategoryFormatter;
 use App\Support\WorkingWeekday;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -104,7 +105,7 @@ class ServiceService
                     'name' => $service->area->name,
                     'number' => $service->area->number,
                     'usageType' => $service->area->usageType,
-                    'category' => $service->area->category,
+                    'category' => BusinessCategoryFormatter::toArray($service->area->category),
                     'floorID' => $service->area->floorID,
                     'floor' => $service->area->relationLoaded('floor') && $service->area->floor
                         ? [

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminAnalyticsController;
+use App\Http\Controllers\BusinessCategoryController;
 use App\Http\Controllers\AdvertisementController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\AuthController;
@@ -63,6 +64,9 @@ Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 // ___________________ Rates (public read) ___________________
 Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
     ->where('type', 'store|product|service|service_item');
+
+// ___________________ Business Categories (public) ___________________
+Route::get('/businessCategories', [BusinessCategoryController::class, 'index']);
 
 // ___________________ Advertisements (public) ___________________
 Route::get('/ads/home', [AdvertisementController::class, 'homeAds']);

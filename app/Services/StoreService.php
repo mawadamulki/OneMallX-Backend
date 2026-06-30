@@ -10,7 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\Rate;
 use App\Models\Store;
 use App\Models\StoreSubscription;
-use App\Support\RateableType;
+use App\Support\BusinessCategoryFormatter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -340,7 +340,7 @@ class StoreService
                     'number' => $store->area->number,
                     'floorID' => $store->area->floorID,
                     'usageType' => $store->area->usageType,
-                    'category' => $store->area->category,
+                    'category' => BusinessCategoryFormatter::toArray($store->area->category),
                     'maxCapacity' => $store->area->maxCapacity,
                     'floor' => $store->area->relationLoaded('floor') && $store->area->floor
                         ? [

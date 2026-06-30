@@ -8,13 +8,13 @@ class AreaDAO implements AreaDAOInterface
 {
     public function getByFloor($floorId)
     {
-        return Area::with('media')->where('floorID', $floorId)->get();
+        return Area::with(['media', 'category'])->where('floorID', $floorId)->get();
     }
 
     public function getStoreAreasByFloor($floorId)
     {
         return Area::query()
-            ->with('media')
+            ->with(['media', 'category'])
             ->withCount([
                 'stores as occupied' => fn ($q) => $q->where('accountStatus', 'active'),
             ])
@@ -26,7 +26,7 @@ class AreaDAO implements AreaDAOInterface
     public function getServiceAreasByFloor($floorId)
     {
         return Area::query()
-            ->with('media')
+            ->with(['media', 'category'])
             ->withCount([
                 'services as occupied' => fn ($q) => $q->where('accountStatus', 'active'),
             ])
@@ -37,7 +37,7 @@ class AreaDAO implements AreaDAOInterface
 
     public function findById($id): ?Area
     {
-        return Area::with('media')->find($id);
+        return Area::with(['media', 'category'])->find($id);
     }
 
     public function create(array $data): Area

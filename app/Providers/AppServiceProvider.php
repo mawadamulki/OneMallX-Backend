@@ -6,6 +6,8 @@ use App\DAO\AdminAnalyticsClass;
 use App\DAO\AdminAnalyticsInterface;
 use App\DAO\AdvertisementClass;
 use App\DAO\AdvertisementInterface;
+use App\DAO\BusinessCategoryClass;
+use App\DAO\BusinessCategoryInterface;
 use App\DAO\AreaDAO;
 use App\DAO\AreaDAOInterface;
 use App\DAO\CategoryClass;
@@ -53,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserDAOInterface::class, UserDAO::class);
         $this->app->bind(AdminAnalyticsInterface::class, AdminAnalyticsClass::class);
         $this->app->bind(AdvertisementInterface::class, AdvertisementClass::class);
+        $this->app->bind(BusinessCategoryInterface::class, BusinessCategoryClass::class);
         $this->app->bind(AreaDAOInterface::class, AreaDAO::class);
         $this->app->bind(FloorDAOInterface::class, FloorDAO::class);
         $this->app->bind(StoreInterface::class, StoreClass::class);

@@ -284,13 +284,15 @@ class AdminAnalyticsClass implements AdminAnalyticsInterface
     {
         return DB::table('stores')
             ->join('areas', 'areas.id', '=', 'stores.areaID')
+            ->join('business_categories', 'business_categories.id', '=', 'areas.categoryID')
             ->whereNull('stores.deleted_at')
-            ->selectRaw('areas.category as category, COUNT(*) as count')
-            ->groupBy('areas.category')
+            ->selectRaw('business_categories.slug as category, business_categories.name as category_name, COUNT(*) as count')
+            ->groupBy('business_categories.slug', 'business_categories.name')
             ->orderByDesc('count')
             ->get()
             ->map(fn ($row) => [
                 'category' => (string) $row->category,
+                'category_name' => (string) $row->category_name,
                 'count' => (int) $row->count,
             ])
             ->values()
@@ -301,13 +303,15 @@ class AdminAnalyticsClass implements AdminAnalyticsInterface
     {
         return DB::table('services')
             ->join('areas', 'areas.id', '=', 'services.areaID')
+            ->join('business_categories', 'business_categories.id', '=', 'areas.categoryID')
             ->whereNull('services.deleted_at')
-            ->selectRaw('areas.category as category, COUNT(*) as count')
-            ->groupBy('areas.category')
+            ->selectRaw('business_categories.slug as category, business_categories.name as category_name, COUNT(*) as count')
+            ->groupBy('business_categories.slug', 'business_categories.name')
             ->orderByDesc('count')
             ->get()
             ->map(fn ($row) => [
                 'category' => (string) $row->category,
+                'category_name' => (string) $row->category_name,
                 'count' => (int) $row->count,
             ])
             ->values()

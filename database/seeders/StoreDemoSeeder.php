@@ -30,7 +30,7 @@ class StoreDemoSeeder extends Seeder
     {
         $storeAreas = Area::query()
             ->where('usageType', 'store')
-            ->with('floor')
+            ->with(['floor', 'category'])
             ->orderBy('floorID')
             ->orderBy('number')
             ->get();
@@ -68,7 +68,7 @@ class StoreDemoSeeder extends Seeder
                     'storeOwnerID' => $owner->id,
                     'areaID' => $area->id,
                     'name' => "{$area->name} — Shop {$unit} ({$floorLabel})",
-                    'description' => "Seeded unit {$unit} in {$area->name} ({$area->category}).",
+                    'description' => "Seeded unit {$unit} in {$area->name} ({$area->category?->name}).",
                     'status' => 'active',
                     'accountStatus' => 'active',
                     'paymentAccount' => null,

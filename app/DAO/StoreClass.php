@@ -12,7 +12,7 @@ class StoreClass implements StoreInterface
     {
         $query = Store::query()
             ->visibleToCustomers()
-            ->with(['area.floor', 'media'])
+            ->with(['area.floor', 'area.category', 'media'])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->orderBy('name');
@@ -32,7 +32,7 @@ class StoreClass implements StoreInterface
 
         return Store::query()
             ->whereKey($store->id)
-            ->with(['area.floor', 'media'])
+            ->with(['area.floor', 'area.category', 'media'])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->first();
@@ -51,7 +51,7 @@ class StoreClass implements StoreInterface
     {
         return Store::query()
             ->whereKey($storeId)
-            ->with(['media', 'area.floor', 'owner'])->first();
+            ->with(['media', 'area.floor', 'area.category', 'owner'])->first();
 
         if (! $store) {
             return null;

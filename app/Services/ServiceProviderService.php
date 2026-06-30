@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Media;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
+use App\Support\BusinessCategoryFormatter;
 use App\Support\WorkingWeekday;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -248,7 +249,7 @@ class ServiceProviderService
                 ? [
                     'id' => $service->area->id,
                     'name' => $service->area->name,
-                    'category' => $service->area->category,
+                    'category' => BusinessCategoryFormatter::toArray($service->area->category),
                     'floor' => $service->area->relationLoaded('floor') && $service->area->floor
                         ? [
                             'id' => $service->area->floor->id,

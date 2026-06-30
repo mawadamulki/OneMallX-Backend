@@ -41,7 +41,7 @@ class FloorDAO implements FloorDAOInterface
             ->select(['id', 'name', 'number', 'mallID'])
             ->with([
                 'media' => fn ($q) => $q->orderBy('id'),
-                'areas' => fn ($q) => $q->select(['id', 'floorID', 'category']),
+                'areas' => fn ($q) => $q->select(['id', 'floorID', 'categoryID'])->with('category:id,name,slug'),
             ])
             ->withCount([
                 'areas',

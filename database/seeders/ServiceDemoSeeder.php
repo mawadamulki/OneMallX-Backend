@@ -48,7 +48,7 @@ class ServiceDemoSeeder extends Seeder
     {
         $serviceAreas = Area::query()
             ->where('usageType', 'service')
-            ->with('floor')
+            ->with(['floor', 'category'])
             ->orderBy('floorID')
             ->orderBy('number')
             ->get();
@@ -82,7 +82,7 @@ class ServiceDemoSeeder extends Seeder
                         'serviceOwnerID' => $owner->id,
                         'price' => 0,
                         'areaID' => $area->id,
-                        'description' => "Seeded service {$unit} in {$area->name} ({$area->category}).",
+                        'description' => "Seeded service {$unit} in {$area->name} ({$area->category?->name}).",
                         'paymentAccount' => null,
                         'openTime' => self::OPEN_TIME,
                         'closeTime' => self::CLOSE_TIME,

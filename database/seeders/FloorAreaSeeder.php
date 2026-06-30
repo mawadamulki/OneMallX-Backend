@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Area;
+use App\Models\BusinessCategory;
 use App\Models\Floor;
 use App\Models\Mall;
 use Illuminate\Database\Eloquent\Model;
@@ -27,21 +28,23 @@ class FloorAreaSeeder extends Seeder
             return;
         }
 
+        $categoryIds = BusinessCategory::query()->pluck('id', 'slug');
+
         $floorDefinitions = [
             ['name' => 'Ground Floor', 'number' => 0, 'areas' => [
-                ['name' => 'Main Entrance Plaza', 'number' => 1, 'usageType' => 'service', 'category' => 'common', 'maxCapacity' => 200],
-                ['name' => 'West Retail Wing', 'number' => 2, 'usageType' => 'store', 'category' => 'retail', 'maxCapacity' => 15],
-                ['name' => 'Food Court Central', 'number' => 3, 'usageType' => 'store', 'category' => 'food_beverage', 'maxCapacity' => 12],
+                ['name' => 'Main Entrance Plaza', 'number' => 1, 'usageType' => 'service', 'categorySlug' => 'common', 'maxCapacity' => 200],
+                ['name' => 'West Retail Wing', 'number' => 2, 'usageType' => 'store', 'categorySlug' => 'retail', 'maxCapacity' => 15],
+                ['name' => 'Food Court Central', 'number' => 3, 'usageType' => 'store', 'categorySlug' => 'food_beverage', 'maxCapacity' => 12],
             ]],
             ['name' => 'First Floor', 'number' => 1, 'areas' => [
-                ['name' => 'Fashion Corridor A', 'number' => 10, 'usageType' => 'store', 'category' => 'fashion', 'maxCapacity' => 20],
-                ['name' => 'Electronics Zone', 'number' => 11, 'usageType' => 'store', 'category' => 'electronics', 'maxCapacity' => 10],
-                ['name' => 'Customer Service Desk', 'number' => 12, 'usageType' => 'service', 'category' => 'customer_service', 'maxCapacity' => 50],
+                ['name' => 'Fashion Corridor A', 'number' => 10, 'usageType' => 'store', 'categorySlug' => 'fashion', 'maxCapacity' => 20],
+                ['name' => 'Electronics Zone', 'number' => 11, 'usageType' => 'store', 'categorySlug' => 'electronics', 'maxCapacity' => 10],
+                ['name' => 'Customer Service Desk', 'number' => 12, 'usageType' => 'service', 'categorySlug' => 'customer_service', 'maxCapacity' => 50],
             ]],
             ['name' => 'Second Floor', 'number' => 2, 'areas' => [
-                ['name' => 'Entertainment Hub', 'number' => 20, 'usageType' => 'service', 'category' => 'entertainment', 'maxCapacity' => 300],
-                ['name' => 'Beauty & Wellness Alley', 'number' => 21, 'usageType' => 'store', 'category' => 'beauty', 'maxCapacity' => 8],
-                ['name' => 'Kids Play Corner', 'number' => 22, 'usageType' => 'service', 'category' => 'family', 'maxCapacity' => 40],
+                ['name' => 'Entertainment Hub', 'number' => 20, 'usageType' => 'service', 'categorySlug' => 'entertainment', 'maxCapacity' => 300],
+                ['name' => 'Beauty & Wellness Alley', 'number' => 21, 'usageType' => 'store', 'categorySlug' => 'beauty', 'maxCapacity' => 8],
+                ['name' => 'Kids Play Corner', 'number' => 22, 'usageType' => 'service', 'categorySlug' => 'family', 'maxCapacity' => 40],
             ]],
         ];
 
@@ -57,8 +60,12 @@ class FloorAreaSeeder extends Seeder
             $this->attachSeedPhoto($floor, 'floors', 'floor-'.$floor->id);
 
             foreach ($areas as $area) {
+                $categorySlug = $area['categorySlug'];
+                unset($area['categorySlug']);
+
                 $areaModel = Area::create([
                     ...$area,
+                    'categoryID' => $categoryIds[$categorySlug],
                     'floorID' => $floor->id,
                 ]);
 
