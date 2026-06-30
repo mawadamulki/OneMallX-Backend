@@ -21,6 +21,7 @@ use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\StoreAnalyticsController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscribtionPlanController;
 use App\Http\Controllers\SubscriptionExtensionController;
@@ -64,6 +65,11 @@ Route::get('/stores', [StoreController::class, 'index']);
 Route::get('/storesInArea/{areaID}', [StoreController::class, 'listByArea']);
 Route::get('/productsInStore/{storeId}', [StoreController::class, 'products']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
+
+// ___________________ Search (mobile) ___________________
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/search', [SearchController::class, 'index']);
+});
 
 // ___________________ Rates (public read) ___________________
 Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
