@@ -310,7 +310,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/storeCollections/{collectionId}', [CollectionController::class, 'show']);
         Route::post('/storeCollections', [CollectionController::class, 'store']);
         Route::put('/storeCollections/{collectionId}', [CollectionController::class, 'update']);
-        Route::put('/storeCollections/{collectionId}/products', [CollectionController::class, 'syncProducts']);
+        Route::put('/storeCollections/products/{collectionId}', [CollectionController::class, 'syncProducts']);
         Route::delete('/storeCollections/{collectionId}', [CollectionController::class, 'destroy']);
 
         Route::get('/storeAttributes', [ProductAttributeController::class, 'index']);
