@@ -55,6 +55,7 @@ class CollectionClass implements CollectionInterface
     public function syncProducts(ProductCollection $collection, array $productIds): void
     {
         $collection->products()->sync($productIds);
+        $collection->unsetRelation('products');
     }
 
     public function allProductsBelongToStore(int $storeId, array $productIds): bool

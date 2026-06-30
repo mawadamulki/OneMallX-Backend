@@ -79,6 +79,7 @@ class CollectionService
 
         if ($productIds !== []) {
             $this->collectionClass->syncProducts($collection, $productIds);
+            $collection->unsetRelation('products');
         }
 
         $collection = $this->collectionClass->findForStore((int) $collection->id, (int) $store->id);
@@ -113,6 +114,7 @@ class CollectionService
             }
 
             $this->collectionClass->syncProducts($collection, $productIds);
+            $collection->unsetRelation('products');
         }
 
         $data = [];
