@@ -14,10 +14,21 @@ class ServiceController extends Controller
         protected ServiceProviderService $serviceProviderService,
     ) {}
 
-    public function index($areaId)
+    public function index(Request $request, $areaId)
     {
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
         return response()->json(
-            $this->serviceService->getServicesByArea($areaId)
+            $this->serviceService->listForCustomer($perPage, (int) $areaId)
+        );
+    }
+
+    public function list(Request $request)
+    {
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
+        return response()->json(
+            $this->serviceService->listForCustomer($perPage, null)
         );
     }
 

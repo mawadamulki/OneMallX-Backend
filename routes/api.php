@@ -52,14 +52,16 @@ Route::get('/areaDetails/{id}', [AreaController::class, 'show']);
 Route::get('/getAreaMedia/{id}', [AreaController::class, 'media']);
 
 // ___________________ Services Mobile Routes ___________________
-Route::get('/getServicesByArea/{areaID}', [ServiceController::class, 'index']);
-Route::get('/serviceDetails/{id}', [ServiceController::class, 'getServiceDetails']);
+Route::get('/services', [ServiceController::class, 'list']);
+Route::get('/servicesInArea/{areaID}', [ServiceController::class, 'index']);
+Route::get('/serviceDetails/{id}', [ServiceController::class, 'show']);
 Route::get('/serviceItemsInService/{serviceID}', [ServiceItemController::class, 'getItemsInService']);
 Route::get('/serviceItemAvailability/{id}', [ServiceItemController::class, 'getAvailability']);
 Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
 
 // ___________________ Stores Mobile Routes ___________________
 Route::get('/stores', [StoreController::class, 'index']);
+Route::get('/storesInArea/{areaID}', [StoreController::class, 'listByArea']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 
 // ___________________ Rates (public read) ___________________

@@ -18,20 +18,15 @@ class ServiceService
         private RateInterface $rateDAO
     ) {}
 
+    public function listForCustomer(int $perPage, ?int $areaId): LengthAwarePaginator
+    {
+        return $this->serviceDAO->paginateVisibleToCustomers($perPage, $areaId)
+            ->through(fn (Service $service) => $this->toCustomerArray($service));
+    }
+
     public function getServicesByArea($areaId)
     {
-        $services = $this->serviceDAO->getByArea($areaId);
-
-        return $services->map(function ($service) {
-            return [
-                'id' => $service->id,
-                'name' => $service->name,
-                'image' => $service->media->first()?->url,
-                'rating' => round($service->rates->avg('score'), 1),
-                'rating_count' => $service->rates->count(),
-                'is_favorite' => false, // لاحقاً
-            ];
-        });
+        return $this->listForCustomer(15, (int) $areaId);
     }
 
     public function getServiceDetails($id)
@@ -242,5 +237,46 @@ class ServiceService
                 ];
             }),
         ];
+    }
+
+    private function toCustomerArray(Service $service): array
+    {
+        $media = $this->mapMediaCollection($service);
+
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'description' => $service->description,
+            'image' => $media[0]['url'] ?? null,
+            'area' => $service->relationLoaded('area') && $service->area
+                ? [
+                    'id' => $service->area->id,
+                    'name' => $service->area->name,
+                    'floor' => $service->area->relationLoaded('floor') && $service->area->floor
+                        ? [
+                            'id' => $service->area->floor->id,
+                            'name' => $service->area->floor->name,
+                            'number' => $service->area->floor->number,
+                        ]
+                        : null,
+                ]
+                : null,
+            'media' => $media,
+            'rating' => $service->rates_avg_score !== null ? round((float) $service->rates_avg_score, 1) : null,
+            'rating_count' => (int) ($service->rates_count ?? 0),
+        ];
+    }
+
+    private function mapMediaCollection(Service $service): array
+    {
+        if (! $service->relationLoaded('media')) {
+            return [];
+        }
+
+        return $service->media->map(fn ($m) => [
+            'id' => $m->id,
+            'url' => $m->url,
+            'fileType' => $m->fileType,
+        ])->values()->all();
     }
 }

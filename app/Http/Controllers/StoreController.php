@@ -25,6 +25,15 @@ class StoreController extends Controller
         );
     }
 
+    public function listByArea(Request $request, $areaId)
+    {
+        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+
+        return response()->json(
+            $this->storeService->listForCustomer($perPage, (int) $areaId)
+        );
+    }
+
     // Customer: single store (404 if not active for customers). Route uses {storeId}.
     public function show($storeId)
     {

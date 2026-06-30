@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,6 +71,16 @@ class Service extends Model
     public function serviceItems()
     {
         return $this->hasMany(ServiceItem::class, 'serviceID');
+    }
+
+    public function scopeVisibleToCustomers(Builder $query): void
+    {
+        $query->where('accountStatus', 'active');
+    }
+
+    public function isVisibleToCustomers(): bool
+    {
+        return $this->accountStatus === 'active';
     }
 
     public function workingDays(): HasMany

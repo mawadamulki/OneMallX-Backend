@@ -9,6 +9,22 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ServiceDAO
 {
+    public function paginateVisibleToCustomers(int $perPage, ?int $areaId): LengthAwarePaginator
+    {
+        $query = Service::query()
+            ->visibleToCustomers()
+            ->with(['area.floor', 'area.category', 'media' => fn ($q) => $q->orderBy('id')])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->orderBy('name');
+
+        if ($areaId !== null) {
+            $query->where('areaID', $areaId);
+        }
+
+        return $query->paginate($perPage);
+    }
+
     public function getByArea($areaId)
     {
         return Service::with(['media', 'rates'])
