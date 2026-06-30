@@ -37,7 +37,7 @@ class StoreService
             return null;
         }
 
-        return $this->toCustomerArray($store);
+        return $this->toCustomerArray($store, includeCustomization: true);
     }
 
 
@@ -346,9 +346,9 @@ class StoreService
         ];
     }
 
-    private function toCustomerArray(Store $store): array
+    private function toCustomerArray(Store $store, bool $includeCustomization = false): array
     {
-        return [
+        $payload = [
             'id' => $store->id,
             'name' => $store->name,
             'description' => $store->description,
@@ -369,11 +369,16 @@ class StoreService
             'media' => $this->mapMediaCollection($store),
             'rating' => $store->rates_avg_score !== null ? round((float) $store->rates_avg_score, 1) : null,
             'rating_count' => (int) ($store->rates_count ?? 0),
-            'customization' => $store->customization,
-            'customizationData' => $store->customizationData,
-            'detailCustomization' => $store->detailCustomization,
-            'detailCustomizationData' => $store->detailCustomizationData,
         ];
+
+        if ($includeCustomization) {
+            $payload['customization'] = $store->customization;
+            $payload['customizationData'] = $store->customizationData;
+            $payload['detailCustomization'] = $store->detailCustomization;
+            $payload['detailCustomizationData'] = $store->detailCustomizationData;
+        }
+
+        return $payload;
     }
 
     private function toAdminStoreSummaryArray(Store $store): array

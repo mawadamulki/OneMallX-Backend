@@ -272,10 +272,6 @@ class ServiceService
             'media' => $media,
             'rating' => $service->rates_avg_score !== null ? round((float) $service->rates_avg_score, 1) : null,
             'rating_count' => (int) ($service->rates_count ?? 0),
-            'customization' => $service->customization,
-            'customizationData' => $service->customizationData,
-            'detailCustomization' => $service->detailCustomization,
-            'detailCustomizationData' => $service->detailCustomizationData,
         ];
     }
 
