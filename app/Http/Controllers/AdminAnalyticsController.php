@@ -30,6 +30,17 @@ class AdminAnalyticsController extends Controller
         ));
     }
 
+    public function overview(Request $request)
+    {
+        $data = $request->validate([
+            'month' => 'nullable|date_format:Y-m',
+        ]);
+
+        $result = $this->service->getOverview($data['month'] ?? now()->format('Y-m'));
+
+        return $this->respondAnalytics($result);
+    }
+
     public function export(Request $request)
     {
         $data = $this->validateAnalyticsExportRequest($request);

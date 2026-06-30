@@ -90,6 +90,21 @@ class AdminAnalyticsService
         ]);
     }
 
+    public function getOverview(string $month): array
+    {
+        if (Auth::id() === null) {
+            return $this->fail('Unauthenticated', 401);
+        }
+
+        $from = Carbon::createFromFormat('Y-m-d', $month.'-01')->startOfDay();
+        $to = $from->copy()->endOfMonth()->endOfDay();
+
+        return array_merge(
+            ['success' => true, 'http_status' => 200],
+            $this->adminAnalytics->getOverviewStats($from, $to),
+        );
+    }
+
     /**
      * @return array{0: Carbon, 1: Carbon}
      */

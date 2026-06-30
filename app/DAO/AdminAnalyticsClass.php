@@ -3,6 +3,7 @@
 namespace App\DAO;
 
 use App\Models\Booking;
+use App\Models\Floor;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Rate;
@@ -57,6 +58,18 @@ class AdminAnalyticsClass implements AdminAnalyticsInterface
             'services_by_area_category' => $this->getServicesByAreaCategory(),
             'moderation_summary' => $this->getModerationSummary($from, $to),
             'reports_by_status' => $this->getReportsByStatus(),
+        ];
+    }
+
+    public function getOverviewStats(Carbon $monthStart, Carbon $monthEnd): array
+    {
+        return [
+            'total_floors' => Floor::query()->count(),
+            'total_stores' => Store::query()->count(),
+            'total_services' => Service::query()->count(),
+            'occupied_stores' => Store::query()->where('accountStatus', 'active')->count(),
+            'occupied_services' => Service::query()->where('accountStatus', 'active')->count(),
+            'monthly_revenue' => $this->sumPlatformRevenue($monthStart, $monthEnd),
         ];
     }
 

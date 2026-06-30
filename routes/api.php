@@ -188,6 +188,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware(['permission:view admin analytics'])->group(function () {
+        Route::get('/adminAnalytics/overview', [AdminAnalyticsController::class, 'overview']);
         Route::get('/adminAnalytics/dashboard', [AdminAnalyticsController::class, 'dashboard']);
         Route::get('/adminAnalytics/export', [AdminAnalyticsController::class, 'export']);
     });
