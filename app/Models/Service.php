@@ -21,6 +21,8 @@ class Service extends Model
         'logo',
         'customization',
         'customizationData',
+        'detailCustomization',
+        'detailCustomizationData',
         'paymentAccount',
         'openTime',
         'closeTime',
@@ -35,6 +37,8 @@ class Service extends Model
         return [
             'customization' => 'array',
             'customizationData' => 'array',
+            'detailCustomization' => 'array',
+            'detailCustomizationData' => 'array',
         ];
     }
 

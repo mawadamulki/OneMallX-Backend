@@ -199,6 +199,36 @@ class StoreService
         ];
     }
 
+    public function updateDetailCustomizationForOwner(int $userId, array $payload): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $data = [];
+
+        foreach (['detailCustomization', 'detailCustomizationData'] as $field) {
+            if (array_key_exists($field, $payload)) {
+                $data[$field] = $payload[$field];
+            }
+        }
+
+        if ($data === []) {
+            return $this->fail('No fields to update.', 422);
+        }
+
+        $updated = $this->storeClass->updateStore($store, $data);
+
+        return [
+            'success' => true,
+            'message' => 'Detail customization saved.',
+            'detailCustomization' => $updated->detailCustomization,
+            'detailCustomizationData' => $updated->detailCustomizationData,
+        ];
+    }
+
     public function planForOwner(int $userId): array
     {
         $subscription = StoreSubscription::query()
@@ -322,6 +352,7 @@ class StoreService
             'id' => $store->id,
             'name' => $store->name,
             'description' => $store->description,
+            'logo' => $this->resolvePublicUrl($store->logo),
             'area' => $store->relationLoaded('area') && $store->area
                 ? [
                     'id' => $store->area->id,
@@ -340,6 +371,8 @@ class StoreService
             'rating_count' => (int) ($store->rates_count ?? 0),
             'customization' => $store->customization,
             'customizationData' => $store->customizationData,
+            'detailCustomization' => $store->detailCustomization,
+            'detailCustomizationData' => $store->detailCustomizationData,
         ];
     }
 
@@ -409,6 +442,8 @@ class StoreService
             'media' => $this->mapMediaCollection($store),
             'customization' => $store->customization,
             'customizationData' => $store->customizationData,
+            'detailCustomization' => $store->detailCustomization,
+            'detailCustomizationData' => $store->detailCustomizationData,
         ];
     }
 

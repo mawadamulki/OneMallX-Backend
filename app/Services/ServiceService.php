@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DAO\RateInterface;
 use App\DAO\ServiceDAO;
+use App\Models\Media;
 use App\Models\Rate;
 use App\Models\Service;
 use App\Models\ServiceItem;
@@ -41,6 +42,7 @@ class ServiceService
             'id' => $service->id,
             'name' => $service->name,
             'description' => $service->description,
+            'logo' => $this->resolvePublicUrl($service->logo),
             'location' => $service->locationID,
             'openTime' => $service->openTime,
             'closeTime' => $service->closeTime,
@@ -51,10 +53,13 @@ class ServiceService
                 ->all(),
             'weekdays' => $service->workingDays->sortBy('weekday')->pluck('weekday')->values()->all(),
             'image' => $service->media->first()?->url,
+            'media' => $this->mapMediaCollection($service),
             'rating' => round($service->rates->avg('score'), 1),
             'rating_count' => $service->rates->count(),
             'customization' => $service->customization,
             'customizationData' => $service->customizationData,
+            'detailCustomization' => $service->detailCustomization,
+            'detailCustomizationData' => $service->detailCustomizationData,
         ];
     }
 
@@ -249,6 +254,7 @@ class ServiceService
             'id' => $service->id,
             'name' => $service->name,
             'description' => $service->description,
+            'logo' => $this->resolvePublicUrl($service->logo),
             'image' => $media[0]['url'] ?? null,
             'area' => $service->relationLoaded('area') && $service->area
                 ? [
@@ -268,6 +274,8 @@ class ServiceService
             'rating_count' => (int) ($service->rates_count ?? 0),
             'customization' => $service->customization,
             'customizationData' => $service->customizationData,
+            'detailCustomization' => $service->detailCustomization,
+            'detailCustomizationData' => $service->detailCustomizationData,
         ];
     }
 
@@ -282,5 +290,14 @@ class ServiceService
             'url' => $m->url,
             'fileType' => $m->fileType,
         ])->values()->all();
+    }
+
+    private function resolvePublicUrl(?string $stored): ?string
+    {
+        if ($stored === null || $stored === '') {
+            return null;
+        }
+
+        return (new Media(['url' => $stored]))->url;
     }
 }

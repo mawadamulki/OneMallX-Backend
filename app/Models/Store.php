@@ -19,6 +19,8 @@ class Store extends Model
         'logo',
         'customization',
         'customizationData',
+        'detailCustomization',
+        'detailCustomizationData',
         'status',
         'accountStatus',
         'paymentAccount',
@@ -29,6 +31,8 @@ class Store extends Model
         return [
             'customization' => 'array',
             'customizationData' => 'array',
+            'detailCustomization' => 'array',
+            'detailCustomizationData' => 'array',
         ];
     }
 

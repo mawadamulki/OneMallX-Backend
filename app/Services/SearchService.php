@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DAO\SearchInterface;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Media;
 use App\Models\Service;
 use App\Models\Store;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -56,6 +57,7 @@ class SearchService
             'id' => $store->id,
             'name' => $store->name,
             'description' => $store->description,
+            'logo' => $this->resolvePublicUrl($store->logo),
             'area' => $store->relationLoaded('area') && $store->area
                 ? [
                     'id' => $store->area->id,
@@ -127,6 +129,7 @@ class SearchService
             'id' => $service->id,
             'name' => $service->name,
             'description' => $service->description,
+            'logo' => $this->resolvePublicUrl($service->logo),
             'image' => $media[0]['url'] ?? null,
             'area' => $service->relationLoaded('area') && $service->area
                 ? [
@@ -158,5 +161,14 @@ class SearchService
             'url' => $m->url,
             'fileType' => $m->fileType,
         ])->values()->all();
+    }
+
+    private function resolvePublicUrl(?string $stored): ?string
+    {
+        if ($stored === null || $stored === '') {
+            return null;
+        }
+
+        return (new Media(['url' => $stored]))->url;
     }
 }

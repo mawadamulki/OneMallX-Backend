@@ -131,6 +131,36 @@ class ServiceProviderService
         ];
     }
 
+    public function updateDetailCustomizationForOwner(int $userId, array $payload): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        $data = [];
+
+        foreach (['detailCustomization', 'detailCustomizationData'] as $field) {
+            if (array_key_exists($field, $payload)) {
+                $data[$field] = $payload[$field];
+            }
+        }
+
+        if ($data === []) {
+            return $this->fail('No fields to update.', 422);
+        }
+
+        $updated = $this->serviceProviderClass->updateService($service, $data);
+
+        return [
+            'success' => true,
+            'message' => 'Detail customization saved.',
+            'detailCustomization' => $updated->detailCustomization,
+            'detailCustomizationData' => $updated->detailCustomizationData,
+        ];
+    }
+
     public function syncWorkingDaysForOwner(int $userId, array $payload): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
@@ -296,6 +326,8 @@ class ServiceProviderService
                 : null,
             'customization' => $service->customization,
             'customizationData' => $service->customizationData,
+            'detailCustomization' => $service->detailCustomization,
+            'detailCustomizationData' => $service->detailCustomizationData,
         ];
     }
 
