@@ -131,6 +131,21 @@ class ServiceProviderService
         ];
     }
 
+    public function customizationForOwner(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'customization' => $service->customization,
+            'customizationData' => $service->customizationData,
+        ];
+    }
+
     public function updateDetailCustomizationForOwner(int $userId, array $payload): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);
@@ -158,6 +173,21 @@ class ServiceProviderService
             'message' => 'Detail customization saved.',
             'detailCustomization' => $updated->detailCustomization,
             'detailCustomizationData' => $updated->detailCustomizationData,
+        ];
+    }
+
+    public function detailCustomizationForOwner(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'detailCustomization' => $service->detailCustomization,
+            'detailCustomizationData' => $service->detailCustomizationData,
         ];
     }
 

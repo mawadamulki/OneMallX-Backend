@@ -294,7 +294,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/store', [StoreController::class, 'showForOwner']);
         Route::get('/storePlan', [StoreController::class, 'planForOwner']);
         Route::put('/store', [StoreController::class, 'updateForOwner']);
+        Route::get('/store/customization', [StoreController::class, 'customizationForOwner']);
         Route::put('/store/customization', [StoreController::class, 'updateCustomizationForOwner']);
+        Route::get('/store/detailCustomization', [StoreController::class, 'detailCustomizationForOwner']);
         Route::put('/store/detailCustomization', [StoreController::class, 'updateDetailCustomizationForOwner']);
         Route::post('/storeLogo', [StoreController::class, 'storeLogo']);
         Route::delete('/storeLogo', [StoreController::class, 'destroyLogo']);
@@ -357,7 +359,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/service', [ServiceController::class, 'showForOwner']);
         Route::get('/servicePlan', [ServiceController::class, 'planForOwner']);
         Route::put('/service', [ServiceController::class, 'updateForOwner']);
+        Route::get('/service/customization', [ServiceController::class, 'customizationForOwner']);
         Route::put('/service/customization', [ServiceController::class, 'updateCustomizationForOwner']);
+        Route::get('/service/detailCustomization', [ServiceController::class, 'detailCustomizationForOwner']);
         Route::put('/service/detailCustomization', [ServiceController::class, 'updateDetailCustomizationForOwner']);
         Route::put('/service/workingDays', [ServiceController::class, 'syncWorkingDays']);
         Route::post('/serviceMedia', [ServiceController::class, 'storeMedia']);

@@ -199,6 +199,21 @@ class StoreService
         ];
     }
 
+    public function customizationForOwner(int $userId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'customization' => $store->customization,
+            'customizationData' => $store->customizationData,
+        ];
+    }
+
     public function updateDetailCustomizationForOwner(int $userId, array $payload): array
     {
         $store = $this->storeClass->findStoreByOwnerId($userId);
@@ -226,6 +241,21 @@ class StoreService
             'message' => 'Detail customization saved.',
             'detailCustomization' => $updated->detailCustomization,
             'detailCustomizationData' => $updated->detailCustomizationData,
+        ];
+    }
+
+    public function detailCustomizationForOwner(int $userId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        return [
+            'success' => true,
+            'detailCustomization' => $store->detailCustomization,
+            'detailCustomizationData' => $store->detailCustomizationData,
         ];
     }
 

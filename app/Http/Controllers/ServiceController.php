@@ -139,6 +139,17 @@ class ServiceController extends Controller
         return response()->json($result);
     }
 
+    public function customizationForOwner()
+    {
+        $result = $this->serviceProviderService->customizationForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function updateCustomizationForOwner(Request $request)
     {
         $validated = $request->validate([
@@ -166,6 +177,17 @@ class ServiceController extends Controller
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
+        }
+
+        return response()->json($result);
+    }
+
+    public function detailCustomizationForOwner()
+    {
+        $result = $this->serviceProviderService->detailCustomizationForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
         }
 
         return response()->json($result);
