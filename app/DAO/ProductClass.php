@@ -33,23 +33,29 @@ class ProductClass implements ProductInterface
 
     public function paginateVisibleProductsForStore(int $storeId, int $perPage): LengthAwarePaginator
     {
-        return Product::query()
-            ->where('storeID', $storeId)
-            ->where('status', 'active')
-            ->whereHas('store', fn ($q) => $q->where('accountStatus', 'active'))
-            ->with([
-                'media' => fn ($q) => $q->orderBy('id'),
-                'categories:id,name,slug',
-                'variants' => fn ($q) => $q
-                    ->select(['id', 'productID', 'price', 'quantity', 'attributeName', 'isDefault', 'status'])
-                    ->where('status', 'active')
-                    ->orderByDesc('isDefault'),
-            ])
-            ->withCount('rates')
-            ->withAvg('rates', 'score')
-            ->orderByDesc('isFeatured')
-            ->orderByDesc('publishedAt')
-            ->orderBy('name')
+        return $this->visibleProductsQuery($storeId)->paginate($perPage);
+    }
+
+    public function paginateOfferProductsForStore(int $storeId, int $perPage): LengthAwarePaginator
+    {
+        return $this->visibleProductsQuery($storeId)
+            ->whereHas('variants', fn ($q) => $q
+                ->where('status', 'active')
+                ->where('discountPercentage', '>', 0))
+            ->paginate($perPage);
+    }
+
+    public function paginateVisibleProductsForCategory(int $storeId, int $categoryId, int $perPage): LengthAwarePaginator
+    {
+        return $this->visibleProductsQuery($storeId)
+            ->whereHas('categories', fn ($q) => $q->where('categories.id', $categoryId))
+            ->paginate($perPage);
+    }
+
+    public function paginateVisibleProductsForCollection(int $storeId, int $collectionId, int $perPage): LengthAwarePaginator
+    {
+        return $this->visibleProductsQuery($storeId)
+            ->whereHas('collections', fn ($q) => $q->where('collections.id', $collectionId))
             ->paginate($perPage);
     }
 
@@ -293,6 +299,37 @@ class ProductClass implements ProductInterface
         }
 
         return $query->exists();
+    }
+
+    private function visibleProductsQuery(int $storeId)
+    {
+        return Product::query()
+            ->where('storeID', $storeId)
+            ->where('status', 'active')
+            ->whereHas('store', fn ($q) => $q->where('accountStatus', 'active'))
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'categories:id,name,slug',
+                'variants' => fn ($q) => $q
+                    ->select([
+                        'id',
+                        'productID',
+                        'price',
+                        'compareAtPrice',
+                        'discountPercentage',
+                        'quantity',
+                        'attributeName',
+                        'isDefault',
+                        'status',
+                    ])
+                    ->where('status', 'active')
+                    ->orderByDesc('isDefault'),
+            ])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->orderByDesc('isFeatured')
+            ->orderByDesc('publishedAt')
+            ->orderBy('name');
     }
 
     /** @param  array<int, array<string, mixed>>  $variantsData */

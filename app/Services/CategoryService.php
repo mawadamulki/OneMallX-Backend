@@ -5,6 +5,8 @@ namespace App\Services;
 use App\DAO\CategoryInterface;
 use App\DAO\ProductInterface;
 use App\Models\Category;
+use App\Models\Category;
+use App\Models\Store;
 use Illuminate\Support\Str;
 
 class CategoryService
@@ -29,6 +31,21 @@ class CategoryService
         return [
             'success' => true,
             'categories' => $categories,
+        ];
+    }
+
+    public function listForCustomerByStore(int $storeId): ?array
+    {
+        if (! $this->storeIsVisibleToCustomers($storeId)) {
+            return null;
+        }
+
+        $categories = $this->categoryClass
+            ->listForStore($storeId)
+            ->map(fn (Category $category) => $this->toArray($category));
+
+        return [
+            'categories' => $categories->values()->all(),
         ];
     }
 
@@ -176,6 +193,11 @@ class CategoryService
         }
 
         return $slug;
+    }
+
+    private function storeIsVisibleToCustomers(int $storeId): bool
+    {
+        return Store::query()->visibleToCustomers()->whereKey($storeId)->exists();
     }
 
     /** @return array{success: false, message: string, http_status: int} */

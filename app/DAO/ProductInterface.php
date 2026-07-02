@@ -15,6 +15,12 @@ interface ProductInterface
 
     public function paginateVisibleProductsForStore(int $storeId, int $perPage): LengthAwarePaginator;
 
+    public function paginateOfferProductsForStore(int $storeId, int $perPage): LengthAwarePaginator;
+
+    public function paginateVisibleProductsForCategory(int $storeId, int $categoryId, int $perPage): LengthAwarePaginator;
+
+    public function paginateVisibleProductsForCollection(int $storeId, int $collectionId, int $perPage): LengthAwarePaginator;
+
     public function listAllProductsForStore(int $storeId): \Illuminate\Support\Collection;
 
     public function countActiveProductsForStore(int $storeId): int;

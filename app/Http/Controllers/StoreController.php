@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Store;
+use App\Services\CategoryService;
+use App\Services\CollectionService;
 use App\Services\ProductService;
 use App\Services\StoreService;
 use Illuminate\Http\Request;
@@ -14,6 +16,8 @@ class StoreController extends Controller
     public function __construct(
         protected StoreService $storeService,
         protected ProductService $productService,
+        protected CategoryService $categoryService,
+        protected CollectionService $collectionService,
     ) {}
 
     // Customer: paginated list (accountStatus = active only).
@@ -87,7 +91,7 @@ class StoreController extends Controller
 
     public function products(Request $request, $storeId)
     {
-        $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
+        $perPage = $this->customerProductsPerPage($request);
 
         $products = $this->productService->listForCustomerByStore((int) $storeId, $perPage);
 
@@ -96,6 +100,75 @@ class StoreController extends Controller
         }
 
         return response()->json($products);
+    }
+
+    public function productsWithOffers(Request $request, $storeId)
+    {
+        $products = $this->productService->listOffersForCustomerByStore(
+            (int) $storeId,
+            $this->customerProductsPerPage($request)
+        );
+
+        if ($products === null) {
+            abort(404);
+        }
+
+        return response()->json($products);
+    }
+
+    public function collections(Request $request, $storeId)
+    {
+        $payload = $this->collectionService->listForCustomerByStore((int) $storeId);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
+    public function productsInCollection(Request $request, $collectionId)
+    {
+        $products = $this->productService->listForCustomerByCollection(
+            (int) $collectionId,
+            $this->customerProductsPerPage($request)
+        );
+
+        if ($products === null) {
+            abort(404);
+        }
+
+        return response()->json($products);
+    }
+
+    public function categories(Request $request, $storeId)
+    {
+        $payload = $this->categoryService->listForCustomerByStore((int) $storeId);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
+    public function productsInCategory(Request $request, $categoryId)
+    {
+        $products = $this->productService->listForCustomerByCategory(
+            (int) $categoryId,
+            $this->customerProductsPerPage($request)
+        );
+
+        if ($products === null) {
+            abort(404);
+        }
+
+        return response()->json($products);
+    }
+
+    private function customerProductsPerPage(Request $request): int
+    {
+        return min(max((int) $request->query('per_page', 15), 1), 50);
     }
 
 

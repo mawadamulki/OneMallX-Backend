@@ -7,6 +7,7 @@ use App\DAO\ProductInterface;
 use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductCollection;
+use App\Models\Store;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,6 +32,21 @@ class CollectionService
 
         return [
             'success' => true,
+            'collections' => $collections->values()->all(),
+        ];
+    }
+
+    public function listForCustomerByStore(int $storeId): ?array
+    {
+        if (! $this->storeIsVisibleToCustomers($storeId)) {
+            return null;
+        }
+
+        $collections = $this->collectionClass
+            ->listForStore($storeId)
+            ->map(fn (ProductCollection $collection) => $this->toSummaryArray($collection));
+
+        return [
             'collections' => $collections->values()->all(),
         ];
     }
@@ -234,6 +250,11 @@ class CollectionService
         }
 
         return (new Media(['url' => $stored]))->url;
+    }
+
+    private function storeIsVisibleToCustomers(int $storeId): bool
+    {
+        return Store::query()->visibleToCustomers()->whereKey($storeId)->exists();
     }
 
     /** @return array{success: false, message: string, http_status: int} */

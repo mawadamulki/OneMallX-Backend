@@ -5,8 +5,10 @@ namespace App\Services;
 use App\DAO\CategoryInterface;
 use App\DAO\ProductAttributeInterface;
 use App\DAO\ProductInterface;
+use App\Models\Category;
 use App\Models\Media;
 use App\Models\Product;
+use App\Models\ProductCollection;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -45,18 +47,55 @@ class ProductService
 
     public function listForCustomerByStore(int $storeId, int $perPage): ?LengthAwarePaginator
     {
-        $store = Store::query()
-            ->visibleToCustomers()
-            ->whereKey($storeId)
-            ->first();
-
-        if ($store === null) {
+        if ($this->findVisibleStore($storeId) === null) {
             return null;
         }
 
         return $this->productClass
-            ->paginateVisibleProductsForStore((int) $store->id, $perPage)
+            ->paginateVisibleProductsForStore($storeId, $perPage)
             ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
+    }
+
+    public function listOffersForCustomerByStore(int $storeId, int $perPage): ?LengthAwarePaginator
+    {
+        if ($this->findVisibleStore($storeId) === null) {
+            return null;
+        }
+
+        return $this->productClass
+            ->paginateOfferProductsForStore($storeId, $perPage)
+            ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
+    }
+
+    public function listForCustomerByCategory(int $categoryId, int $perPage): ?LengthAwarePaginator
+    {
+        $category = Category::query()->whereKey($categoryId)->first();
+
+        if ($category === null || $this->findVisibleStore((int) $category->storeID) === null) {
+            return null;
+        }
+
+        return $this->productClass
+            ->paginateVisibleProductsForCategory((int) $category->storeID, $categoryId, $perPage)
+            ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
+    }
+
+    public function listForCustomerByCollection(int $collectionId, int $perPage): ?LengthAwarePaginator
+    {
+        $collection = ProductCollection::query()->whereKey($collectionId)->first();
+
+        if ($collection === null || $this->findVisibleStore((int) $collection->storeID) === null) {
+            return null;
+        }
+
+        return $this->productClass
+            ->paginateVisibleProductsForCollection((int) $collection->storeID, $collectionId, $perPage)
+            ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
+    }
+
+    private function findVisibleStore(int $storeId): ?Store
+    {
+        return Store::query()->visibleToCustomers()->whereKey($storeId)->first();
     }
 
     public function showForOwner(int $userId, int $productId): array
@@ -582,6 +621,8 @@ class ProductService
             'variants' => $variants->map(fn (ProductVariant $variant) => [
                 'id' => $variant->id,
                 'price' => $variant->price,
+                'compareAtPrice' => $variant->compareAtPrice,
+                'discountPercentage' => (int) $variant->discountPercentage,
                 'quantity' => $variant->quantity,
                 'isDefault' => (bool) $variant->isDefault,
                 'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
