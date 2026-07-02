@@ -57,7 +57,9 @@ Route::get('/services', [ServiceController::class, 'list']);
 Route::get('/servicesInArea/{areaID}', [ServiceController::class, 'index']);
 Route::get('/serviceDetails/{id}', [ServiceController::class, 'show']);
 Route::get('/serviceCustomization/{id}', [ServiceController::class, 'customizationForMobile']);
+Route::get('/serviceCustomizationData/{id}', [ServiceController::class, 'customizationDataForMobile']);
 Route::get('/serviceDetailCustomization/{id}', [ServiceController::class, 'detailCustomizationForMobile']);
+Route::get('/serviceDetailCustomizationData/{id}', [ServiceController::class, 'detailCustomizationDataForMobile']);
 Route::get('/serviceItemsInService/{serviceID}', [ServiceItemController::class, 'getItemsInService']);
 Route::get('/serviceItemAvailability/{id}', [ServiceItemController::class, 'getAvailability']);
 Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
@@ -68,7 +70,9 @@ Route::get('/storesInArea/{areaID}', [StoreController::class, 'listByArea']);
 Route::get('/productsInStore/{storeId}', [StoreController::class, 'products']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 Route::get('/storeCustomization/{storeId}', [StoreController::class, 'customizationForMobile']);
+Route::get('/storeCustomizationData/{storeId}', [StoreController::class, 'customizationDataForMobile']);
 Route::get('/storeDetailCustomization/{storeId}', [StoreController::class, 'detailCustomizationForMobile']);
+Route::get('/storeDetailCustomizationData/{storeId}', [StoreController::class, 'detailCustomizationDataForMobile']);
 
 // ___________________ Search (mobile) ___________________
 Route::middleware('throttle:60,1')->group(function () {

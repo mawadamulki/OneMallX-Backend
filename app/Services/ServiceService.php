@@ -63,32 +63,9 @@ class ServiceService
         ];
     }
 
-    public function customizationForCustomer(int $serviceId): ?array
+    public function findVisibleServiceForCustomer(int $serviceId): ?Service
     {
-        $service = Service::query()->visibleToCustomers()->whereKey($serviceId)->first();
-
-        if ($service === null) {
-            return null;
-        }
-
-        return [
-            'customization' => $service->customization,
-            'customizationData' => $service->customizationData,
-        ];
-    }
-
-    public function detailCustomizationForCustomer(int $serviceId): ?array
-    {
-        $service = Service::query()->visibleToCustomers()->whereKey($serviceId)->first();
-
-        if ($service === null) {
-            return null;
-        }
-
-        return [
-            'detailCustomization' => $service->detailCustomization,
-            'detailCustomizationData' => $service->detailCustomizationData,
-        ];
+        return Service::query()->visibleToCustomers()->whereKey($serviceId)->first();
     }
 
     public function adminServicesSummaryList(int $perPage): LengthAwarePaginator

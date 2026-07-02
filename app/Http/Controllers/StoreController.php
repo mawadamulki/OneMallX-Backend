@@ -56,24 +56,33 @@ class StoreController extends Controller
 
     public function customizationForMobile($storeId)
     {
-        $payload = $this->storeService->customizationForCustomer((int) $storeId);
+        return $this->storeCustomizationJsonResponse((int) $storeId, 'customization');
+    }
 
-        if ($payload === null) {
-            abort(404);
-        }
-
-        return response()->json($payload);
+    public function customizationDataForMobile($storeId)
+    {
+        return $this->storeCustomizationJsonResponse((int) $storeId, 'customizationData');
     }
 
     public function detailCustomizationForMobile($storeId)
     {
-        $payload = $this->storeService->detailCustomizationForCustomer((int) $storeId);
+        return $this->storeCustomizationJsonResponse((int) $storeId, 'detailCustomization');
+    }
 
-        if ($payload === null) {
+    public function detailCustomizationDataForMobile($storeId)
+    {
+        return $this->storeCustomizationJsonResponse((int) $storeId, 'detailCustomizationData');
+    }
+
+    private function storeCustomizationJsonResponse(int $storeId, string $field)
+    {
+        $store = $this->storeService->findVisibleStoreForCustomer($storeId);
+
+        if ($store === null) {
             abort(404);
         }
 
-        return response()->json($payload);
+        return response()->json($store->{$field});
     }
 
     public function products(Request $request, $storeId)

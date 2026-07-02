@@ -45,24 +45,33 @@ class ServiceController extends Controller
 
     public function customizationForMobile($id)
     {
-        $payload = $this->serviceService->customizationForCustomer((int) $id);
+        return $this->serviceCustomizationJsonResponse((int) $id, 'customization');
+    }
 
-        if ($payload === null) {
-            abort(404);
-        }
-
-        return response()->json($payload);
+    public function customizationDataForMobile($id)
+    {
+        return $this->serviceCustomizationJsonResponse((int) $id, 'customizationData');
     }
 
     public function detailCustomizationForMobile($id)
     {
-        $payload = $this->serviceService->detailCustomizationForCustomer((int) $id);
+        return $this->serviceCustomizationJsonResponse((int) $id, 'detailCustomization');
+    }
 
-        if ($payload === null) {
+    public function detailCustomizationDataForMobile($id)
+    {
+        return $this->serviceCustomizationJsonResponse((int) $id, 'detailCustomizationData');
+    }
+
+    private function serviceCustomizationJsonResponse(int $serviceId, string $field)
+    {
+        $service = $this->serviceService->findVisibleServiceForCustomer($serviceId);
+
+        if ($service === null) {
             abort(404);
         }
 
-        return response()->json($payload);
+        return response()->json($service->{$field});
     }
 
     public function adminServicesSummary(Request $request)

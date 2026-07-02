@@ -40,32 +40,9 @@ class StoreService
         return $this->toCustomerArray($store, includeCustomization: true);
     }
 
-    public function customizationForCustomer(int $storeId): ?array
+    public function findVisibleStoreForCustomer(int $storeId): ?Store
     {
-        $store = Store::query()->visibleToCustomers()->whereKey($storeId)->first();
-
-        if ($store === null) {
-            return null;
-        }
-
-        return [
-            'customization' => $store->customization,
-            'customizationData' => $store->customizationData,
-        ];
-    }
-
-    public function detailCustomizationForCustomer(int $storeId): ?array
-    {
-        $store = Store::query()->visibleToCustomers()->whereKey($storeId)->first();
-
-        if ($store === null) {
-            return null;
-        }
-
-        return [
-            'detailCustomization' => $store->detailCustomization,
-            'detailCustomizationData' => $store->detailCustomizationData,
-        ];
+        return Store::query()->visibleToCustomers()->whereKey($storeId)->first();
     }
 
 
