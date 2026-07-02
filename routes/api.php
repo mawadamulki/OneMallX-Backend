@@ -63,6 +63,8 @@ Route::get('/serviceDetailCustomizationData/{id}', [ServiceController::class, 'd
 Route::get('/serviceItemsInService/{serviceID}', [ServiceItemController::class, 'getItemsInService']);
 Route::get('/serviceItemAvailability/{id}', [ServiceItemController::class, 'getAvailability']);
 Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
+Route::get('/serviceRates/{serviceId}', [RateController::class, 'serviceRatesForMobile']);
+Route::get('/serviceItemRates/{serviceItemId}', [RateController::class, 'serviceItemRatesForMobile']);
 
 // ___________________ Stores Mobile Routes ___________________
 Route::get('/stores', [StoreController::class, 'index']);
@@ -73,6 +75,8 @@ Route::get('/collectionsInStore/{storeId}', [StoreController::class, 'collection
 Route::get('/productsInCollection/{collectionId}', [StoreController::class, 'productsInCollection']);
 Route::get('/categoriesInStore/{storeId}', [StoreController::class, 'categories']);
 Route::get('/productsInCategory/{categoryId}', [StoreController::class, 'productsInCategory']);
+Route::get('/storeRates/{storeId}', [RateController::class, 'storeRatesForMobile']);
+Route::get('/productRates/{productId}', [RateController::class, 'productRatesForMobile']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 Route::get('/storeCustomization/{storeId}', [StoreController::class, 'customizationForMobile']);
 Route::get('/storeCustomizationData/{storeId}', [StoreController::class, 'customizationDataForMobile']);

@@ -111,12 +111,22 @@ class RateService
 
     public function listForRateable(string $typeAlias, int $rateableId, int $perPage): array
     {
+        return $this->listForRateableInternal($typeAlias, $rateableId, $perPage, strictVisibility: false);
+    }
+
+    public function listForRateableMobile(string $typeAlias, int $rateableId, int $perPage): array
+    {
+        return $this->listForRateableInternal($typeAlias, $rateableId, $perPage, strictVisibility: true);
+    }
+
+    private function listForRateableInternal(string $typeAlias, int $rateableId, int $perPage, bool $strictVisibility): array
+    {
         $rateableClass = RateableType::resolveClass($typeAlias);
         if ($rateableClass === null) {
             return $this->fail('Invalid rateable type.', 422);
         }
 
-        $entityError = $this->validateRateableExists($rateableClass, $rateableId, false);
+        $entityError = $this->validateRateableExists($rateableClass, $rateableId, $strictVisibility);
         if ($entityError !== null) {
             return $entityError;
         }
@@ -574,6 +584,9 @@ class RateService
             if ($product === null) {
                 return $this->fail('Product not found.', 404);
             }
+            if ($strictVisibility && $product->status !== 'active') {
+                return $this->fail('Product not found.', 404);
+            }
             if ($strictVisibility && ($product->store === null || ! $product->store->isVisibleToCustomers())) {
                 return $this->fail('Product not found.', 404);
             }
@@ -582,7 +595,11 @@ class RateService
         }
 
         if ($rateableClass === Service::class) {
-            if (! Service::query()->whereKey($rateableId)->exists()) {
+            $service = Service::query()->find($rateableId);
+            if ($service === null) {
+                return $this->fail('Service not found.', 404);
+            }
+            if ($strictVisibility && ! $service->isVisibleToCustomers()) {
                 return $this->fail('Service not found.', 404);
             }
 
@@ -590,7 +607,14 @@ class RateService
         }
 
         if ($rateableClass === ServiceItem::class) {
-            if (! ServiceItem::query()->whereKey($rateableId)->exists()) {
+            $item = ServiceItem::query()->with('service')->find($rateableId);
+            if ($item === null) {
+                return $this->fail('Service item not found.', 404);
+            }
+            if ($strictVisibility && ! $item->isActive()) {
+                return $this->fail('Service item not found.', 404);
+            }
+            if ($strictVisibility && ($item->service === null || ! $item->service->isVisibleToCustomers())) {
                 return $this->fail('Service item not found.', 404);
             }
 

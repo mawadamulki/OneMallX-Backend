@@ -53,6 +53,31 @@ class RateController extends Controller
         return $this->respond($this->rateService->listForRateable($type, $id, $perPage));
     }
 
+    public function storeRatesForMobile(Request $request, int $storeId)
+    {
+        return $this->respond($this->rateService->listForRateableMobile('store', $storeId, $this->mobileRatesPerPage($request)));
+    }
+
+    public function serviceRatesForMobile(Request $request, int $serviceId)
+    {
+        return $this->respond($this->rateService->listForRateableMobile('service', $serviceId, $this->mobileRatesPerPage($request)));
+    }
+
+    public function productRatesForMobile(Request $request, int $productId)
+    {
+        return $this->respond($this->rateService->listForRateableMobile('product', $productId, $this->mobileRatesPerPage($request)));
+    }
+
+    public function serviceItemRatesForMobile(Request $request, int $serviceItemId)
+    {
+        return $this->respond($this->rateService->listForRateableMobile('service_item', $serviceItemId, $this->mobileRatesPerPage($request)));
+    }
+
+    private function mobileRatesPerPage(Request $request): int
+    {
+        return min(max((int) $request->query('per_page', 10), 1), 50);
+    }
+
     public function report(int $id)
     {
         return $this->respond($this->rateService->report((int) Auth::id(), $id), 201);
