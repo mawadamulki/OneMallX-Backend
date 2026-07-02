@@ -91,6 +91,8 @@ class StoreDemoSeeder extends Seeder
                 ]);
                 $storeCount++;
 
+                $this->seedStorePhotos($store);
+
                 if (! $this->loggedMobileTestStore) {
                     $this->seedMobileTestStoreCustomization($store);
                 }
@@ -114,7 +116,7 @@ class StoreDemoSeeder extends Seeder
         }
 
         $this->command?->info(sprintf(
-            'StoreDemoSeeder: %d retail area(s), %d owner account(s), %d store(s), %d product(s), %d offer product(s). Login any owner: password "%s".',
+            'StoreDemoSeeder: %d retail area(s), %d owner account(s), %d store(s), %d product(s), %d offer product(s). Each store has logo + 2 gallery photos; each product has 1 photo. Login any owner: password "%s".',
             $storeAreas->count(),
             $ownerCount,
             $storeCount,
@@ -243,6 +245,8 @@ class StoreDemoSeeder extends Seeder
             ...$variantData,
         ]);
 
+        $this->seedProductPhoto($product, (int) $store->id, $productIndex);
+
         if ($categories !== []) {
             $category = $categories[($productIndex - 1) % count($categories)];
             $product->categories()->sync([$category->id]);
@@ -256,12 +260,45 @@ class StoreDemoSeeder extends Seeder
         return ['hasOffer' => $hasOffer];
     }
 
+    private function seedStorePhotos(Store $store): void
+    {
+        $logoPath = "stores/{$store->id}/logo/demo-logo.png";
+        $this->putPlaceholderImage($logoPath);
+        $store->update(['logo' => $logoPath]);
+
+        foreach (['banner', 'gallery-1'] as $basename) {
+            $path = "stores/{$store->id}/{$basename}.png";
+            $this->putPlaceholderImage($path);
+
+            $store->media()->create([
+                'fileType' => 'image/png',
+                'url' => $path,
+            ]);
+        }
+    }
+
+    private function seedProductPhoto(Product $product, int $storeId, int $productIndex): void
+    {
+        $path = "stores/{$storeId}/products/{$product->id}/demo-{$productIndex}.png";
+        $this->putPlaceholderImage($path);
+
+        $product->media()->create([
+            'fileType' => 'image/png',
+            'url' => $path,
+        ]);
+    }
+
     private function seedCollectionImage(int $storeId, string $name): string
     {
         $path = "collections/stores/{$storeId}/".Str::slug($name).'.png';
-        Storage::disk('public')->put($path, base64_decode(self::PLACEHOLDER_PNG));
+        $this->putPlaceholderImage($path);
 
         return $path;
+    }
+
+    private function putPlaceholderImage(string $path): void
+    {
+        Storage::disk('public')->put($path, base64_decode(self::PLACEHOLDER_PNG));
     }
 
     /**
