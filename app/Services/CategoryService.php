@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DAO\CategoryInterface;
 use App\DAO\ProductInterface;
 use App\Models\Category;
-use App\Models\Category;
 use App\Models\Store;
 use Illuminate\Support\Str;
 
