@@ -54,6 +54,28 @@ class StoreController extends Controller
         return response()->json($payload);
     }
 
+    public function customizationForMobile($storeId)
+    {
+        $payload = $this->storeService->customizationForCustomer((int) $storeId);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
+    public function detailCustomizationForMobile($storeId)
+    {
+        $payload = $this->storeService->detailCustomizationForCustomer((int) $storeId);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
     public function products(Request $request, $storeId)
     {
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);

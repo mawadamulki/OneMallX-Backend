@@ -43,6 +43,28 @@ class ServiceController extends Controller
         return response()->json($payload);
     }
 
+    public function customizationForMobile($id)
+    {
+        $payload = $this->serviceService->customizationForCustomer((int) $id);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
+    public function detailCustomizationForMobile($id)
+    {
+        $payload = $this->serviceService->detailCustomizationForCustomer((int) $id);
+
+        if ($payload === null) {
+            abort(404);
+        }
+
+        return response()->json($payload);
+    }
+
     public function adminServicesSummary(Request $request)
     {
         $perPage = min(max((int) $request->query('per_page', 20), 1), 20);
