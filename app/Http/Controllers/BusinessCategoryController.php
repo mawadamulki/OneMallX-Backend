@@ -22,23 +22,27 @@ class BusinessCategoryController extends Controller
     {
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
 
-        $result = $this->businessCategoryService->listStoresForCustomer($categoryId, $perPage);
-
-        if ($result === null) {
-            abort(404);
-        }
-
-        return response()->json($result);
+        return $this->respond(
+            $this->businessCategoryService->listStoresForCustomer($categoryId, $perPage)
+        );
     }
 
     public function servicesInCategory(Request $request, int $categoryId)
     {
         $perPage = min(max((int) $request->query('per_page', 15), 1), 50);
 
-        $result = $this->businessCategoryService->listServicesForCustomer($categoryId, $perPage);
+        return $this->respond(
+            $this->businessCategoryService->listServicesForCustomer($categoryId, $perPage)
+        );
+    }
 
-        if ($result === null) {
-            abort(404);
+    private function respond(array $result)
+    {
+        if (isset($result['success']) && $result['success'] === false) {
+            return response()->json(
+                ['success' => false, 'message' => $result['message']],
+                $result['http_status'] ?? 404
+            );
         }
 
         return response()->json($result);

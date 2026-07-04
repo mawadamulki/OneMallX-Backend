@@ -30,12 +30,19 @@ class BusinessCategoryService
         ];
     }
 
-    public function listStoresForCustomer(int $categoryId, int $perPage): ?array
+    public function listStoresForCustomer(int $categoryId, int $perPage): array
     {
-        $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'store');
+        $category = $this->businessCategoryClass->findActiveById($categoryId);
 
         if ($category === null) {
-            return null;
+            return $this->categoryFail('Business category not found.', 404);
+        }
+
+        if ($category->type !== 'store') {
+            return $this->categoryFail(
+                'This category is for services, not stores. Use GET /api/servicesInBusinessCategory/{categoryId}.',
+                422
+            );
         }
 
         $paginator = $this->storeService->listForCustomerByBusinessCategory($perPage, $categoryId);
@@ -49,12 +56,19 @@ class BusinessCategoryService
         );
     }
 
-    public function listServicesForCustomer(int $categoryId, int $perPage): ?array
+    public function listServicesForCustomer(int $categoryId, int $perPage): array
     {
-        $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'service');
+        $category = $this->businessCategoryClass->findActiveById($categoryId);
 
         if ($category === null) {
-            return null;
+            return $this->categoryFail('Business category not found.', 404);
+        }
+
+        if ($category->type !== 'service') {
+            return $this->categoryFail(
+                'This category is for stores, not services. Use GET /api/storesInBusinessCategory/{categoryId}.',
+                422
+            );
         }
 
         $paginator = $this->serviceService->listForCustomerByBusinessCategory($perPage, $categoryId);
@@ -66,6 +80,16 @@ class BusinessCategoryService
             ],
             $paginator->toArray()
         );
+    }
+
+    /** @return array{success: false, message: string, http_status: int} */
+    private function categoryFail(string $message, int $httpStatus): array
+    {
+        return [
+            'success' => false,
+            'message' => $message,
+            'http_status' => $httpStatus,
+        ];
     }
 
     public function validateForArea(string $usageType, int $categoryId): ?string
