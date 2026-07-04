@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DAO\BusinessCategoryInterface;
 use App\Models\BusinessCategory;
 use App\Support\BusinessCategoryFormatter;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BusinessCategoryService
 {
@@ -31,7 +30,7 @@ class BusinessCategoryService
         ];
     }
 
-    public function listStoresForCustomer(int $categoryId, int $perPage): ?LengthAwarePaginator
+    public function listStoresForCustomer(int $categoryId, int $perPage): ?array
     {
         $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'store');
 
@@ -39,15 +38,18 @@ class BusinessCategoryService
             return null;
         }
 
-        return $this->storeService
-            ->listForCustomerByBusinessCategory($perPage, $categoryId)
-            ->additional([
+        $paginator = $this->storeService->listForCustomerByBusinessCategory($perPage, $categoryId);
+
+        return array_merge(
+            [
                 'success' => true,
                 'category' => BusinessCategoryFormatter::toArray($category),
-            ]);
+            ],
+            $paginator->toArray()
+        );
     }
 
-    public function listServicesForCustomer(int $categoryId, int $perPage): ?LengthAwarePaginator
+    public function listServicesForCustomer(int $categoryId, int $perPage): ?array
     {
         $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'service');
 
@@ -55,12 +57,15 @@ class BusinessCategoryService
             return null;
         }
 
-        return $this->serviceService
-            ->listForCustomerByBusinessCategory($perPage, $categoryId)
-            ->additional([
+        $paginator = $this->serviceService->listForCustomerByBusinessCategory($perPage, $categoryId);
+
+        return array_merge(
+            [
                 'success' => true,
                 'category' => BusinessCategoryFormatter::toArray($category),
-            ]);
+            ],
+            $paginator->toArray()
+        );
     }
 
     public function validateForArea(string $usageType, int $categoryId): ?string
