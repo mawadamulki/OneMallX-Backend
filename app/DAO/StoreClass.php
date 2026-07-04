@@ -24,6 +24,18 @@ class StoreClass implements StoreInterface
         return $query->paginate($perPage);
     }
 
+    public function paginateVisibleToCustomersByBusinessCategory(int $businessCategoryId, int $perPage): LengthAwarePaginator
+    {
+        return Store::query()
+            ->visibleToCustomers()
+            ->whereHas('area', fn ($query) => $query->where('categoryID', $businessCategoryId))
+            ->with(['area.floor', 'area.category', 'media'])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
     public function getStoreForCustomerDetail(Store $store): ?Store
     {
         if (! $store->isVisibleToCustomers()) {

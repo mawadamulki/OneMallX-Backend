@@ -25,6 +25,12 @@ class ServiceService
             ->through(fn (Service $service) => $this->toCustomerArray($service));
     }
 
+    public function listForCustomerByBusinessCategory(int $perPage, int $businessCategoryId): LengthAwarePaginator
+    {
+        return $this->serviceDAO->paginateVisibleToCustomersByBusinessCategory($businessCategoryId, $perPage)
+            ->through(fn (Service $service) => $this->toCustomerArray($service));
+    }
+
     public function getServicesByArea($areaId)
     {
         return $this->listForCustomer(15, (int) $areaId);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ServiceProviderEmployeeService;
 use App\Services\ServiceProviderService;
 use App\Services\ServiceService;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ class ServiceController extends Controller
     public function __construct(
         private ServiceService $serviceService,
         protected ServiceProviderService $serviceProviderService,
+        protected ServiceProviderEmployeeService $serviceProviderEmployeeService,
     ) {}
 
     public function index(Request $request, $areaId)
@@ -38,6 +40,17 @@ class ServiceController extends Controller
 
         if (isset($payload['error'])) {
             return response()->json($payload, 404);
+        }
+
+        return response()->json($payload);
+    }
+
+    public function employeesInService(int $serviceId)
+    {
+        $payload = $this->serviceProviderEmployeeService->listForCustomerByService($serviceId);
+
+        if ($payload === null) {
+            abort(404);
         }
 
         return response()->json($payload);

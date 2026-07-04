@@ -29,6 +29,12 @@ class StoreService
             ->through(fn (Store $store) => $this->toCustomerArray($store));
     }
 
+    public function listForCustomerByBusinessCategory(int $perPage, int $businessCategoryId): LengthAwarePaginator
+    {
+        return $this->storeClass->paginateVisibleToCustomersByBusinessCategory($businessCategoryId, $perPage)
+            ->through(fn (Store $store) => $this->toCustomerArray($store));
+    }
+
     public function showForCustomer(Store $store): ?array
     {
         $store = $this->storeClass->getStoreForCustomerDetail($store);

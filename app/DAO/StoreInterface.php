@@ -10,6 +10,8 @@ interface StoreInterface
 {
     public function paginateVisibleToCustomers(int $perPage, ?int $areaId): LengthAwarePaginator;
 
+    public function paginateVisibleToCustomersByBusinessCategory(int $businessCategoryId, int $perPage): LengthAwarePaginator;
+
     public function getStoreForCustomerDetail(Store $store): ?Store;
 
     public function paginateAdminStoresSummary(int $perPage): LengthAwarePaginator;

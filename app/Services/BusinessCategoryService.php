@@ -5,11 +5,14 @@ namespace App\Services;
 use App\DAO\BusinessCategoryInterface;
 use App\Models\BusinessCategory;
 use App\Support\BusinessCategoryFormatter;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BusinessCategoryService
 {
     public function __construct(
         protected BusinessCategoryInterface $businessCategoryClass,
+        protected StoreService $storeService,
+        protected ServiceService $serviceService,
     ) {}
 
     public function listPublic(?string $type = null): array
@@ -26,6 +29,38 @@ class BusinessCategoryService
             'success' => true,
             'categories' => $categories->values()->all(),
         ];
+    }
+
+    public function listStoresForCustomer(int $categoryId, int $perPage): ?LengthAwarePaginator
+    {
+        $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'store');
+
+        if ($category === null) {
+            return null;
+        }
+
+        return $this->storeService
+            ->listForCustomerByBusinessCategory($perPage, $categoryId)
+            ->additional([
+                'success' => true,
+                'category' => BusinessCategoryFormatter::toArray($category),
+            ]);
+    }
+
+    public function listServicesForCustomer(int $categoryId, int $perPage): ?LengthAwarePaginator
+    {
+        $category = $this->businessCategoryClass->findActiveForUsageType($categoryId, 'service');
+
+        if ($category === null) {
+            return null;
+        }
+
+        return $this->serviceService
+            ->listForCustomerByBusinessCategory($perPage, $categoryId)
+            ->additional([
+                'success' => true,
+                'category' => BusinessCategoryFormatter::toArray($category),
+            ]);
     }
 
     public function validateForArea(string $usageType, int $categoryId): ?string

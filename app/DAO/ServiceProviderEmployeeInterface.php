@@ -9,6 +9,8 @@ interface ServiceProviderEmployeeInterface
 {
     public function listForService(int $serviceId): Collection;
 
+    public function listActiveForCustomerByService(int $serviceId): Collection;
+
     public function findForService(int $employeeId, int $serviceId): ?Employee;
 
     public function createForService(int $serviceId, array $data): Employee;

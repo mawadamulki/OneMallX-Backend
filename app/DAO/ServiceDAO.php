@@ -25,6 +25,18 @@ class ServiceDAO
         return $query->paginate($perPage);
     }
 
+    public function paginateVisibleToCustomersByBusinessCategory(int $businessCategoryId, int $perPage): LengthAwarePaginator
+    {
+        return Service::query()
+            ->visibleToCustomers()
+            ->whereHas('area', fn ($query) => $query->where('categoryID', $businessCategoryId))
+            ->with(['area.floor', 'area.category', 'media' => fn ($q) => $q->orderBy('id')])
+            ->withCount('rates')
+            ->withAvg('rates', 'score')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
     public function getByArea($areaId)
     {
         return Service::with(['media', 'rates'])

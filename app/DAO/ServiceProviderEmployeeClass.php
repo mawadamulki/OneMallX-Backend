@@ -20,6 +20,23 @@ class ServiceProviderEmployeeClass implements ServiceProviderEmployeeInterface
             ->get();
     }
 
+    public function listActiveForCustomerByService(int $serviceId): Collection
+    {
+        return Employee::query()
+            ->where('serviceID', $serviceId)
+            ->where(function ($query) {
+                $query->where('status', 'active')
+                    ->orWhereNull('status');
+            })
+            ->with([
+                'media' => fn ($q) => $q->orderBy('id'),
+                'workingDays',
+                'serviceItems' => fn ($q) => $q->active()->orderBy('name'),
+            ])
+            ->orderBy('name')
+            ->get();
+    }
+
     public function findForService(int $employeeId, int $serviceId): ?Employee
     {
         return Employee::query()

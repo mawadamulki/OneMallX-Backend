@@ -7,6 +7,7 @@ use App\DAO\ServiceProviderItemInterface;
 use App\DAO\ServiceProviderInterface;
 use App\Models\Employee;
 use App\Models\Media;
+use App\Models\Service;
 use App\Support\ServiceEmployeeSchedule;
 use App\Support\WorkingWeekday;
 use Illuminate\Http\UploadedFile;
@@ -36,6 +37,25 @@ class ServiceProviderEmployeeService
             'success' => true,
             'service' => ['id' => $service->id, 'name' => $service->name],
             'employees' => $employees,
+        ];
+    }
+
+    public function listForCustomerByService(int $serviceId): ?array
+    {
+        $service = Service::query()->visibleToCustomers()->whereKey($serviceId)->first();
+
+        if ($service === null) {
+            return null;
+        }
+
+        $employees = $this->serviceProviderEmployeeClass
+            ->listActiveForCustomerByService((int) $service->id)
+            ->map(fn (Employee $employee) => $this->toCustomerArray($employee));
+
+        return [
+            'success' => true,
+            'service' => ['id' => $service->id, 'name' => $service->name],
+            'employees' => $employees->values()->all(),
         ];
     }
 
@@ -358,6 +378,26 @@ class ServiceProviderEmployeeService
             'email' => $employee->email,
             'status' => $employee->status ?? 'active',
             'created_at' => $employee->created_at,
+            'image' => $this->profileImageUrl($employee),
+            'serviceItems' => $employee->relationLoaded('serviceItems')
+                ? $employee->serviceItems->map(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $item->pivot->price !== null
+                        ? (int) $item->pivot->price
+                        : (int) $item->price,
+                    'duration' => (int) $item->duration,
+                ])->values()->all()
+                : [],
+            'workingDays' => $this->mapWorkingDays($employee),
+        ];
+    }
+
+    private function toCustomerArray(Employee $employee): array
+    {
+        return [
+            'id' => $employee->id,
+            'name' => $employee->name,
             'image' => $this->profileImageUrl($employee),
             'serviceItems' => $employee->relationLoaded('serviceItems')
                 ? $employee->serviceItems->map(fn ($item) => [

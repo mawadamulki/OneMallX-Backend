@@ -61,6 +61,7 @@ Route::get('/serviceCustomizationData/{id}', [ServiceController::class, 'customi
 Route::get('/serviceDetailCustomization/{id}', [ServiceController::class, 'detailCustomizationForMobile']);
 Route::get('/serviceDetailCustomizationData/{id}', [ServiceController::class, 'detailCustomizationDataForMobile']);
 Route::get('/serviceItemsInService/{serviceID}', [ServiceItemController::class, 'getItemsInService']);
+Route::get('/employeesInService/{serviceId}', [ServiceController::class, 'employeesInService']);
 Route::get('/serviceItemAvailability/{id}', [ServiceItemController::class, 'getAvailability']);
 Route::get('/serviceItemDays/{id}', [ServiceItemController::class, 'days']);
 Route::get('/serviceRates/{serviceId}', [RateController::class, 'serviceRatesForMobile']);
@@ -94,6 +95,8 @@ Route::get('/rates/{type}/{id}', [RateController::class, 'index'])
 
 // ___________________ Business Categories (public) ___________________
 Route::get('/businessCategories', [BusinessCategoryController::class, 'index']);
+Route::get('/storesInBusinessCategory/{categoryId}', [BusinessCategoryController::class, 'storesInCategory']);
+Route::get('/servicesInBusinessCategory/{categoryId}', [BusinessCategoryController::class, 'servicesInCategory']);
 
 // ___________________ Advertisements (public) ___________________
 Route::get('/ads/home', [AdvertisementController::class, 'homeAds']);
