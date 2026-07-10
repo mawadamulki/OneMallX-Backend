@@ -51,6 +51,23 @@ class StoreService
         return Store::query()->visibleToCustomers()->whereKey($storeId)->first();
     }
 
+    public function getMediaForOwner(int $userId): array
+    {
+        $store = $this->storeClass->findStoreByOwnerId($userId);
+
+        if ($store === null) {
+            return $this->fail('Store not found for this account.', 404);
+        }
+
+        $store->load(['media' => fn ($q) => $q->orderBy('id')]);
+
+        return [
+            'success' => true,
+            'logo' => $this->resolvePublicUrl($store->logo),
+            'media' => $this->mapMediaCollection($store),
+        ];
+    }
+
 
     public function adminStoresSummaryList(int $perPage): LengthAwarePaginator
     {

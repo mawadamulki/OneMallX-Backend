@@ -239,6 +239,23 @@ class ServiceProviderService
         ];
     }
 
+    public function getMediaForOwner(int $userId): array
+    {
+        $service = $this->serviceProviderClass->findServiceByProviderId($userId);
+
+        if ($service === null) {
+            return $this->fail('Service not found for this account.', 404);
+        }
+
+        $service->load(['media' => fn ($q) => $q->orderBy('id')]);
+
+        return [
+            'success' => true,
+            'logo' => $this->resolvePublicUrl($service->logo),
+            'media' => $this->mapMediaCollection($service),
+        ];
+    }
+
     public function attachLogoForOwner(int $userId, UploadedFile $file): array
     {
         $service = $this->serviceProviderClass->findServiceByProviderId($userId);

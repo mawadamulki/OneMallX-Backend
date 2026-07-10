@@ -347,6 +347,17 @@ class StoreController extends Controller
         return response()->json($result, $result['http_status'] ?? 201);
     }
 
+    public function indexMedia()
+    {
+        $result = $this->storeService->getMediaForOwner((int) Auth::id());
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function storeLogo(Request $request)
     {
         $validated = $request->validate([
