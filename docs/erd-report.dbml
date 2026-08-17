@@ -1,0 +1,175 @@
+// OneMallX Report ERD (simplified for one-page export)
+// Import at https://dbdiagram.io and export as PNG (scale 2x, landscape)
+
+Table users {
+  id int [pk, note: 'PK']
+}
+
+Table malls {
+  id int [pk, note: 'PK']
+}
+
+Table floors {
+  id int [pk, note: 'PK']
+}
+
+Table areas {
+  id int [pk, note: 'PK']
+}
+
+Table business_categories {
+  id int [pk, note: 'PK']
+}
+
+Table locations {
+  id int [pk, note: 'PK']
+}
+
+Table stores {
+  id int [pk, note: 'PK']
+}
+
+Table products {
+  id int [pk, note: 'PK']
+}
+
+Table product_variants {
+  id int [pk, note: 'PK']
+}
+
+Table categories {
+  id int [pk, note: 'PK']
+}
+
+Table collections {
+  id int [pk, note: 'PK']
+}
+
+Table services {
+  id int [pk, note: 'PK']
+}
+
+Table service_items {
+  id int [pk, note: 'PK']
+}
+
+Table employees {
+  id int [pk, note: 'PK']
+}
+
+Table bookings {
+  id int [pk, note: 'PK']
+}
+
+Table baskets {
+  id int [pk, note: 'PK']
+}
+
+Table orders {
+  id int [pk, note: 'PK']
+}
+
+Table order_items {
+  id int [pk, note: 'PK']
+}
+
+Table payment_methods {
+  id int [pk, note: 'PK']
+}
+
+Table customer_payments {
+  id int [pk, note: 'PK']
+}
+
+Table store_subscriptions {
+  id int [pk, note: 'PK']
+}
+
+Table service_subscriptions {
+  id int [pk, note: 'PK']
+}
+
+Table permissions {
+  id int [pk, note: 'PK']
+}
+
+Table roles {
+  id int [pk, note: 'PK']
+}
+
+TableGroup Auth {
+  users
+  permissions
+  roles
+}
+
+TableGroup Mall {
+  malls
+  floors
+  areas
+  business_categories
+  locations
+}
+
+TableGroup Commerce {
+  stores
+  products
+  product_variants
+  categories
+  collections
+}
+
+TableGroup Services {
+  services
+  service_items
+  employees
+  bookings
+}
+
+TableGroup Orders {
+  baskets
+  orders
+  order_items
+  payment_methods
+  customer_payments
+}
+
+TableGroup Subscriptions {
+  store_subscriptions
+  service_subscriptions
+}
+
+Ref: areas.id > floors.id
+Ref: areas.id > business_categories.id
+Ref: baskets.id > users.id
+Ref: bookings.id > services.id
+Ref: bookings.id > users.id
+Ref: bookings.id > employees.id
+Ref: bookings.id > service_items.id
+Ref: categories.id > stores.id
+Ref: categories.id > categories.id
+Ref: collections.id > stores.id
+Ref: customer_payments.id > users.id
+Ref: customer_payments.id > orders.id
+Ref: customer_payments.id > payment_methods.id
+Ref: employees.id > services.id
+Ref: floors.id > malls.id
+Ref: malls.id > users.id
+Ref: order_items.id > orders.id
+Ref: order_items.id > stores.id
+Ref: order_items.id > services.id
+Ref: order_items.id > employees.id
+Ref: orders.id > baskets.id
+Ref: orders.id > users.id
+Ref: orders.id > locations.id
+Ref: product_variants.id > products.id
+Ref: product_variants.id > stores.id
+Ref: products.id > stores.id
+Ref: service_items.id > services.id
+Ref: service_subscriptions.id > services.id
+Ref: services.id > users.id
+Ref: services.id > areas.id
+Ref: services.id > locations.id
+Ref: store_subscriptions.id > stores.id
+Ref: stores.id > users.id
+Ref: stores.id > areas.id

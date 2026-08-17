@@ -1,0 +1,94 @@
+---
+title: OneMallX Database — Entity Overview
+config:
+  theme: neutral
+  flowchart:
+    curve: basis
+    padding: 18
+    nodeSpacing: 28
+    rankSpacing: 40
+  themeVariables:
+    fontSize: 18px
+    fontFamily: Arial, Helvetica, sans-serif
+    lineColor: "#334155"
+    primaryTextColor: "#0f172a"
+    primaryBorderColor: "#334155"
+---
+flowchart TB
+    subgraph AUTH["Users & Access"]
+        users((users))
+        roles((roles))
+        permissions((permissions))
+        roles --- permissions
+    end
+
+    subgraph MALL["Mall Structure"]
+        malls((malls))
+        floors((floors))
+        areas((areas))
+        business_categories((business_categories))
+        locations((locations))
+        malls --> floors --> areas
+        business_categories --> areas
+    end
+
+    subgraph STORE["Store Commerce"]
+        stores((stores))
+        products((products))
+        product_variants((product_variants))
+        categories((categories))
+        collections((collections))
+        stores --> products --> product_variants
+        stores --> categories
+        stores --> collections
+    end
+
+    subgraph SERVICE["Services & Bookings"]
+        services((services))
+        service_items((service_items))
+        employees((employees))
+        bookings((bookings))
+        services --> service_items
+        services --> employees
+        services --> bookings
+        service_items --> bookings
+        employees --> bookings
+    end
+
+    subgraph ORDER["Cart & Orders"]
+        baskets((baskets))
+        orders((orders))
+        order_items((order_items))
+        payment_methods((payment_methods))
+        customer_payments((customer_payments))
+        baskets --> orders --> order_items
+        payment_methods --> customer_payments
+    end
+
+    subgraph SUBS["Subscriptions"]
+        store_subscriptions((store_subscriptions))
+        service_subscriptions((service_subscriptions))
+    end
+
+    users --> malls
+    users --> stores
+    users --> services
+    users --> baskets
+    users --> orders
+    users --> bookings
+    users --> customer_payments
+
+    areas --> stores
+    areas --> services
+    locations --> services
+    locations --> orders
+
+    stores --> order_items
+    services --> order_items
+    employees --> order_items
+
+    stores --> store_subscriptions
+    services --> service_subscriptions
+
+    classDef entity fill:#ffffff,stroke:#334155,stroke-width:2px,color:#0f172a;
+    class users,malls,floors,areas,business_categories,locations,stores,products,product_variants,categories,collections,services,service_items,employees,bookings,baskets,orders,order_items,payment_methods,customer_payments,store_subscriptions,service_subscriptions,roles,permissions entity;

@@ -1,0 +1,45 @@
+---
+title: OneMallX Database — Core Relationships
+config:
+  theme: neutral
+  er:
+    layoutDirection: LR
+  themeVariables:
+    fontSize: 16px
+    fontFamily: Arial, Helvetica, sans-serif
+---
+erDiagram
+    floors ||--o{ areas : "floorID"
+    business_categories ||--o{ areas : "categoryID"
+    users ||--o{ baskets : "userID"
+    services ||--o{ bookings : "serviceID"
+    users ||--o{ bookings : "customerID"
+    employees ||--o{ bookings : "employeeID"
+    service_items ||--o{ bookings : "serviceItemID"
+    stores ||--o{ categories : "storeID"
+    categories ||--o{ categories : "parentID"
+    stores ||--o{ collections : "storeID"
+    users ||--o{ customer_payments : "customerID"
+    orders ||--o{ customer_payments : "orderID"
+    payment_methods ||--o{ customer_payments : "methodID"
+    services ||--o{ employees : "serviceID"
+    malls ||--o{ floors : "mallID"
+    users ||--o{ malls : "mallOwnerID"
+    orders ||--o{ order_items : "orderID"
+    stores ||--o{ order_items : "storeID"
+    services ||--o{ order_items : "serviceID"
+    employees ||--o{ order_items : "employeeID"
+    baskets ||--o{ orders : "basketID"
+    users ||--o{ orders : "userID"
+    locations ||--o{ orders : "locationID"
+    products ||--o{ product_variants : "productID"
+    stores ||--o{ product_variants : "storeID"
+    stores ||--o{ products : "storeID"
+    services ||--o{ service_items : "serviceID"
+    services ||--o{ service_subscriptions : "serviceID"
+    users ||--o{ services : "serviceOwnerID"
+    areas ||--o{ services : "areaID"
+    locations ||--o{ services : "locationID"
+    stores ||--o{ store_subscriptions : "storeID"
+    users ||--o{ stores : "storeOwnerID"
+    areas ||--o{ stores : "areaID"

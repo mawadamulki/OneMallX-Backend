@@ -1,0 +1,853 @@
+// OneMallX Database ERD
+// Generated from Laravel migrations on 2026-08-16
+// Import at https://dbdiagram.io
+
+Table advertisements {
+  id bigint [pk]
+  storeID bigint
+  serviceID bigint
+  title varchar
+  image varchar
+  targetType enum
+  targetID bigint
+  placement enum
+  startDate date
+  endDate date
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table areas {
+  id bigint [pk]
+  name varchar
+  number int
+  floorID bigint
+  usageType varchar
+  category varchar
+  maxCapacity int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  categoryID bigint
+}
+
+Table attribute_values {
+  id bigint [pk]
+  attributeID bigint
+  value varchar
+  sortOrder int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table attributes {
+  id bigint [pk]
+  storeID bigint
+  name varchar
+  code varchar
+  sortOrder int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table basket_items {
+  id bigint [pk]
+  basketID bigint
+  lineType varchar
+  itemType varchar
+  itemID bigint
+  lineKey varchar
+  quantity int
+  unitPrice int
+  employeeID bigint
+  scheduledDate date
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table baskets {
+  id bigint [pk]
+  userID bigint
+  status varchar
+  totalPrice int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table bookings {
+  id bigint [pk]
+  serviceID bigint
+  customerID bigint
+  employeeID bigint
+  date date
+  entryNumber int
+  status varchar
+  paymentStatus varchar
+  totalPrice int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  serviceItemID bigint
+}
+
+Table business_categories {
+  id bigint [pk]
+  name varchar
+  slug varchar
+  type varchar
+  icon varchar
+  sortOrder int
+  isActive boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table cache {
+  key varchar
+  expiration int
+}
+
+Table cache_locks {
+  key varchar
+  owner varchar
+  expiration int
+}
+
+Table categories {
+  id bigint [pk]
+  storeID bigint
+  parentID bigint
+  name varchar
+  slug varchar
+  sortOrder int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table collection_product {
+  id bigint [pk]
+  collectionID bigint
+  productID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table collections {
+  id bigint [pk]
+  storeID bigint
+  name varchar
+  image varchar
+  description text
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table customer_payments {
+  id bigint [pk]
+  customerID bigint
+  orderID bigint
+  methodID bigint
+  price int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table employee_service_item {
+  id bigint [pk]
+  employeeID bigint
+  serviceItemID bigint
+  price int
+}
+
+Table employee_working_days {
+  id bigint [pk]
+  employee_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table employees {
+  id bigint [pk]
+  name varchar
+  serviceID bigint
+  daysOfWeek varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  phoneNumber varchar
+  email varchar
+  status varchar
+}
+
+Table failed_jobs {
+  id bigint [pk]
+  uuid varchar
+  connection text
+  queue text
+  failed_at timestamp
+}
+
+Table favorite_products {
+  id bigint [pk]
+  userID bigint
+  productID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table floors {
+  id bigint [pk]
+  name varchar
+  number int
+  mallID bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table inventory_movements {
+  id bigint [pk]
+  productVariantID bigint
+  storeID bigint
+  type varchar
+  quantityChange int
+  quantityAfter int
+  referenceType varchar
+  referenceID bigint
+  note text
+  createdBy bigint
+  created_at timestamp
+}
+
+Table job_batches {
+  id varchar [pk]
+  name varchar
+  total_jobs int
+  pending_jobs int
+  failed_jobs int
+  cancelled_at int
+  created_at int
+  finished_at int
+}
+
+Table jobs {
+  id bigint [pk]
+  queue varchar
+  reserved_at int
+  available_at int
+  created_at int
+}
+
+Table locations {
+  id bigint [pk]
+  location varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table malls {
+  id bigint [pk]
+  name varchar
+  country varchar
+  mallOwnerID bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table media {
+  id bigint [pk]
+  mediableType varchar
+  mediableID bigint
+  fileType varchar
+  url varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table model_has_permissions {
+  permission_id bigint
+  model_type varchar
+  model_id bigint
+}
+
+Table model_has_roles {
+  role_id bigint
+  model_type varchar
+  model_id bigint
+}
+
+Table order_items {
+  id bigint [pk]
+  orderID bigint
+  lineType varchar
+  itemType varchar
+  itemID bigint
+  storeID bigint
+  serviceID bigint
+  quantity int
+  unitPrice int
+  lineTotal int
+  sku varchar
+  itemName varchar
+  variantName varchar
+  employeeID bigint
+  scheduledDate date
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table orders {
+  id bigint [pk]
+  basketID bigint
+  userID bigint
+  status varchar
+  totalPrice int
+  created_at timestamp
+  updated_at timestamp
+  locationID bigint
+}
+
+Table password_reset_tokens {
+  email varchar
+  token varchar
+  created_at timestamp
+}
+
+Table payment_methods {
+  id bigint [pk]
+  providerName varchar
+  active boolean
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table permissions {
+  id bigint [pk]
+  name varchar
+  guard_name varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table personal_access_tokens {
+  id bigint [pk]
+  tokenable morphs
+  tokenable_type varchar
+  tokenable_id bigint
+  name text
+  token varchar
+  abilities text
+  last_used_at timestamp
+  expires_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table platform_daily_stats {
+  id bigint [pk]
+  date date
+  user_registrations int
+  orders_count int
+  bookings_count int
+  platform_revenue int
+  pending_reports int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table product_category {
+  id bigint [pk]
+  productID bigint
+  categoryID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table product_variant_attribute_value {
+  id bigint [pk]
+  productVariantID bigint
+  attributeValueID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table product_variants {
+  id bigint [pk]
+  productID bigint
+  storeID bigint
+  sku varchar
+  barcode varchar
+  name varchar
+  price int
+  compareAtPrice int
+  costPrice int
+  quantity int
+  reservedQuantity int
+  weight int
+  isDefault boolean
+  status varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  attributeName varchar
+  discountPercentage int
+}
+
+Table products {
+  id bigint [pk]
+  name varchar
+  detail text
+  price int
+  quantity int
+  storeID bigint
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  slug varchar
+  shortDetail text
+  status varchar
+  isFeatured boolean
+  publishedAt timestamp
+}
+
+Table rate_reports {
+  id bigint [pk]
+  rateID bigint
+  reporterUserID bigint
+  status varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table rates {
+  id bigint [pk]
+  userID bigint
+  rateableType varchar
+  rateableID bigint
+  comment text
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table role_has_permissions {
+  permission_id bigint
+  role_id bigint
+}
+
+Table roles {
+  id bigint [pk]
+  name varchar
+  guard_name varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_daily_stats {
+  id bigint [pk]
+  serviceID bigint
+  date date
+  revenue int
+  bookings_count int
+  cancelled_bookings_count int
+  customers_count int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_items {
+  id bigint [pk]
+  serviceID bigint
+  name varchar
+  price int
+  duration int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  status enum
+}
+
+Table service_plan_prices {
+  id bigint [pk]
+  serviceSubscriptionPlanID bigint
+  duration int
+  price int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table service_subscription_extension_requests {
+  id bigint [pk]
+  serviceSubscriptionID bigint
+  applicantNote text
+  requestedByUserID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_subscription_new_requests {
+  id bigint [pk]
+  serviceSubscriptionID bigint
+  requestedServiceSubscriptionPlanID bigint
+  requestedPlanPriceID bigint
+  applicantNote text
+  requestedByUserID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_subscription_payments {
+  id bigint [pk]
+  subscriptionID bigint
+  methodID bigint
+  price int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_subscription_plans {
+  id bigint [pk]
+  name varchar
+  floorID bigint
+  serviceSpace int
+  adsNumber int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  accepting_subscriptions boolean
+  adsDuration int
+  adsPlacement enum
+}
+
+Table service_subscription_requests {
+  id bigint [pk]
+  applicantName varchar
+  email varchar
+  password varchar
+  phoneNumber varchar
+  serviceName varchar
+  price int
+  areaID bigint
+  description text
+  paymentAccount varchar
+  duration int
+  locationID bigint
+  serviceStatus varchar
+  daysOfWeek varchar
+  serviceSubscriptionPlanID bigint
+  planPriceID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  createdUserID bigint
+  createdServiceID bigint
+  createdSubscriptionID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_subscriptions {
+  id bigint [pk]
+  serviceID bigint
+  serviceSubscriptionPlanID bigint
+  planPriceID bigint
+  startDate timestamp
+  endDate timestamp
+  autoRenew boolean
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table service_working_days {
+  id bigint [pk]
+  service_id bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table services {
+  id bigint [pk]
+  name varchar
+  serviceOwnerID bigint
+  price int
+  areaID bigint
+  description text
+  paymentAccount varchar
+  duration int
+  locationID bigint
+  status varchar
+  daysOfWeek varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  accountStatus enum
+  logo varchar
+  customization json
+  customizationData json
+  detailCustomization json
+  detailCustomizationData json
+}
+
+Table sessions {
+  id varchar [pk]
+  user_id bigint
+  ip_address varchar
+  user_agent text
+  last_activity int
+}
+
+Table store_daily_stats {
+  id bigint [pk]
+  storeID bigint
+  date date
+  revenue int
+  orders_count int
+  customers_count int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_plan_prices {
+  id bigint [pk]
+  storeSubscriptionPlanID bigint
+  duration int
+  price int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table store_subscription_extension_requests {
+  id bigint [pk]
+  storeSubscriptionID bigint
+  applicantNote text
+  requestedByUserID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_subscription_new_requests {
+  id bigint [pk]
+  storeSubscriptionID bigint
+  requestedStoreSubscriptionPlanID bigint
+  requestedPlanPriceID bigint
+  applicantNote text
+  requestedByUserID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_subscription_payments {
+  id bigint [pk]
+  subscriptionID bigint
+  methodID bigint
+  price int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_subscription_plans {
+  id bigint [pk]
+  name varchar
+  floorID bigint
+  storeSpace int
+  adsNumber int
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  accepting_subscriptions boolean
+  adsDuration int
+  adsPlacement enum
+}
+
+Table store_subscription_requests {
+  id bigint [pk]
+  applicantName varchar
+  email varchar
+  password varchar
+  phoneNumber varchar
+  storeName varchar
+  areaID bigint
+  description text
+  storeStatus varchar
+  paymentAccount varchar
+  storeSubscriptionPlanID bigint
+  planPriceID bigint
+  status varchar
+  reviewedByUserID bigint
+  reviewedAt timestamp
+  rejectionReason text
+  createdUserID bigint
+  createdStoreID bigint
+  createdSubscriptionID bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_subscriptions {
+  id bigint [pk]
+  storeID bigint
+  storeSubscriptionPlanID bigint
+  planPriceID bigint
+  startDate timestamp
+  endDate timestamp
+  autoRenew boolean
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+}
+
+Table stores {
+  id bigint [pk]
+  name varchar
+  storeOwnerID bigint
+  areaID bigint
+  description text
+  status varchar
+  paymentAccount varchar
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+  accountStatus enum
+  logo varchar
+  customization json
+  customizationData json
+  detailCustomization json
+  detailCustomizationData json
+}
+
+Table users {
+  id bigint [pk]
+  name varchar
+  email varchar
+  password varchar
+  phoneNumber varchar
+  status enum
+  otp_code int
+  otp_expires_at timestamp
+  is_verified boolean
+  created_at timestamp
+  updated_at timestamp
+  password_reset_otp int
+  password_reset_otp_expires_at timestamp
+  image varchar
+}
+
+Ref: advertisements.storeID > stores.id
+Ref: advertisements.serviceID > services.id
+Ref: areas.floorID > floors.id
+Ref: areas.categoryID > business_categories.id
+Ref: attribute_values.attributeID > attributes.id
+Ref: attributes.storeID > stores.id
+Ref: basket_items.basketID > baskets.id
+Ref: basket_items.employeeID > employees.id
+Ref: baskets.userID > users.id
+Ref: bookings.serviceID > services.id
+Ref: bookings.customerID > users.id
+Ref: bookings.employeeID > employees.id
+Ref: bookings.serviceItemID > service_items.id
+Ref: categories.storeID > stores.id
+Ref: categories.parentID > categories.id
+Ref: collection_product.collectionID > collections.id
+Ref: collection_product.productID > products.id
+Ref: collections.storeID > stores.id
+Ref: customer_payments.customerID > users.id
+Ref: customer_payments.orderID > orders.id
+Ref: customer_payments.methodID > payment_methods.id
+Ref: employee_service_item.employeeID > employees.id
+Ref: employee_service_item.serviceItemID > service_items.id
+Ref: employee_working_days.employee_id > employees.id
+Ref: employees.serviceID > services.id
+Ref: favorite_products.userID > users.id
+Ref: favorite_products.productID > products.id
+Ref: floors.mallID > malls.id
+Ref: inventory_movements.productVariantID > product_variants.id
+Ref: inventory_movements.storeID > stores.id
+Ref: inventory_movements.createdBy > users.id
+Ref: malls.mallOwnerID > users.id
+Ref: model_has_permissions.permission_id > permissions.id
+Ref: model_has_roles.role_id > roles.id
+Ref: order_items.orderID > orders.id
+Ref: order_items.storeID > stores.id
+Ref: order_items.serviceID > services.id
+Ref: order_items.employeeID > employees.id
+Ref: orders.basketID > baskets.id
+Ref: orders.userID > users.id
+Ref: orders.locationID > locations.id
+Ref: product_category.productID > products.id
+Ref: product_category.categoryID > categories.id
+Ref: product_variant_attribute_value.productVariantID > product_variants.id
+Ref: product_variant_attribute_value.attributeValueID > attribute_values.id
+Ref: product_variants.productID > products.id
+Ref: product_variants.storeID > stores.id
+Ref: products.storeID > stores.id
+Ref: rate_reports.rateID > rates.id
+Ref: rate_reports.reporterUserID > users.id
+Ref: rates.userID > users.id
+Ref: role_has_permissions.permission_id > permissions.id
+Ref: role_has_permissions.role_id > roles.id
+Ref: service_daily_stats.serviceID > services.id
+Ref: service_items.serviceID > services.id
+Ref: service_plan_prices.serviceSubscriptionPlanID > service_subscription_plans.id
+Ref: service_subscription_payments.subscriptionID > service_subscriptions.id
+Ref: service_subscription_payments.methodID > payment_methods.id
+Ref: service_subscription_plans.floorID > floors.id
+Ref: service_subscription_requests.areaID > areas.id
+Ref: service_subscription_requests.locationID > locations.id
+Ref: service_subscription_requests.serviceSubscriptionPlanID > service_subscription_plans.id
+Ref: service_subscription_requests.planPriceID > service_plan_prices.id
+Ref: service_subscription_requests.reviewedByUserID > users.id
+Ref: service_subscription_requests.createdUserID > users.id
+Ref: service_subscription_requests.createdServiceID > services.id
+Ref: service_subscription_requests.createdSubscriptionID > service_subscriptions.id
+Ref: service_subscriptions.serviceID > services.id
+Ref: service_subscriptions.serviceSubscriptionPlanID > service_subscription_plans.id
+Ref: service_subscriptions.planPriceID > service_plan_prices.id
+Ref: service_working_days.service_id > services.id
+Ref: services.serviceOwnerID > users.id
+Ref: services.areaID > areas.id
+Ref: services.locationID > locations.id
+Ref: store_daily_stats.storeID > stores.id
+Ref: store_plan_prices.storeSubscriptionPlanID > store_subscription_plans.id
+Ref: store_subscription_payments.subscriptionID > store_subscriptions.id
+Ref: store_subscription_payments.methodID > payment_methods.id
+Ref: store_subscription_plans.floorID > floors.id
+Ref: store_subscription_requests.areaID > areas.id
+Ref: store_subscription_requests.storeSubscriptionPlanID > store_subscription_plans.id
+Ref: store_subscription_requests.planPriceID > store_plan_prices.id
+Ref: store_subscription_requests.reviewedByUserID > users.id
+Ref: store_subscription_requests.createdUserID > users.id
+Ref: store_subscription_requests.createdStoreID > stores.id
+Ref: store_subscription_requests.createdSubscriptionID > store_subscriptions.id
+Ref: store_subscriptions.storeID > stores.id
+Ref: store_subscriptions.storeSubscriptionPlanID > store_subscription_plans.id
+Ref: store_subscriptions.planPriceID > store_plan_prices.id
+Ref: stores.storeOwnerID > users.id
+Ref: stores.areaID > areas.id
