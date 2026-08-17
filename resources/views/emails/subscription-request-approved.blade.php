@@ -8,6 +8,8 @@
     <p>{{ __('app.email_hello_name', ['name' => $applicantName]) }}</p>
     @if($isStoreAccount)
         <p>{{ __('app.email_subscription_approved_body_store') }}</p>
+        <p>{{ __('app.email_subscription_approved_payment_hint') }}</p>
+        <p><a href="https://digital-shopping-mall.vercel.app/payment">https://digital-shopping-mall.vercel.app/payment</a></p>
     @else
         <p>{{ __('app.email_subscription_approved_body_service') }}</p>
     @endif

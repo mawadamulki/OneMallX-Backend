@@ -120,6 +120,7 @@ return [
     'email_subscription_approved_body_store' => 'تمت الموافقة على طلب امتلاك متجر. حسابك جاهز الآن.',
     'email_subscription_approved_body_service' => 'تمت الموافقة على طلب التسجيل كمقدّم خدمة. حسابك جاهز الآن.',
     'email_subscription_approved_login_hint' => 'يمكنك تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور اللتين استخدمتهما عند تقديم الطلب.',
+    'email_subscription_approved_payment_hint' => 'يرجى إتمام الدفع لتفعيل اشتراك المتجر عبر الرابط:',
     'email_login_link_label' => 'تسجيل الدخول',
 
     // Subscription request rejection emails

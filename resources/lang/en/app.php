@@ -120,6 +120,7 @@ return [
     'email_subscription_approved_body_store' => 'Your request to own a store has been approved. Your account is ready.',
     'email_subscription_approved_body_service' => 'Your request to register as a service provider has been approved. Your account is ready.',
     'email_subscription_approved_login_hint' => 'You can log in using the email address and password you used when you submitted your request.',
+    'email_subscription_approved_payment_hint' => 'Please complete your payment to activate your store subscription at:',
     'email_login_link_label' => 'Log in',
 
     // Subscription request rejection emails
