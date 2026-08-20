@@ -31,6 +31,10 @@ interface ProductInterface
 
     public function findVisibleProductForCustomer(int $productId): ?Product;
 
+    public function findVisibleProductInfoForCustomer(int $productId): ?Product;
+
+    public function findVisibleProductVariantsForCustomer(int $productId): ?Product;
+
     public function findVisibleProductMediaForCustomer(int $productId): ?Product;
 
     public function findVariantForStore(int $variantId, int $storeId): ?ProductVariant;

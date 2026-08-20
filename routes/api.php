@@ -80,6 +80,8 @@ Route::get('/productsInCategory/{categoryId}', [StoreController::class, 'product
 Route::get('/storeRates/{storeId}', [RateController::class, 'storeRatesForMobile']);
 Route::get('/productRates/{productId}', [RateController::class, 'productRatesForMobile']);
 Route::get('/productInformation/{productId}', [ProductController::class, 'showForMobile']);
+Route::get('/productAttributes/{productId}', [ProductController::class, 'attributesForMobile']);
+Route::get('/productVariants/{productId}', [ProductController::class, 'variantsForMobile']);
 Route::get('/getProductMedia/{productId}', [ProductController::class, 'mediaForMobile']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 Route::get('/storeCustomization/{storeId}', [StoreController::class, 'customizationForMobile']);

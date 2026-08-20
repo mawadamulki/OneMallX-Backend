@@ -97,13 +97,44 @@ class ProductService
 
     public function showForCustomer(int $productId): ?array
     {
+        return $this->getProductInfoForCustomer($productId);
+    }
+
+    public function getProductInfoForCustomer(int $productId): ?array
+    {
+        $product = $this->productClass->findVisibleProductInfoForCustomer($productId);
+
+        if ($product === null) {
+            return null;
+        }
+
+        return $this->toCustomerInfoArray($product);
+    }
+
+    public function getProductAttributesForCustomer(int $productId): ?array
+    {
         $product = $this->productClass->findVisibleProductForCustomer($productId);
 
         if ($product === null) {
             return null;
         }
 
-        return $this->toCustomerDetailArray($product);
+        return [
+            'attributes' => $this->mapProductAttributes($product),
+        ];
+    }
+
+    public function getProductVariantsForCustomer(int $productId): ?array
+    {
+        $product = $this->productClass->findVisibleProductVariantsForCustomer($productId);
+
+        if ($product === null) {
+            return null;
+        }
+
+        return [
+            'variants' => $this->mapCustomerVariants($product),
+        ];
     }
 
     public function formatCustomerSummary(Product $product): array
@@ -661,10 +692,8 @@ class ProductService
         ];
     }
 
-    private function toCustomerDetailArray(Product $product): array
+    private function toCustomerInfoArray(Product $product): array
     {
-        $variants = $product->relationLoaded('variants') ? $product->variants : collect();
-
         return [
             'id' => $product->id,
             'name' => $product->name,
@@ -679,8 +708,17 @@ class ProductService
                     'slug' => $category->slug,
                 ])->values()->all()
                 : [],
-            'attributes' => $this->mapProductAttributes($product),
-            'variants' => $variants->map(fn (ProductVariant $variant) => [
+        ];
+    }
+
+    private function mapCustomerVariants(Product $product): array
+    {
+        if (! $product->relationLoaded('variants')) {
+            return [];
+        }
+
+        return $product->variants
+            ->map(fn (ProductVariant $variant) => [
                 'id' => $variant->id,
                 'price' => $variant->price,
                 'compareAtPrice' => $variant->compareAtPrice,
@@ -688,8 +726,9 @@ class ProductService
                 'quantity' => $variant->quantity,
                 'isDefault' => (bool) $variant->isDefault,
                 'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
-            ])->values()->all(),
-        ];
+            ])
+            ->values()
+            ->all();
     }
 
     private function mapProductAttributes(Product $product): array
