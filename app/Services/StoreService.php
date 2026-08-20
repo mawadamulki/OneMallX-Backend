@@ -411,6 +411,7 @@ class StoreService
             'name' => $store->name,
             'description' => $store->description,
             'logo' => $this->resolvePublicUrl($store->logo),
+            'businessCategory' => BusinessCategoryFormatter::toArray($store->businessCategory),
             'area' => $store->relationLoaded('area') && $store->area
                 ? [
                     'id' => $store->area->id,
@@ -456,6 +457,8 @@ class StoreService
             'description' => $store->description,
             'storeOwnerID' => $store->storeOwnerID,
             'areaID' => $store->areaID,
+            'businessCategoryID' => $store->businessCategoryID,
+            'businessCategory' => BusinessCategoryFormatter::toArray($store->businessCategory),
             'status' => $store->status,
             'accountStatus' => $store->accountStatus,
             'paymentAccount' => $store->paymentAccount,

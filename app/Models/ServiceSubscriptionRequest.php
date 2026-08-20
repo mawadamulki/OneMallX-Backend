@@ -22,6 +22,7 @@ class ServiceSubscriptionRequest extends Model
         'password',
         'phoneNumber',
         'serviceName',
+        'businessCategoryID',
         'price',
         'description',
         'paymentAccount',
@@ -47,6 +48,11 @@ class ServiceSubscriptionRequest extends Model
         return [
             'reviewedAt' => 'datetime',
         ];
+    }
+
+    public function businessCategory(): BelongsTo
+    {
+        return $this->belongsTo(BusinessCategory::class, 'businessCategoryID');
     }
 
     public function serviceSubscriptionPlan(): BelongsTo

@@ -22,6 +22,7 @@ class StoreSubscriptionRequest extends Model
         'password',
         'phoneNumber',
         'storeName',
+        'businessCategoryID',
         'description',
         'storeStatus',
         'paymentAccount',
@@ -41,6 +42,11 @@ class StoreSubscriptionRequest extends Model
         return [
             'reviewedAt' => 'datetime',
         ];
+    }
+
+    public function businessCategory(): BelongsTo
+    {
+        return $this->belongsTo(BusinessCategory::class, 'businessCategoryID');
     }
 
     public function storeSubscriptionPlan(): BelongsTo

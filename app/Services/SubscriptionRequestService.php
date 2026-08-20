@@ -24,7 +24,8 @@ use Illuminate\Validation\Rule;
 class SubscriptionRequestService
 {
     public function __construct(
-        protected SubscriptionRequestInterface $subscriptionRequestDao
+        protected SubscriptionRequestInterface $subscriptionRequestDao,
+        protected BusinessCategoryService $businessCategoryService,
     ) {}
 
     public function submitStoreRequest(array $input): array
@@ -36,6 +37,7 @@ class SubscriptionRequestService
             'phoneNumber' => 'required|string|max:255',
 
             'storeName' => 'required|string|max:255',
+            'businessCategoryID' => 'required|integer|exists:business_categories,id',
             'description' => 'nullable|string',
             'storeStatus' => 'nullable|string|max:255',
             'paymentAccount' => 'nullable|string|max:255',
@@ -49,6 +51,14 @@ class SubscriptionRequestService
         }
 
         $data = $validator->validated();
+
+        $categoryError = $this->businessCategoryService->validateForArea('store', (int) $data['businessCategoryID']);
+        if ($categoryError !== null) {
+            return [
+                'message' => __('app.validation_failed'),
+                'errors' => ['businessCategoryID' => [$categoryError]],
+            ];
+        }
 
         if ($this->hasPendingSubscriptionRequest($data['email'])) {
             return [
@@ -95,6 +105,7 @@ class SubscriptionRequestService
             'phoneNumber' => 'required|string|max:255',
 
             'serviceName' => 'required|string|max:255',
+            'businessCategoryID' => 'required|integer|exists:business_categories,id',
             'price' => 'nullable|integer|min:0',
             'description' => 'nullable|string',
             'paymentAccount' => 'nullable|string|max:255',
@@ -114,6 +125,14 @@ class SubscriptionRequestService
         }
 
         $data = $validator->validated();
+
+        $categoryError = $this->businessCategoryService->validateForArea('service', (int) $data['businessCategoryID']);
+        if ($categoryError !== null) {
+            return [
+                'message' => __('app.validation_failed'),
+                'errors' => ['businessCategoryID' => [$categoryError]],
+            ];
+        }
 
         if ($this->hasPendingSubscriptionRequest($data['email'])) {
             return [

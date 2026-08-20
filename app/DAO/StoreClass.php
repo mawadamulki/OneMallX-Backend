@@ -12,7 +12,7 @@ class StoreClass implements StoreInterface
     {
         $query = Store::query()
             ->visibleToCustomers()
-            ->with(['area.floor', 'area.category', 'media'])
+            ->with(['area.floor', 'area.category', 'businessCategory', 'media'])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->orderBy('name');
@@ -28,8 +28,8 @@ class StoreClass implements StoreInterface
     {
         return Store::query()
             ->visibleToCustomers()
-            ->whereHas('area', fn ($query) => $query->where('categoryID', $businessCategoryId))
-            ->with(['area.floor', 'area.category', 'media'])
+            ->where('businessCategoryID', $businessCategoryId)
+            ->with(['area.floor', 'area.category', 'businessCategory', 'media'])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->orderBy('name')
@@ -44,7 +44,7 @@ class StoreClass implements StoreInterface
 
         return Store::query()
             ->whereKey($store->id)
-            ->with(['area.floor', 'area.category', 'media'])
+            ->with(['area.floor', 'area.category', 'businessCategory', 'media'])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->first();
@@ -63,7 +63,7 @@ class StoreClass implements StoreInterface
     {
         return Store::query()
             ->whereKey($storeId)
-            ->with(['media', 'area.floor', 'area.category', 'owner'])->first();
+            ->with(['media', 'area.floor', 'area.category', 'businessCategory', 'owner'])->first();
 
         if (! $store) {
             return null;

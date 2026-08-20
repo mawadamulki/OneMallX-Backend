@@ -15,6 +15,7 @@ class Store extends Model
         'name',
         'storeOwnerID',
         'areaID',
+        'businessCategoryID',
         'description',
         'logo',
         'customization',
@@ -44,6 +45,11 @@ class Store extends Model
     public function area()
     {
         return $this->belongsTo(Area::class, 'areaID');
+    }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'businessCategoryID');
     }
 
     public function products()

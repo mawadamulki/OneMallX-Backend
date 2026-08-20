@@ -27,7 +27,17 @@ class BusinessCategory extends Model
 
     public function areas()
     {
-        return $this->hasMany(Area::class, 'businessCategoryID');
+        return $this->hasMany(Area::class, 'categoryID');
+    }
+
+    public function stores()
+    {
+        return $this->hasMany(Store::class, 'businessCategoryID');
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'businessCategoryID');
     }
 
     public function scopeActive($query)

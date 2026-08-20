@@ -13,7 +13,7 @@ class ServiceDAO
     {
         $query = Service::query()
             ->visibleToCustomers()
-            ->with(['area.floor', 'area.category', 'media' => fn ($q) => $q->orderBy('id')])
+            ->with(['area.floor', 'area.category', 'businessCategory', 'media' => fn ($q) => $q->orderBy('id')])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->orderBy('name');
@@ -29,8 +29,8 @@ class ServiceDAO
     {
         return Service::query()
             ->visibleToCustomers()
-            ->whereHas('area', fn ($query) => $query->where('categoryID', $businessCategoryId))
-            ->with(['area.floor', 'area.category', 'media' => fn ($q) => $q->orderBy('id')])
+            ->where('businessCategoryID', $businessCategoryId)
+            ->with(['area.floor', 'area.category', 'businessCategory', 'media' => fn ($q) => $q->orderBy('id')])
             ->withCount('rates')
             ->withAvg('rates', 'score')
             ->orderBy('name')
@@ -70,7 +70,7 @@ class ServiceDAO
     {
         return Service::query()
             ->whereKey($serviceId)
-            ->with(['media', 'rates', 'employees', 'workingDays', 'serviceItems.media', 'serviceItems.rates', 'owner', 'area.category', 'area.floor'])
+            ->with(['media', 'rates', 'employees', 'workingDays', 'serviceItems.media', 'serviceItems.rates', 'owner', 'businessCategory', 'area.category', 'area.floor'])
             ->firstOrFail();
     }
 

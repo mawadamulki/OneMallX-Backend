@@ -98,6 +98,8 @@ class ServiceService
             'closeTime' => $service->closeTime,
             'created_at' => $service->created_at,
             'updated_at' => $service->updated_at,
+            'businessCategoryID' => $service->businessCategoryID,
+            'businessCategory' => BusinessCategoryFormatter::toArray($service->businessCategory),
             'days' => $service->workingDays
                 ->sortBy('weekday')
                 ->map(fn ($d) => WorkingWeekday::isoToAbbrev($d->weekday))
@@ -267,6 +269,7 @@ class ServiceService
             'description' => $service->description,
             'logo' => $this->resolvePublicUrl($service->logo),
             'image' => $media[0]['url'] ?? null,
+            'businessCategory' => BusinessCategoryFormatter::toArray($service->businessCategory),
             'area' => $service->relationLoaded('area') && $service->area
                 ? [
                     'id' => $service->area->id,

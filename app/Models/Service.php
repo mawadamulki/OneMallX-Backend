@@ -17,6 +17,7 @@ class Service extends Model
         'serviceOwnerID',
         'price',
         'areaID',
+        'businessCategoryID',
         'description',
         'logo',
         'customization',
@@ -50,6 +51,11 @@ class Service extends Model
     public function area()
     {
         return $this->belongsTo(Area::class, 'areaID');
+    }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'businessCategoryID');
     }
 
     public function location()
