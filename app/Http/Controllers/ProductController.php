@@ -217,4 +217,26 @@ class ProductController extends Controller
 
         return response()->json($result);
     }
+
+    public function showForMobile($productId)
+    {
+        $result = $this->productService->showForCustomer((int) $productId);
+
+        if ($result === null) {
+            abort(404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function mediaForMobile($productId)
+    {
+        $result = $this->productService->getMediaForCustomer((int) $productId);
+
+        if ($result === null) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        return response()->json($result);
+    }
 }

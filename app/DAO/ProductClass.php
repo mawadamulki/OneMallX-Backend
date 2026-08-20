@@ -111,6 +111,24 @@ class ProductClass implements ProductInterface
             ->first();
     }
 
+    public function findVisibleProductForCustomer(int $productId): ?Product
+    {
+        return $this->visibleProductQuery()
+            ->whereKey($productId)
+            ->first();
+    }
+
+    public function findVisibleProductMediaForCustomer(int $productId): ?Product
+    {
+        return Product::query()
+            ->select(['id'])
+            ->whereKey($productId)
+            ->where('status', 'active')
+            ->whereHas('store', fn ($q) => $q->visibleToCustomers())
+            ->with(['media' => fn ($q) => $q->orderBy('id')])
+            ->first();
+    }
+
     public function findVariantForStore(int $variantId, int $storeId): ?ProductVariant
     {
         return ProductVariant::query()
@@ -303,11 +321,20 @@ class ProductClass implements ProductInterface
 
     private function visibleProductsQuery(int $storeId)
     {
-        return Product::query()
+        return $this->visibleProductQuery()
             ->where('storeID', $storeId)
+            ->orderByDesc('isFeatured')
+            ->orderByDesc('publishedAt')
+            ->orderBy('name');
+    }
+
+    private function visibleProductQuery()
+    {
+        return Product::query()
             ->where('status', 'active')
-            ->whereHas('store', fn ($q) => $q->where('accountStatus', 'active'))
+            ->whereHas('store', fn ($q) => $q->visibleToCustomers())
             ->with([
+                'store:id,name',
                 'media' => fn ($q) => $q->orderBy('id'),
                 'categories:id,name,slug',
                 'variants' => fn ($q) => $q
@@ -326,10 +353,7 @@ class ProductClass implements ProductInterface
                     ->orderByDesc('isDefault'),
             ])
             ->withCount('rates')
-            ->withAvg('rates', 'score')
-            ->orderByDesc('isFeatured')
-            ->orderByDesc('publishedAt')
-            ->orderBy('name');
+            ->withAvg('rates', 'score');
     }
 
     /** @param  array<int, array<string, mixed>>  $variantsData */

@@ -93,6 +93,28 @@ class ProductService
             ->through(fn (Product $product) => $this->toCustomerSummaryArray($product));
     }
 
+    public function showForCustomer(int $productId): ?array
+    {
+        $product = $this->productClass->findVisibleProductForCustomer($productId);
+
+        if ($product === null) {
+            return null;
+        }
+
+        return $this->toCustomerDetailArray($product);
+    }
+
+    public function getMediaForCustomer(int $productId): ?array
+    {
+        $product = $this->productClass->findVisibleProductMediaForCustomer($productId);
+
+        if ($product === null) {
+            return null;
+        }
+
+        return ['media' => $this->mapMediaCollection($product)];
+    }
+
     private function findVisibleStore(int $storeId): ?Store
     {
         return Store::query()->visibleToCustomers()->whereKey($storeId)->first();
@@ -629,6 +651,20 @@ class ProductService
             ])->values()->all(),
             'rating' => $product->rates_avg_score !== null ? round((float) $product->rates_avg_score, 1) : null,
             'rating_count' => (int) ($product->rates_count ?? 0),
+        ];
+    }
+
+    private function toCustomerDetailArray(Product $product): array
+    {
+        return [
+            ...$this->toCustomerSummaryArray($product),
+            'detail' => $product->detail,
+            'store' => $product->relationLoaded('store') && $product->store
+                ? [
+                    'id' => $product->store->id,
+                    'name' => $product->store->name,
+                ]
+                : null,
         ];
     }
 

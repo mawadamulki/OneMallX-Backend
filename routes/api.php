@@ -78,6 +78,8 @@ Route::get('/categoriesInStore/{storeId}', [StoreController::class, 'categories'
 Route::get('/productsInCategory/{categoryId}', [StoreController::class, 'productsInCategory']);
 Route::get('/storeRates/{storeId}', [RateController::class, 'storeRatesForMobile']);
 Route::get('/productRates/{productId}', [RateController::class, 'productRatesForMobile']);
+Route::get('/productInformation/{productId}', [ProductController::class, 'showForMobile']);
+Route::get('/getProductMedia/{productId}', [ProductController::class, 'mediaForMobile']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 Route::get('/storeCustomization/{storeId}', [StoreController::class, 'customizationForMobile']);
 Route::get('/storeCustomizationData/{storeId}', [StoreController::class, 'customizationDataForMobile']);
