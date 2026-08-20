@@ -227,7 +227,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ___________________ User Profile Routes ___________________
     Route::get('/user/me', [UserController::class, 'me']);
-    Route::put('/user/profile', [UserController::class, 'updateProfile']);
+    Route::post('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
 
     Route::get('/favoriteProducts', [FavoriteProductController::class, 'index']);

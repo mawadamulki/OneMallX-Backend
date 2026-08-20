@@ -64,15 +64,16 @@ class UserController extends Controller
             'photo' => 'sometimes|image|max:5120',
         ]);
 
-        if (! $request->hasAny(['name', 'phoneNumber']) && ! $request->hasFile('photo')) {
+        $profileData = collect($validated)->except('photo')->filter(
+            fn ($value) => $value !== null && $value !== ''
+        )->all();
+        $photo = $request->file('photo');
+
+        if ($profileData === [] && $photo === null) {
             return response()->json(['message' => 'At least one field is required.'], 422);
         }
 
-        $result = $this->userService->updateProfile(
-            $userId,
-            collect($validated)->except('photo')->all(),
-            $request->file('photo')
-        );
+        $result = $this->userService->updateProfile($userId, $profileData, $photo);
 
         if (! $result['success']) {
             return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
