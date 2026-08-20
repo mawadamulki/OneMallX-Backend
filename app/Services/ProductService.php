@@ -106,6 +106,11 @@ class ProductService
         return $this->toCustomerDetailArray($product);
     }
 
+    public function formatCustomerSummary(Product $product): array
+    {
+        return $this->toCustomerSummaryArray($product);
+    }
+
     public function getMediaForCustomer(int $productId): ?array
     {
         $product = $this->productClass->findVisibleProductMediaForCustomer($productId);

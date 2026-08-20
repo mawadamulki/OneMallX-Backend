@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -49,8 +50,35 @@ class UserController extends Controller
     {
         return response()->json([
             'success' => true,
-            'user' => $this->userService->getCurrentUserDetail(\Illuminate\Support\Facades\Auth::id()),
+            'user' => $this->userService->getCurrentUserDetail((int) Auth::id()),
         ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $userId = (int) Auth::id();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'phoneNumber' => 'sometimes|string|max:50|unique:users,phoneNumber,'.$userId,
+            'photo' => 'sometimes|image|max:5120',
+        ]);
+
+        if (! $request->hasAny(['name', 'phoneNumber']) && ! $request->hasFile('photo')) {
+            return response()->json(['message' => 'At least one field is required.'], 422);
+        }
+
+        $result = $this->userService->updateProfile(
+            $userId,
+            collect($validated)->except('photo')->all(),
+            $request->file('photo')
+        );
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 422);
+        }
+
+        return response()->json($result);
     }
 
     public function uploadProfilePicture(Request $request)
@@ -60,7 +88,7 @@ class UserController extends Controller
         ]);
 
         $result = $this->userService->updateProfilePicture(
-            (int) \Illuminate\Support\Facades\Auth::id(),
+            (int) Auth::id(),
             $request->file('photo')
         );
 

@@ -17,6 +17,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceItemController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\FavoriteProductController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RateController;
@@ -226,7 +227,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ___________________ User Profile Routes ___________________
     Route::get('/user/me', [UserController::class, 'me']);
+    Route::put('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
+
+    Route::get('/favoriteProducts', [FavoriteProductController::class, 'index']);
+    Route::post('/addFavoriteProduct/{productId}', [FavoriteProductController::class, 'store']);
+    Route::delete('/removeFavoriteProduct/{productId}', [FavoriteProductController::class, 'destroy']);
 
     // ___________________ Booking Routes ___________________
     Route::middleware(['permission:book services'])->group(function () {

@@ -85,4 +85,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(RateReport::class, 'reporterUserID');
     }
+
+    public function favoriteProducts()
+    {
+        return $this->hasMany(FavoriteProduct::class, 'userID');
+    }
 }

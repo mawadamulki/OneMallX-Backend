@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DAO\UserDAOInterface;
+use App\Models\Media;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -43,9 +44,50 @@ class UserService
 
     public function updateProfilePicture(int $userId, \Illuminate\Http\UploadedFile $file): array
     {
-        $user = User::findOrFail($userId);
+        $user = User::with('media')->findOrFail($userId);
 
-        // Delete old profile pictures if any
+        $media = $this->replaceProfilePicture($user, $file);
+
+        return [
+            'success' => true,
+            'message' => 'Profile picture updated.',
+            'image_url' => $media->url,
+        ];
+    }
+
+    public function updateProfile(int $userId, array $data, ?\Illuminate\Http\UploadedFile $photo = null): array
+    {
+        unset($data['email']);
+
+        if ($data === [] && $photo === null) {
+            return [
+                'success' => false,
+                'message' => 'At least one field is required.',
+                'http_status' => 422,
+            ];
+        }
+
+        $user = User::with(['roles', 'media'])->findOrFail($userId);
+
+        if ($data !== []) {
+            $this->userDAO->updateUser($user, $data);
+        }
+
+        if ($photo !== null) {
+            $this->replaceProfilePicture($user, $photo);
+        }
+
+        $user->refresh()->load(['roles', 'media']);
+
+        return [
+            'success' => true,
+            'message' => 'Profile updated.',
+            'user' => $this->formatAdminUser($user),
+        ];
+    }
+
+    private function replaceProfilePicture(User $user, \Illuminate\Http\UploadedFile $file): Media
+    {
         foreach ($user->media as $oldMedia) {
             $relative = $oldMedia->publicDiskRelativePath();
             if ($relative) {
@@ -56,16 +98,10 @@ class UserService
 
         $path = $file->store("users/{$user->id}/profile", 'public');
 
-        $media = $user->media()->create([
+        return $user->media()->create([
             'fileType' => $file->getClientMimeType(),
             'url' => $path,
         ]);
-
-        return [
-            'success' => true,
-            'message' => 'Profile picture updated.',
-            'image_url' => $media->url,
-        ];
     }
 
     /**
