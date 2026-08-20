@@ -127,7 +127,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'areaID' => $areaId,
                 'description' => $locked->description,
                 'status' => $locked->storeStatus,
-                'accountStatus' => 'inactive',
+                'accountStatus' => 'notActive',
                 'paymentAccount' => $locked->paymentAccount,
             ]);
 
@@ -223,7 +223,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'duration' => $locked->duration,
                 'locationID' => $locked->locationID,
                 'status' => $locked->serviceStatus ?? 'pending',
-                'accountStatus' => 'inactive',
+                'accountStatus' => 'notActive',
             ]);
 
             WorkingWeekday::syncServiceFromLegacyCsv($service, $locked->daysOfWeek);
