@@ -211,6 +211,32 @@ class SubscriptionRequestService
         ];
     }
 
+    public function activateAccountByEmail(string $email): array
+    {
+        $result = $this->subscriptionRequestDao->activateApprovedAccountByEmail($email);
+
+        if (! $result['success']) {
+            return [
+                'success' => false,
+                'message' => $result['message'],
+                'http_status' => 404,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => $result['message'],
+            'accountType' => $result['accountType'] ?? null,
+            'user' => [
+                'id' => $result['user']->id,
+                'name' => $result['user']->name,
+                'email' => $result['user']->email,
+                'status' => $result['user']->status,
+                'roles' => $result['user']->roles->pluck('name')->values()->all(),
+            ],
+        ];
+    }
+
     public function approveStoreRequest(int $id): array
     {
         $request = StoreSubscriptionRequest::find($id);

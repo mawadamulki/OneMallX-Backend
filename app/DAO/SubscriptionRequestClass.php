@@ -110,7 +110,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'email' => $locked->email,
                 'password' => $locked->password,
                 'phoneNumber' => $locked->phoneNumber,
-                'status' => 'active',
+                'status' => 'inactive',
                 'otp_code' => null,
                 'otp_expires_at' => null,
                 'is_verified' => true,
@@ -127,7 +127,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'areaID' => $areaId,
                 'description' => $locked->description,
                 'status' => $locked->storeStatus,
-                'accountStatus' => 'active',
+                'accountStatus' => 'inactive',
                 'paymentAccount' => $locked->paymentAccount,
             ]);
 
@@ -200,7 +200,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'email' => $locked->email,
                 'password' => $locked->password,
                 'phoneNumber' => $locked->phoneNumber,
-                'status' => 'active',
+                'status' => 'inactive',
                 'otp_code' => null,
                 'otp_expires_at' => null,
                 'is_verified' => true,
@@ -223,7 +223,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'duration' => $locked->duration,
                 'locationID' => $locked->locationID,
                 'status' => $locked->serviceStatus ?? 'pending',
-                'accountStatus' => 'active',
+                'accountStatus' => 'inactive',
             ]);
 
             WorkingWeekday::syncServiceFromLegacyCsv($service, $locked->daysOfWeek);
@@ -302,6 +302,91 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
             ]);
 
             return ['success' => true, 'request' => $locked->fresh()];
+        });
+    }
+
+    public function activateApprovedAccountByEmail(string $email): array
+    {
+        return DB::transaction(function () use ($email) {
+            $user = User::query()->where('email', $email)->lockForUpdate()->first();
+
+            if ($user === null) {
+                return ['success' => false, 'message' => __('app.user_not_found')];
+            }
+
+            $storeRequest = StoreSubscriptionRequest::query()
+                ->where('email', $email)
+                ->where('status', 'approved')
+                ->where('createdUserID', $user->id)
+                ->orderByDesc('id')
+                ->first();
+
+            $serviceRequest = ServiceSubscriptionRequest::query()
+                ->where('email', $email)
+                ->where('status', 'approved')
+                ->where('createdUserID', $user->id)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($storeRequest === null && $serviceRequest === null) {
+                return ['success' => false, 'message' => __('app.subscription_request_not_found_for_email')];
+            }
+
+            $now = Carbon::now();
+            $accountType = null;
+
+            if ($storeRequest !== null && $storeRequest->createdStoreID !== null) {
+                $store = Store::query()->whereKey($storeRequest->createdStoreID)->lockForUpdate()->first();
+                if ($store !== null && $store->accountStatus !== 'active') {
+                    $store->update(['accountStatus' => 'active']);
+                }
+
+                $subscription = StoreSubscription::query()
+                    ->with('planPrice')
+                    ->whereKey($storeRequest->createdSubscriptionID)
+                    ->first();
+
+                if ($subscription !== null && $subscription->planPrice !== null) {
+                    $subscription->update([
+                        'startDate' => $now,
+                        'endDate' => $now->copy()->addMonths((int) $subscription->planPrice->duration),
+                    ]);
+                }
+
+                $accountType = 'store';
+            }
+
+            if ($serviceRequest !== null && $serviceRequest->createdServiceID !== null) {
+                $service = Service::query()->whereKey($serviceRequest->createdServiceID)->lockForUpdate()->first();
+                if ($service !== null && $service->accountStatus !== 'active') {
+                    $service->update(['accountStatus' => 'active']);
+                }
+
+                $subscription = ServiceSubscription::query()
+                    ->with('servicePlanPrice')
+                    ->whereKey($serviceRequest->createdSubscriptionID)
+                    ->first();
+
+                if ($subscription !== null && $subscription->servicePlanPrice !== null) {
+                    $subscription->update([
+                        'startDate' => $now,
+                        'endDate' => $now->copy()->addMonths((int) $subscription->servicePlanPrice->duration),
+                    ]);
+                }
+
+                $accountType = $accountType === null ? 'service' : $accountType;
+            }
+
+            if ($user->status !== 'active') {
+                $user->update(['status' => 'active']);
+            }
+
+            return [
+                'success' => true,
+                'message' => __('app.subscription_account_activated'),
+                'accountType' => $accountType,
+                'user' => $user->fresh(['roles']),
+            ];
         });
     }
 

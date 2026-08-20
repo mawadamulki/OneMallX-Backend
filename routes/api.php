@@ -114,6 +114,7 @@ Route::middleware('throttle:20,1')->group(function () {
     Route::post('/addStoreRequest', [SubscriptionRequestController::class, 'submitStore']);
     Route::post('/addServiceRequest', [SubscriptionRequestController::class, 'submitService']);
     Route::post('/subscriptionRequest/planByEmail', [SubscriptionRequestController::class, 'planByEmail']);
+    Route::post('/subscriptionRequest/activateAccount', [SubscriptionRequestController::class, 'activateAccount']);
 });
 Route::get('/storePlans', [SubscribtionPlanController::class, 'getStorePlansForSubscription']);
 Route::get('/servicePlans', [SubscribtionPlanController::class, 'getServicePlansForSubscription']);

@@ -35,4 +35,9 @@ interface SubscriptionRequestInterface
      * @return array{success: bool, message?: string, request?: ServiceSubscriptionRequest}
      */
     public function rejectServiceRequest(ServiceSubscriptionRequest $request, int $adminUserId, ?string $reason): array;
+
+    /**
+     * @return array{success: bool, message?: string, accountType?: string, user?: \App\Models\User}
+     */
+    public function activateApprovedAccountByEmail(string $email): array;
 }

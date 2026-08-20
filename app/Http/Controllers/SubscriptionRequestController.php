@@ -41,6 +41,21 @@ class SubscriptionRequestController extends Controller
         return response()->json($result);
     }
 
+    public function activateAccount(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        $result = $this->subscriptionRequestService->activateAccountByEmail($validated['email']);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function indexStore(string $status)
     {
         $filter = $status === 'all' ? null : $status;
