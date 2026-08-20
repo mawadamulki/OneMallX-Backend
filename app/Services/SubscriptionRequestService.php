@@ -165,6 +165,52 @@ class SubscriptionRequestService
         return ['requests' => $requests];
     }
 
+    public function getRequestedPlanByEmail(string $email): array
+    {
+        $storeRequest = StoreSubscriptionRequest::query()
+            ->where('email', $email)
+            ->whereIn('status', ['approved', 'pending'])
+            ->with(['requestedPlan.floor', 'requestedPlanPrice'])
+            ->orderByDesc('id')
+            ->get();
+
+        $serviceRequest = ServiceSubscriptionRequest::query()
+            ->where('email', $email)
+            ->whereIn('status', ['approved', 'pending'])
+            ->with(['requestedPlan.floor', 'requestedPlanPrice'])
+            ->orderByDesc('id')
+            ->get();
+
+        $candidate = $storeRequest->concat($serviceRequest)
+            ->sortByDesc(fn (StoreSubscriptionRequest|ServiceSubscriptionRequest $request) => (
+                ($request->status === 'approved' ? 2 : 1) * 1_000_000_000
+            ) + (int) $request->id)
+            ->first();
+
+        if ($candidate === null) {
+            return [
+                'success' => false,
+                'message' => __('app.subscription_request_not_found_for_email'),
+                'http_status' => 404,
+            ];
+        }
+
+        $accountType = $candidate instanceof StoreSubscriptionRequest ? 'store' : 'service';
+
+        return [
+            'success' => true,
+            'accountType' => $accountType,
+            'request' => [
+                'id' => $candidate->id,
+                'status' => $candidate->status,
+                'applicantName' => $candidate->applicantName,
+                'email' => $candidate->email,
+            ],
+            'requestedPlan' => $this->formatRequestedPlan($candidate->requestedPlan, $accountType),
+            'requestedPlanPrice' => $this->formatRequestedPlanPrice($candidate->requestedPlanPrice),
+        ];
+    }
+
     public function approveStoreRequest(int $id): array
     {
         $request = StoreSubscriptionRequest::find($id);
@@ -562,6 +608,56 @@ class SubscriptionRequestService
             'requested_at' => $r->created_at?->toIso8601String(),
             'reviewed_at' => $r->reviewedAt?->toIso8601String(),
             'rejection_reason' => $r->rejectionReason,
+        ];
+    }
+
+    private function formatRequestedPlan(
+        StoreSubscriptionPlan|ServiceSubscriptionPlan|null $plan,
+        string $accountType,
+    ): ?array {
+        if ($plan === null) {
+            return null;
+        }
+
+        $floor = $plan->relationLoaded('floor') ? $plan->floor : null;
+
+        $payload = [
+            'id' => $plan->id,
+            'name' => $plan->name,
+            'floorID' => $plan->floorID,
+            'adsNumber' => $plan->adsNumber,
+            'adsDuration' => $plan->adsDuration,
+            'adsPlacement' => $plan->adsPlacement,
+            'accepting_subscriptions' => (bool) $plan->accepting_subscriptions,
+            'floor' => $floor ? [
+                'id' => $floor->id,
+                'name' => $floor->name,
+                'number' => $floor->number,
+                'mallID' => $floor->mallID,
+            ] : null,
+        ];
+
+        if ($accountType === 'store' && $plan instanceof StoreSubscriptionPlan) {
+            $payload['storeSpace'] = $plan->storeSpace;
+        }
+
+        if ($accountType === 'service' && $plan instanceof ServiceSubscriptionPlan) {
+            $payload['serviceSpace'] = $plan->serviceSpace;
+        }
+
+        return $payload;
+    }
+
+    private function formatRequestedPlanPrice(StorePlanPrice|ServicePlanPrice|null $price): ?array
+    {
+        if ($price === null) {
+            return null;
+        }
+
+        return [
+            'id' => $price->id,
+            'duration' => (int) $price->duration,
+            'price' => $price->price,
         ];
     }
 }

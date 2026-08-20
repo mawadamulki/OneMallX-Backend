@@ -83,6 +83,7 @@ Route::get('/productInformation/{productId}', [ProductController::class, 'showFo
 Route::get('/productAttributes/{productId}', [ProductController::class, 'attributesForMobile']);
 Route::get('/productVariants/{productId}', [ProductController::class, 'variantsForMobile']);
 Route::get('/getProductMedia/{productId}', [ProductController::class, 'mediaForMobile']);
+Route::get('/dealsAds', [AdvertisementController::class, 'dealAds']);
 Route::get('/storeDetails/{storeId}', [StoreController::class, 'show']);
 Route::get('/storeCustomization/{storeId}', [StoreController::class, 'customizationForMobile']);
 Route::get('/storeCustomizationData/{storeId}', [StoreController::class, 'customizationDataForMobile']);
@@ -112,6 +113,7 @@ Route::get('/ads/deals', [AdvertisementController::class, 'dealAds']);
 Route::middleware('throttle:20,1')->group(function () {
     Route::post('/addStoreRequest', [SubscriptionRequestController::class, 'submitStore']);
     Route::post('/addServiceRequest', [SubscriptionRequestController::class, 'submitService']);
+    Route::post('/subscriptionRequest/planByEmail', [SubscriptionRequestController::class, 'planByEmail']);
 });
 Route::get('/storePlans', [SubscribtionPlanController::class, 'getStorePlansForSubscription']);
 Route::get('/servicePlans', [SubscribtionPlanController::class, 'getServicePlansForSubscription']);

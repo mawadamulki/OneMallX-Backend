@@ -59,6 +59,8 @@ return [
     */
     'frontend_login_url' => env('FRONTEND_LOGIN_URL'),
 
+    'frontend_pay_url' => env('FRONTEND_PAY_URL', 'https://digital-shopping-mall.vercel.app/payment'),
+
     /*
     | Optional support / contact page URL (e.g. shown on rejection emails).
     */

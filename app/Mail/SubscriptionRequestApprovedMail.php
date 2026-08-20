@@ -27,6 +27,7 @@ class SubscriptionRequestApprovedMail extends Mailable
                 'applicantName' => $this->applicantName,
                 'isStoreAccount' => $this->isStoreAccount,
                 'loginUrl' => config('app.frontend_login_url'),
+                'payUrl' => config('app.frontend_pay_url'),
             ]);
     }
 }

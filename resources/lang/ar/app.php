@@ -58,6 +58,7 @@ return [
     'store_subscription_request_submitted' => 'تم إرسال طلب اشتراك المتجر بنجاح.',
     'service_subscription_request_submitted' => 'تم إرسال طلب اشتراك الخدمة بنجاح.',
     'subscription_request_not_found' => 'طلب الاشتراك غير موجود.',
+    'subscription_request_not_found_for_email' => 'لا يوجد طلب اشتراك لهذا البريد الإلكتروني.',
     'subscription_request_not_pending' => 'طلب الاشتراك لم يعد قيد الانتظار.',
     'email_already_registered' => 'البريد الإلكتروني مسجّل مسبقاً.',
     'plan_price_mismatch' => 'السعر المحدد لا يتبع الخطة المحددة.',

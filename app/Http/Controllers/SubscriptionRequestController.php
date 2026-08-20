@@ -26,6 +26,21 @@ class SubscriptionRequestController extends Controller
         );
     }
 
+    public function planByEmail(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        $result = $this->subscriptionRequestService->getRequestedPlanByEmail($validated['email']);
+
+        if (! $result['success']) {
+            return response()->json(['message' => $result['message']], $result['http_status'] ?? 404);
+        }
+
+        return response()->json($result);
+    }
+
     public function indexStore(string $status)
     {
         $filter = $status === 'all' ? null : $status;

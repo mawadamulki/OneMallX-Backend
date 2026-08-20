@@ -42,7 +42,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
     {
         $q = StoreSubscriptionRequest::query()
             ->with([
-                'requestedPlan',
+                'requestedPlan.floor',
                 'requestedPlanPrice',
                 'reviewer',
             ])
@@ -57,8 +57,15 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
 
     public function listServiceRequests(?string $status): Collection
     {
-        $q = ServiceSubscriptionRequest::query()->orderBy('created_at');
-        if ($status !== null && $status !== '') {
+        $q = ServiceSubscriptionRequest::query()
+            ->with([
+                'requestedPlan.floor',
+                'requestedPlanPrice',
+                'reviewer',
+            ])
+            ->orderByDesc('created_at');
+
+        if ($status !== null && $status !== '' && $status !== 'all') {
             $q->where('status', $status);
         }
 

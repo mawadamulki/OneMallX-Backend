@@ -58,6 +58,7 @@ return [
     'store_subscription_request_submitted' => 'Your store subscription request was submitted successfully.',
     'service_subscription_request_submitted' => 'Your service subscription request was submitted successfully.',
     'subscription_request_not_found' => 'Subscription request not found.',
+    'subscription_request_not_found_for_email' => 'No subscription request found for this email.',
     'subscription_request_not_pending' => 'This subscription request is no longer pending.',
     'email_already_registered' => 'This email is already registered.',
     'plan_price_mismatch' => 'The selected price does not belong to the selected plan.',
