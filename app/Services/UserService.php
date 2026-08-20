@@ -35,9 +35,17 @@ class UserService
             ->through(fn (User $user) => $this->formatAdminUser($user));
     }
 
+    public function getProfile(int $userId): array
+    {
+        return [
+            'success' => true,
+            'user' => $this->getCurrentUserDetail($userId),
+        ];
+    }
+
     public function getCurrentUserDetail(int $userId): array
     {
-        $user = User::with('media')->findOrFail($userId);
+        $user = User::with(['media', 'roles'])->findOrFail($userId);
 
         return $this->formatAdminUser($user);
     }

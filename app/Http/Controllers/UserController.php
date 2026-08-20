@@ -48,10 +48,16 @@ class UserController extends Controller
 
     public function me()
     {
-        return response()->json([
-            'success' => true,
-            'user' => $this->userService->getCurrentUserDetail((int) Auth::id()),
-        ]);
+        return response()->json(
+            $this->userService->getProfile((int) Auth::id())
+        );
+    }
+
+    public function getProfile()
+    {
+        return response()->json(
+            $this->userService->getProfile((int) Auth::id())
+        );
     }
 
     public function updateProfile(Request $request)

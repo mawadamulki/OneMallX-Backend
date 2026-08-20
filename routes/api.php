@@ -232,6 +232,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ___________________ User Profile Routes ___________________
     Route::get('/user/me', [UserController::class, 'me']);
+    Route::get('/user/profile', [UserController::class, 'getProfile']);
     Route::post('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
 
