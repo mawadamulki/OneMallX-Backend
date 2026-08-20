@@ -113,8 +113,28 @@ class ProductClass implements ProductInterface
 
     public function findVisibleProductForCustomer(int $productId): ?Product
     {
-        return $this->visibleProductQuery()
+        return Product::query()
             ->whereKey($productId)
+            ->where('status', 'active')
+            ->whereHas('store', fn ($q) => $q->visibleToCustomers())
+            ->with([
+                'categories:id,name,slug',
+                'variants' => fn ($q) => $q
+                    ->select([
+                        'id',
+                        'productID',
+                        'price',
+                        'compareAtPrice',
+                        'discountPercentage',
+                        'quantity',
+                        'attributeName',
+                        'isDefault',
+                        'status',
+                    ])
+                    ->where('status', 'active')
+                    ->orderByDesc('isDefault'),
+                'variants.attributeValues.attribute',
+            ])
             ->first();
     }
 

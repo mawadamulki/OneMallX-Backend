@@ -8,6 +8,7 @@ use App\DAO\ProductInterface;
 use App\Models\Category;
 use App\Models\Media;
 use App\Models\Product;
+use App\Models\ProductAttributeValue;
 use App\Models\ProductCollection;
 use App\Models\ProductVariant;
 use App\Models\Store;
@@ -656,16 +657,70 @@ class ProductService
 
     private function toCustomerDetailArray(Product $product): array
     {
+        $variants = $product->relationLoaded('variants') ? $product->variants : collect();
+
         return [
-            ...$this->toCustomerSummaryArray($product),
+            'id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'shortDetail' => $product->shortDetail,
             'detail' => $product->detail,
-            'store' => $product->relationLoaded('store') && $product->store
-                ? [
-                    'id' => $product->store->id,
-                    'name' => $product->store->name,
-                ]
-                : null,
+            'isFeatured' => (bool) $product->isFeatured,
+            'categories' => $product->relationLoaded('categories')
+                ? $product->categories->map(fn ($category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                ])->values()->all()
+                : [],
+            'attributes' => $this->mapProductAttributes($product),
+            'variants' => $variants->map(fn (ProductVariant $variant) => [
+                'id' => $variant->id,
+                'price' => $variant->price,
+                'compareAtPrice' => $variant->compareAtPrice,
+                'discountPercentage' => (int) $variant->discountPercentage,
+                'quantity' => $variant->quantity,
+                'isDefault' => (bool) $variant->isDefault,
+                'attributeName' => $variant->attributeName ?: $this->formatVariantAttributeString($variant),
+            ])->values()->all(),
         ];
+    }
+
+    private function mapProductAttributes(Product $product): array
+    {
+        if (! $product->relationLoaded('variants')) {
+            return [];
+        }
+
+        return $product->variants
+            ->flatMap(fn (ProductVariant $variant) => $variant->relationLoaded('attributeValues')
+                ? $variant->attributeValues
+                : collect())
+            ->filter(fn (ProductAttributeValue $value) => $value->relationLoaded('attribute') && $value->attribute)
+            ->groupBy(fn (ProductAttributeValue $value) => $value->attribute->id)
+            ->map(function ($values) {
+                $attribute = $values->first()->attribute;
+
+                return [
+                    'id' => $attribute->id,
+                    'name' => $attribute->name,
+                    'code' => $attribute->code,
+                    'sortOrder' => $attribute->sortOrder,
+                    'values' => $values
+                        ->unique('id')
+                        ->sortBy('sortOrder')
+                        ->values()
+                        ->map(fn (ProductAttributeValue $value) => [
+                            'id' => $value->id,
+                            'value' => $value->value,
+                            'sortOrder' => $value->sortOrder,
+                        ])
+                        ->all(),
+                ];
+            })
+            ->sortBy('sortOrder')
+            ->values()
+            ->all();
     }
 
     private function toDetailArray(Product $product): array
