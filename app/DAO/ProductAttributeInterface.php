@@ -10,6 +10,8 @@ interface ProductAttributeInterface
 {
     public function listForStore(int $storeId): Collection;
 
+    public function listForProduct(int $productId, int $storeId): Collection;
+
     public function findForStore(int $attributeId, int $storeId): ?ProductAttribute;
 
     public function findValueForStore(int $valueId, int $storeId): ?ProductAttributeValue;

@@ -8,6 +8,7 @@ use App\DAO\ProductInterface;
 use App\Models\Category;
 use App\Models\Media;
 use App\Models\Product;
+use App\Models\ProductAttribute;
 use App\Models\ProductAttributeValue;
 use App\Models\ProductCollection;
 use App\Models\ProductVariant;
@@ -688,26 +689,55 @@ class ProductService
 
     private function mapProductAttributes(Product $product): array
     {
-        if (! $product->relationLoaded('variants')) {
+        $attributes = $this->productAttributeClass
+            ->listForProduct((int) $product->id, (int) $product->storeID);
+
+        if ($attributes->isNotEmpty()) {
+            return $attributes
+                ->map(fn (ProductAttribute $attribute) => $this->toCustomerAttributeArray($attribute))
+                ->values()
+                ->all();
+        }
+
+        return $this->mapProductAttributesFromVariantNames($product);
+    }
+
+    private function mapProductAttributesFromVariantNames(Product $product): array
+    {
+        $variants = $product->relationLoaded('variants')
+            ? $product->variants
+            : $product->variants()->where('status', 'active')->get(['id', 'attributeName']);
+
+        $parts = $variants
+            ->pluck('attributeName')
+            ->filter(fn (?string $name) => $name !== null && trim($name) !== '')
+            ->flatMap(fn (string $name) => preg_split('/\s*\/\s*/', $name) ?: [])
+            ->map(fn (string $part) => mb_strtolower(trim($part)))
+            ->filter(fn (string $part) => $part !== '')
+            ->unique()
+            ->all();
+
+        if ($parts === []) {
             return [];
         }
 
-        return $product->variants
-            ->flatMap(fn (ProductVariant $variant) => $variant->relationLoaded('attributeValues')
-                ? $variant->attributeValues
-                : collect())
-            ->filter(fn (ProductAttributeValue $value) => $value->relationLoaded('attribute') && $value->attribute)
-            ->groupBy(fn (ProductAttributeValue $value) => $value->attribute->id)
-            ->map(function ($values) {
-                $attribute = $values->first()->attribute;
+        return $this->productAttributeClass
+            ->listForStore((int) $product->storeID)
+            ->map(function (ProductAttribute $attribute) use ($parts) {
+                $matchedValues = $attribute->values->filter(
+                    fn (ProductAttributeValue $value) => in_array(mb_strtolower(trim($value->value)), $parts, true)
+                );
+
+                if ($matchedValues->isEmpty()) {
+                    return null;
+                }
 
                 return [
                     'id' => $attribute->id,
                     'name' => $attribute->name,
                     'code' => $attribute->code,
                     'sortOrder' => $attribute->sortOrder,
-                    'values' => $values
-                        ->unique('id')
+                    'values' => $matchedValues
                         ->sortBy('sortOrder')
                         ->values()
                         ->map(fn (ProductAttributeValue $value) => [
@@ -718,9 +748,26 @@ class ProductService
                         ->all(),
                 ];
             })
-            ->sortBy('sortOrder')
+            ->filter()
             ->values()
             ->all();
+    }
+
+    private function toCustomerAttributeArray(ProductAttribute $attribute): array
+    {
+        return [
+            'id' => $attribute->id,
+            'name' => $attribute->name,
+            'code' => $attribute->code,
+            'sortOrder' => $attribute->sortOrder,
+            'values' => $attribute->relationLoaded('values')
+                ? $attribute->values->map(fn (ProductAttributeValue $value) => [
+                    'id' => $value->id,
+                    'value' => $value->value,
+                    'sortOrder' => $value->sortOrder,
+                ])->values()->all()
+                : [],
+        ];
     }
 
     private function toDetailArray(Product $product): array

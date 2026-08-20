@@ -18,6 +18,24 @@ class ProductAttributeClass implements ProductAttributeInterface
             ->get();
     }
 
+    public function listForProduct(int $productId, int $storeId): Collection
+    {
+        return ProductAttribute::query()
+            ->where('storeID', $storeId)
+            ->whereHas('values.variants', fn ($q) => $q
+                ->where('productID', $productId)
+                ->where('status', 'active'))
+            ->with(['values' => fn ($q) => $q
+                ->whereHas('variants', fn ($vq) => $vq
+                    ->where('productID', $productId)
+                    ->where('status', 'active'))
+                ->orderBy('sortOrder')
+                ->orderBy('value')])
+            ->orderBy('sortOrder')
+            ->orderBy('name')
+            ->get();
+    }
+
     public function findForStore(int $attributeId, int $storeId): ?ProductAttribute
     {
         return ProductAttribute::query()

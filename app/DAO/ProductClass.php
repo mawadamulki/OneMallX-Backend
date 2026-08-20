@@ -133,7 +133,6 @@ class ProductClass implements ProductInterface
                     ])
                     ->where('status', 'active')
                     ->orderByDesc('isDefault'),
-                'variants.attributeValues.attribute',
             ])
             ->first();
     }
