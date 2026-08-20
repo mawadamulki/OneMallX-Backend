@@ -11,6 +11,11 @@ class ServiceSubscriptionRequest extends Model
         'password',
     ];
 
+    protected $appends = [
+        'isAccountProvisioned',
+        'provisioningState',
+    ];
+
     protected $fillable = [
         'applicantName',
         'email',
@@ -82,5 +87,19 @@ class ServiceSubscriptionRequest extends Model
     public function createdSubscription(): BelongsTo
     {
         return $this->belongsTo(ServiceSubscription::class, 'createdSubscriptionID');
+    }
+
+    public function getIsAccountProvisionedAttribute(): bool
+    {
+        return $this->status === 'approved' && $this->createdUserID !== null;
+    }
+
+    public function getProvisioningStateAttribute(): string
+    {
+        if ($this->status === 'approved' && $this->createdUserID === null) {
+            return 'approved_incomplete';
+        }
+
+        return (string) $this->status;
     }
 }
