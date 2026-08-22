@@ -15,10 +15,7 @@ use Kreait\Firebase\Messaging\Notification;
 
 class PushNotificationService
 {
-    public function __construct(
-        private Messaging $messaging,
-        private NotificationService $notificationService,
-    ) {}
+    public function __construct(private NotificationService $notificationService) {}
 
     public function notifyHomePageAd(Advertisement $ad): void
     {
@@ -67,20 +64,24 @@ class PushNotificationService
      */
     public function broadcastToCustomers(string $title, string $body, array $data = []): void
     {
+        $this->notificationService->broadcastToCustomers($title, $body, $data);
+
         BroadcastCustomerPushNotification::dispatch($title, $body, $data);
     }
 
     /**
      * @param  array<string, string>  $data
      */
-    public function broadcastToCustomersSync(string $title, string $body, array $data = []): void
+    public function pushBroadcastToCustomers(string $title, string $body, array $data = []): void
     {
         User::query()
             ->role('Customer')
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
             ->select(['id', 'fcm_token'])
             ->chunkById(100, function ($users) use ($title, $body, $data) {
                 foreach ($users as $user) {
-                    $this->sendToUser($user, $title, $body, $data);
+                    $this->sendToToken($user->fcm_token, $title, $body, $data, $user);
                 }
             });
     }
@@ -114,7 +115,7 @@ class PushNotificationService
                 ->withNotification(Notification::create($title, $body))
                 ->withData($this->normalizeData($data));
 
-            $this->messaging->send($message);
+            $this->messaging()->send($message);
 
             return true;
         } catch (NotFound $exception) {
@@ -136,6 +137,11 @@ class PushNotificationService
 
             return false;
         }
+    }
+
+    private function messaging(): Messaging
+    {
+        return app(Messaging::class);
     }
 
     /**

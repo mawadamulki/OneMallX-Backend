@@ -21,6 +21,6 @@ class BroadcastCustomerPushNotification implements ShouldQueue
 
     public function handle(PushNotificationService $pushNotification): void
     {
-        $pushNotification->broadcastToCustomersSync($this->title, $this->body, $this->data);
+        $pushNotification->pushBroadcastToCustomers($this->title, $this->body, $this->data);
     }
 }
