@@ -31,8 +31,7 @@ class DatabaseSeeder extends Seeder
         $this->call(IconSeeder::class);
         $this->call(MallSeeder::class);
         $this->call(FloorAreaSeeder::class);
-        $this->call(StoreDemoSeeder::class);
-        $this->call(ServiceDemoSeeder::class);
+
 
     }
 }
