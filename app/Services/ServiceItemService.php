@@ -175,7 +175,7 @@ class ServiceItemService
             return ['error' => 'No employees assigned to this service item'];
         }
 
-        if (! ServiceEmployeeSchedule::hasValidServiceWindowForService($item->service)) {
+        if (! ServiceEmployeeSchedule::hasBookableHoursConfigured($item->service, $item->employees)) {
             return ['error' => 'Service opening hours are not configured'];
         }
 

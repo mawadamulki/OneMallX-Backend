@@ -12,38 +12,16 @@ use DateTimeInterface;
  */
 final class ServiceEmployeeSchedule
 {
+    private const DEFAULT_OPEN = '09:00:00';
+
+    private const DEFAULT_CLOSE = '18:00:00';
+
     /**
      * @return array{0: Carbon, 1: Carbon}|null [windowStart, windowEnd] on $date's calendar day
      */
     public static function intersectionForDate(Service $service, Employee $employee, Carbon $date): ?array
     {
-        $iso = (int) $date->dayOfWeekIso;
-
-        if (! $service->isOpenOnWeekdayForDisplay($iso)) {
-            return null;
-        }
-
-        $empDay = $employee->workingDays->firstWhere('weekday', $iso);
-        if ($empDay === null) {
-            return null;
-        }
-
-        $day = $date->format('Y-m-d');
-
-        $serviceStart = Carbon::parse($day.' '.self::normalizeTimeString($service->openTime));
-        $serviceEnd = Carbon::parse($day.' '.self::normalizeTimeString($service->closeTime));
-
-        $empStart = Carbon::parse($day.' '.self::normalizeTimeString($empDay->starts_at));
-        $empEnd = Carbon::parse($day.' '.self::normalizeTimeString($empDay->ends_at));
-
-        $start = $serviceStart->greaterThan($empStart) ? $serviceStart : $empStart;
-        $end = $serviceEnd->lessThan($empEnd) ? $serviceEnd : $empEnd;
-
-        if ($start >= $end) {
-            return null;
-        }
-
-        return [$start, $end];
+        return self::intersectionForBooking($service, $employee, $date);
     }
 
     public static function canOfferOnDate(Service $service, Employee $employee, Carbon $date): bool
@@ -87,17 +65,38 @@ final class ServiceEmployeeSchedule
             return null;
         }
 
-        if (! self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
-            return null;
+        $day = $date->format('Y-m-d');
+        $serviceWindow = self::resolveServiceWindowTimes($service);
+
+        if ($serviceWindow !== null) {
+            [$openTime, $closeTime] = $serviceWindow;
+            $serviceStart = Carbon::parse($day.' '.self::normalizeTimeString($openTime));
+            $serviceEnd = Carbon::parse($day.' '.self::normalizeTimeString($closeTime));
+
+            if (! $employee->hasWorkingDaySchedule()) {
+                return [$serviceStart, $serviceEnd];
+            }
+
+            $empDay = $employee->workingDays->firstWhere('weekday', $iso);
+            if ($empDay === null) {
+                return null;
+            }
+
+            $empStart = Carbon::parse($day.' '.self::normalizeTimeString($empDay->starts_at));
+            $empEnd = Carbon::parse($day.' '.self::normalizeTimeString($empDay->ends_at));
+
+            $start = $serviceStart->greaterThan($empStart) ? $serviceStart : $empStart;
+            $end = $serviceEnd->lessThan($empEnd) ? $serviceEnd : $empEnd;
+
+            if ($start >= $end) {
+                return null;
+            }
+
+            return [$start, $end];
         }
 
-        $day = $date->format('Y-m-d');
-
-        $serviceStart = Carbon::parse($day.' '.self::normalizeTimeString($service->openTime));
-        $serviceEnd = Carbon::parse($day.' '.self::normalizeTimeString($service->closeTime));
-
         if (! $employee->hasWorkingDaySchedule()) {
-            return [$serviceStart, $serviceEnd];
+            return null;
         }
 
         $empDay = $employee->workingDays->firstWhere('weekday', $iso);
@@ -108,14 +107,11 @@ final class ServiceEmployeeSchedule
         $empStart = Carbon::parse($day.' '.self::normalizeTimeString($empDay->starts_at));
         $empEnd = Carbon::parse($day.' '.self::normalizeTimeString($empDay->ends_at));
 
-        $start = $serviceStart->greaterThan($empStart) ? $serviceStart : $empStart;
-        $end = $serviceEnd->lessThan($empEnd) ? $serviceEnd : $empEnd;
-
-        if ($start >= $end) {
+        if ($empStart >= $empEnd) {
             return null;
         }
 
-        return [$start, $end];
+        return [$empStart, $empEnd];
     }
 
     /**
@@ -139,7 +135,7 @@ final class ServiceEmployeeSchedule
             return 'Employee is not working on this day';
         }
 
-        if (! self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
+        if (! self::hasBookableHoursConfigured($service, [$employee])) {
             return 'Service opening hours are not configured';
         }
 
@@ -262,7 +258,52 @@ final class ServiceEmployeeSchedule
 
     public static function hasValidServiceWindowForService(Service $service): bool
     {
-        return self::hasValidServiceWindow($service->openTime, $service->closeTime);
+        return self::resolveServiceWindowTimes($service) !== null;
+    }
+
+    /**
+     * True when the service or its employees have enough schedule data to book.
+     *
+     * @param  iterable<int, Employee>  $employees
+     */
+    public static function hasBookableHoursConfigured(Service $service, iterable $employees = []): bool
+    {
+        if (self::resolveServiceWindowTimes($service) !== null) {
+            return true;
+        }
+
+        foreach ($employees as $employee) {
+            if (! $employee->hasWorkingDaySchedule()) {
+                continue;
+            }
+
+            foreach ($employee->workingDays as $workingDay) {
+                if (self::hasValidServiceWindow($workingDay->starts_at, $workingDay->ends_at)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{0: string, 1: string}|null [openTime, closeTime]
+     */
+    public static function resolveServiceWindowTimes(Service $service): ?array
+    {
+        if (self::hasValidServiceWindow($service->openTime, $service->closeTime)) {
+            return [
+                self::normalizeTimeString($service->openTime),
+                self::normalizeTimeString($service->closeTime),
+            ];
+        }
+
+        if ($service->hasWorkingDaySchedule()) {
+            return [self::DEFAULT_OPEN, self::DEFAULT_CLOSE];
+        }
+
+        return null;
     }
 
     private static function hasValidServiceWindow(mixed $openTime, mixed $closeTime): bool
