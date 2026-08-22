@@ -101,4 +101,18 @@ class UserController extends Controller
 
         return response()->json($result, $result['http_status'] ?? 200);
     }
+
+    public function updateDeviceToken(Request $request)
+    {
+        $validated = $request->validate([
+            'fcm_token' => 'required|string|max:512',
+        ]);
+
+        return response()->json(
+            $this->userService->updateDeviceToken(
+                (int) Auth::id(),
+                $validated['fcm_token']
+            )
+        );
+    }
 }

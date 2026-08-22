@@ -26,6 +26,7 @@ class SubscriptionRequestService
     public function __construct(
         protected SubscriptionRequestInterface $subscriptionRequestDao,
         protected BusinessCategoryService $businessCategoryService,
+        protected PushNotificationService $pushNotification,
     ) {}
 
     public function submitStoreRequest(array $input): array
@@ -240,6 +241,14 @@ class SubscriptionRequestService
                 'message' => $result['message'],
                 'http_status' => 404,
             ];
+        }
+
+        if (! empty($result['openedStore'])) {
+            $this->pushNotification->notifyStoreOpened($result['openedStore']);
+        }
+
+        if (! empty($result['openedService'])) {
+            $this->pushNotification->notifyServiceOpened($result['openedService']);
         }
 
         return [

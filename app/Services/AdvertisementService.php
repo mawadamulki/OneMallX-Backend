@@ -27,6 +27,7 @@ class AdvertisementService
         protected ProductInterface $productClass,
         protected ServiceProviderInterface $serviceProviderClass,
         protected ServiceProviderItemInterface $serviceProviderItemClass,
+        protected PushNotificationService $pushNotification,
     ) {}
 
     public function listForAdmin(
@@ -175,6 +176,8 @@ class AdvertisementService
             'endDate' => $endDate,
         ]);
 
+        $this->notifyIfHomePageAdLive($ad, $startDate, $endDate);
+
         return [
             'success' => true,
             'message' => 'Advertisement created.',
@@ -247,6 +250,10 @@ class AdvertisementService
         }
 
         $updated = $this->advertisementClass->update($ad, $data);
+
+        if ($ad->placement === 'home' && $willBeActive && ! $wasActive) {
+            $this->notifyIfHomePageAdLive($updated, $startDate, $endDate);
+        }
 
         return [
             'success' => true,
@@ -388,6 +395,8 @@ class AdvertisementService
             'endDate' => $endDate,
         ]);
 
+        $this->notifyIfHomePageAdLive($ad, $startDate, $endDate);
+
         return [
             'success' => true,
             'message' => 'Advertisement created.',
@@ -460,6 +469,10 @@ class AdvertisementService
         }
 
         $updated = $this->advertisementClass->update($ad, $data);
+
+        if ($ad->placement === 'home' && $willBeActive && ! $wasActive) {
+            $this->notifyIfHomePageAdLive($updated, $startDate, $endDate);
+        }
 
         return [
             'success' => true,
@@ -790,6 +803,15 @@ class AdvertisementService
         if ($ad->image) {
             Storage::disk('public')->delete($ad->image);
         }
+    }
+
+    private function notifyIfHomePageAdLive(Advertisement $ad, string $startDate, string $endDate): void
+    {
+        if ($ad->placement !== 'home' || ! $this->wouldBeActiveToday($startDate, $endDate)) {
+            return;
+        }
+
+        $this->pushNotification->notifyHomePageAd($ad);
     }
 
     /** @return array{success: false, message: string, http_status: int} */

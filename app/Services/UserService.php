@@ -63,6 +63,22 @@ class UserService
         ];
     }
 
+    public function updateDeviceToken(int $userId, string $fcmToken): array
+    {
+        $user = User::findOrFail($userId);
+        $user->update(['fcm_token' => $fcmToken]);
+
+        return [
+            'success' => true,
+            'message' => 'Device token saved.',
+        ];
+    }
+
+    public function clearDeviceToken(int $userId): void
+    {
+        User::whereKey($userId)->update(['fcm_token' => null]);
+    }
+
     public function updateProfile(int $userId, array $data, ?\Illuminate\Http\UploadedFile $photo = null): array
     {
         unset($data['email']);

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'password_reset_otp',
         'password_reset_otp_expires_at',
         'is_verified',
+        'fcm_token',
     ];
 
     protected $appends = [

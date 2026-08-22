@@ -338,11 +338,14 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
 
             $now = Carbon::now();
             $accountType = null;
+            $openedStore = null;
+            $openedService = null;
 
             if ($storeRequest !== null && $storeRequest->createdStoreID !== null) {
                 $store = Store::query()->whereKey($storeRequest->createdStoreID)->lockForUpdate()->first();
                 if ($store !== null && $store->accountStatus !== 'active') {
                     $store->update(['accountStatus' => 'active']);
+                    $openedStore = $store->fresh();
                 }
 
                 $subscription = StoreSubscription::query()
@@ -364,6 +367,7 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 $service = Service::query()->whereKey($serviceRequest->createdServiceID)->lockForUpdate()->first();
                 if ($service !== null && $service->accountStatus !== 'active') {
                     $service->update(['accountStatus' => 'active']);
+                    $openedService = $service->fresh();
                 }
 
                 $subscription = ServiceSubscription::query()
@@ -390,6 +394,8 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 'message' => __('app.subscription_account_activated'),
                 'accountType' => $accountType,
                 'user' => $user->fresh(['roles']),
+                'openedStore' => $openedStore,
+                'openedService' => $openedService,
             ];
         });
     }

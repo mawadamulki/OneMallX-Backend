@@ -237,6 +237,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', [UserController::class, 'getProfile']);
     Route::post('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
+    Route::post('/user/device-token', [UserController::class, 'updateDeviceToken']);
 
     Route::get('/favoriteProducts', [FavoriteProductController::class, 'index']);
     Route::post('/addFavoriteProduct/{productId}', [FavoriteProductController::class, 'store']);
