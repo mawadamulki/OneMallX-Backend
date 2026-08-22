@@ -52,7 +52,7 @@ class CheckoutService
             $unavailableItems = $this->collectUnavailableBasketItems($basket);
             if ($unavailableItems !== []) {
                 return $this->fail(
-                    'Some items in your basket are no longer available',
+                    $this->unavailableItemsMessage($unavailableItems),
                     422,
                     ['unavailable_items' => $unavailableItems]
                 );
@@ -170,21 +170,23 @@ class CheckoutService
     }
 
     /**
-     * @return list<array{basket_item_id: int, line_type: string, reason: string, reason_code: string, item: array<string, mixed>}>
+     * @return list<array{basket_item_id: int, line_type: string, item_name: string, reason: string, reason_code: string, item: array<string, mixed>}>
      */
     private function collectUnavailableBasketItems(Basket $basket): array
     {
         $unavailable = [];
 
         foreach ($basket->items as $line) {
+            $itemName = $this->basketLineDisplayName($line);
             $issue = $line->lineType === BasketItem::LINE_TYPE_PRODUCT
-                ? $this->validateProductLine($line)
-                : $this->validateServiceLine($line);
+                ? $this->validateProductLine($line, $itemName)
+                : $this->validateServiceLine($line, $itemName);
 
             if ($issue !== null) {
                 $unavailable[] = [
                     'basket_item_id' => $line->id,
                     'line_type' => $line->lineType,
+                    'item_name' => $itemName,
                     'reason' => $issue['message'],
                     'reason_code' => $issue['code'],
                     'item' => $this->formatBasketLine($line),
@@ -195,14 +197,55 @@ class CheckoutService
         return $unavailable;
     }
 
+    private function unavailableItemsMessage(array $unavailableItems): string
+    {
+        $names = array_values(array_filter(array_map(
+            fn (array $row) => $row['item_name'] ?? null,
+            $unavailableItems
+        )));
+
+        if ($names === []) {
+            return 'Some items in your basket are no longer available';
+        }
+
+        if (count($names) === 1) {
+            return "{$names[0]} is no longer available";
+        }
+
+        $last = array_pop($names);
+
+        return implode(', ', $names).' and '.$last.' are no longer available';
+    }
+
+    private function basketLineDisplayName(BasketItem $line): string
+    {
+        if ($line->lineType === BasketItem::LINE_TYPE_PRODUCT && $line->item instanceof ProductVariant) {
+            $variant = $line->item;
+            $product = $variant->relationLoaded('product') ? $variant->product : null;
+            $productName = $product?->name ?? $variant->sku ?? 'Product';
+
+            if ($variant->name && $variant->name !== $productName) {
+                return "{$productName} ({$variant->name})";
+            }
+
+            return $productName;
+        }
+
+        if ($line->lineType === BasketItem::LINE_TYPE_SERVICE && $line->item instanceof ServiceItem) {
+            return $line->item->name ?: 'Service appointment';
+        }
+
+        return $line->lineType === BasketItem::LINE_TYPE_SERVICE ? 'Service appointment' : 'Product';
+    }
+
     /**
      * @return array{message: string, code: string}|null
      */
-    private function validateProductLine(BasketItem $line): ?array
+    private function validateProductLine(BasketItem $line, string $itemName): ?array
     {
         if (! $line->item instanceof ProductVariant) {
             return [
-                'message' => 'A product in your basket is no longer available',
+                'message' => "{$itemName} is no longer available",
                 'code' => 'unavailable',
             ];
         }
@@ -210,7 +253,7 @@ class CheckoutService
         $variant = $line->item;
         if (($variant->status ?? 'active') !== 'active') {
             return [
-                'message' => "Product variant {$variant->sku} is no longer available",
+                'message' => "{$itemName} is no longer available",
                 'code' => 'inactive_variant',
             ];
         }
@@ -218,14 +261,14 @@ class CheckoutService
         $product = $variant->product;
         if ($product === null || $product->status !== 'active') {
             return [
-                'message' => "Product {$variant->sku} is no longer available",
+                'message' => "{$itemName} is no longer available",
                 'code' => 'inactive_product',
             ];
         }
 
         if ($variant->availableQuantity() < (int) $line->quantity) {
             return [
-                'message' => "Insufficient stock for {$variant->sku}",
+                'message' => "{$itemName} is out of stock",
                 'code' => 'insufficient_stock',
             ];
         }
@@ -236,11 +279,11 @@ class CheckoutService
     /**
      * @return array{message: string, code: string}|null
      */
-    private function validateServiceLine(BasketItem $line): ?array
+    private function validateServiceLine(BasketItem $line, string $itemName): ?array
     {
         if (! $line->item instanceof ServiceItem) {
             return [
-                'message' => 'A service in your basket is no longer available',
+                'message' => "{$itemName} is no longer available",
                 'code' => 'unavailable',
             ];
         }
@@ -248,7 +291,7 @@ class CheckoutService
         $serviceItem = $line->item;
         if (! $serviceItem->isActive()) {
             return [
-                'message' => "Service item {$serviceItem->name} is no longer available",
+                'message' => "{$itemName} is no longer available",
                 'code' => 'inactive_service_item',
             ];
         }
@@ -256,7 +299,7 @@ class CheckoutService
         $service = $serviceItem->service;
         if ($service === null) {
             return [
-                'message' => 'Service for a basket item was not found',
+                'message' => "{$itemName}: service was not found",
                 'code' => 'service_not_found',
             ];
         }
@@ -264,7 +307,7 @@ class CheckoutService
         $employee = $line->employee;
         if ($employee === null) {
             return [
-                'message' => 'Employee for a service basket item was not found',
+                'message' => "{$itemName}: employee was not found",
                 'code' => 'employee_not_found',
             ];
         }
@@ -274,7 +317,7 @@ class CheckoutService
 
         if (ServiceEmployeeSchedule::parseAppointmentDateTime($date, $time)->isPast()) {
             return [
-                'message' => 'A service appointment in your basket is in the past',
+                'message' => "{$itemName}: appointment time is in the past",
                 'code' => 'appointment_past',
             ];
         }
@@ -289,7 +332,7 @@ class CheckoutService
 
         if ($rejection !== null) {
             return [
-                'message' => $rejection,
+                'message' => "{$itemName}: {$rejection}",
                 'code' => 'schedule_invalid',
             ];
         }
@@ -301,7 +344,7 @@ class CheckoutService
             (int) $serviceItem->duration
         )) {
             return [
-                'message' => 'This appointment slot was already booked by someone else',
+                'message' => "{$itemName}: this appointment slot was already booked",
                 'code' => 'appointment_taken',
             ];
         }
@@ -314,6 +357,7 @@ class CheckoutService
         $payload = [
             'id' => $line->id,
             'line_type' => $line->lineType,
+            'item_name' => $this->basketLineDisplayName($line),
             'quantity' => (int) $line->quantity,
             'unit_price' => (int) $line->unitPrice,
             'line_total' => (int) $line->quantity * (int) $line->unitPrice,
