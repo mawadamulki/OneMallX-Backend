@@ -10,6 +10,7 @@ use App\Http\Controllers\BasketController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ServiceProviderEmployeeController;
 use App\Http\Controllers\ServiceProviderItemController;
 use App\Http\Controllers\ServiceAnalyticsController;
@@ -238,6 +239,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile', [UserController::class, 'updateProfile']);
     Route::post('/user/profilePicture', [UserController::class, 'uploadProfilePicture']);
     Route::post('/user/device-token', [UserController::class, 'updateDeviceToken']);
+    Route::get('/user/notifications', [NotificationController::class, 'index']);
+    Route::post('/user/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/user/notifications/read/{id}', [NotificationController::class, 'markAsRead']);
 
     Route::get('/favoriteProducts', [FavoriteProductController::class, 'index']);
     Route::post('/addFavoriteProduct/{productId}', [FavoriteProductController::class, 'store']);

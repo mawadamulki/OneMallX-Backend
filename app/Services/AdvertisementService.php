@@ -27,7 +27,6 @@ class AdvertisementService
         protected ProductInterface $productClass,
         protected ServiceProviderInterface $serviceProviderClass,
         protected ServiceProviderItemInterface $serviceProviderItemClass,
-        protected PushNotificationService $pushNotification,
     ) {}
 
     public function listForAdmin(
@@ -811,7 +810,7 @@ class AdvertisementService
             return;
         }
 
-        $this->pushNotification->notifyHomePageAd($ad);
+        app(PushNotificationService::class)->notifyHomePageAd($ad);
     }
 
     /** @return array{success: false, message: string, http_status: int} */

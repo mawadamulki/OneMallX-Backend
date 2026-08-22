@@ -15,7 +15,10 @@ use Kreait\Firebase\Messaging\Notification;
 
 class PushNotificationService
 {
-    public function __construct(private Messaging $messaging) {}
+    public function __construct(
+        private Messaging $messaging,
+        private NotificationService $notificationService,
+    ) {}
 
     public function notifyHomePageAd(Advertisement $ad): void
     {
@@ -74,8 +77,6 @@ class PushNotificationService
     {
         User::query()
             ->role('Customer')
-            ->whereNotNull('fcm_token')
-            ->where('fcm_token', '!=', '')
             ->select(['id', 'fcm_token'])
             ->chunkById(100, function ($users) use ($title, $body, $data) {
                 foreach ($users as $user) {
@@ -89,6 +90,8 @@ class PushNotificationService
      */
     public function sendToUser(User $user, string $title, string $body, array $data = []): bool
     {
+        $this->notificationService->createForUser((int) $user->id, $title, $body, $data);
+
         if (empty($user->fcm_token)) {
             return false;
         }
