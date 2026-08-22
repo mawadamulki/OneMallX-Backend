@@ -49,9 +49,13 @@ class CheckoutService
                 return $this->fail('Basket is empty', 422);
             }
 
-            $validationError = $this->validateBasketItems($basket);
-            if ($validationError !== null) {
-                return $this->fail($validationError, 422);
+            $unavailableItems = $this->collectUnavailableBasketItems($basket);
+            if ($unavailableItems !== []) {
+                return $this->fail(
+                    'Some items in your basket are no longer available',
+                    422,
+                    ['unavailable_items' => $unavailableItems]
+                );
             }
 
             $locationText = trim((string) ($data['location'] ?? ''));
@@ -165,72 +169,114 @@ class CheckoutService
         ]);
     }
 
-    private function validateBasketItems(Basket $basket): ?string
+    /**
+     * @return list<array{basket_item_id: int, line_type: string, reason: string, reason_code: string, item: array<string, mixed>}>
+     */
+    private function collectUnavailableBasketItems(Basket $basket): array
     {
-        foreach ($basket->items as $line) {
-            if ($line->lineType === BasketItem::LINE_TYPE_PRODUCT) {
-                $error = $this->validateProductLine($line);
-            } else {
-                $error = $this->validateServiceLine($line);
-            }
+        $unavailable = [];
 
-            if ($error !== null) {
-                return $error;
+        foreach ($basket->items as $line) {
+            $issue = $line->lineType === BasketItem::LINE_TYPE_PRODUCT
+                ? $this->validateProductLine($line)
+                : $this->validateServiceLine($line);
+
+            if ($issue !== null) {
+                $unavailable[] = [
+                    'basket_item_id' => $line->id,
+                    'line_type' => $line->lineType,
+                    'reason' => $issue['message'],
+                    'reason_code' => $issue['code'],
+                    'item' => $this->formatBasketLine($line),
+                ];
             }
         }
 
-        return null;
+        return $unavailable;
     }
 
-    private function validateProductLine(BasketItem $line): ?string
+    /**
+     * @return array{message: string, code: string}|null
+     */
+    private function validateProductLine(BasketItem $line): ?array
     {
         if (! $line->item instanceof ProductVariant) {
-            return 'A product in your basket is no longer available';
+            return [
+                'message' => 'A product in your basket is no longer available',
+                'code' => 'unavailable',
+            ];
         }
 
         $variant = $line->item;
         if (($variant->status ?? 'active') !== 'active') {
-            return "Product variant {$variant->sku} is no longer available";
+            return [
+                'message' => "Product variant {$variant->sku} is no longer available",
+                'code' => 'inactive_variant',
+            ];
         }
 
         $product = $variant->product;
         if ($product === null || $product->status !== 'active') {
-            return "Product {$variant->sku} is no longer available";
+            return [
+                'message' => "Product {$variant->sku} is no longer available",
+                'code' => 'inactive_product',
+            ];
         }
 
         if ($variant->availableQuantity() < (int) $line->quantity) {
-            return "Insufficient stock for {$variant->sku}";
+            return [
+                'message' => "Insufficient stock for {$variant->sku}",
+                'code' => 'insufficient_stock',
+            ];
         }
 
         return null;
     }
 
-    private function validateServiceLine(BasketItem $line): ?string
+    /**
+     * @return array{message: string, code: string}|null
+     */
+    private function validateServiceLine(BasketItem $line): ?array
     {
         if (! $line->item instanceof ServiceItem) {
-            return 'A service in your basket is no longer available';
+            return [
+                'message' => 'A service in your basket is no longer available',
+                'code' => 'unavailable',
+            ];
         }
 
         $serviceItem = $line->item;
         if (! $serviceItem->isActive()) {
-            return "Service item {$serviceItem->name} is no longer available";
+            return [
+                'message' => "Service item {$serviceItem->name} is no longer available",
+                'code' => 'inactive_service_item',
+            ];
         }
 
         $service = $serviceItem->service;
         if ($service === null) {
-            return 'Service for a basket item was not found';
+            return [
+                'message' => 'Service for a basket item was not found',
+                'code' => 'service_not_found',
+            ];
         }
 
         $employee = $line->employee;
         if ($employee === null) {
-            return 'Employee for a service basket item was not found';
+            return [
+                'message' => 'Employee for a service basket item was not found',
+                'code' => 'employee_not_found',
+            ];
         }
 
         $date = ServiceEmployeeSchedule::normalizeDateString($line->scheduledDate);
         $time = ServiceEmployeeSchedule::formatTimeForApi($line->scheduledTime);
 
         if (ServiceEmployeeSchedule::parseAppointmentDateTime($date, $time)->isPast()) {
-            return 'A service appointment in your basket is in the past';
+            return [
+                'message' => 'A service appointment in your basket is in the past',
+                'code' => 'appointment_past',
+            ];
         }
 
         $rejection = ServiceEmployeeSchedule::bookingRejectionReason(
@@ -242,7 +288,10 @@ class CheckoutService
         );
 
         if ($rejection !== null) {
-            return $rejection;
+            return [
+                'message' => $rejection,
+                'code' => 'schedule_invalid',
+            ];
         }
 
         if ($this->slotTakenByBooking(
@@ -251,10 +300,54 @@ class CheckoutService
             $time,
             (int) $serviceItem->duration
         )) {
-            return 'A service slot in your basket is no longer available';
+            return [
+                'message' => 'This appointment slot was already booked by someone else',
+                'code' => 'appointment_taken',
+            ];
         }
 
         return null;
+    }
+
+    private function formatBasketLine(BasketItem $line): array
+    {
+        $payload = [
+            'id' => $line->id,
+            'line_type' => $line->lineType,
+            'quantity' => (int) $line->quantity,
+            'unit_price' => (int) $line->unitPrice,
+            'line_total' => (int) $line->quantity * (int) $line->unitPrice,
+        ];
+
+        if ($line->lineType === BasketItem::LINE_TYPE_PRODUCT && $line->item instanceof ProductVariant) {
+            $variant = $line->item;
+            $product = $variant->relationLoaded('product') ? $variant->product : Product::find($variant->productID);
+
+            $payload['product_variant_id'] = $variant->id;
+            $payload['product_id'] = $variant->productID;
+            $payload['store_id'] = $variant->storeID;
+            $payload['sku'] = $variant->sku;
+            $payload['product_name'] = $product?->name;
+            $payload['variant_name'] = $variant->name;
+        }
+
+        if ($line->lineType === BasketItem::LINE_TYPE_SERVICE && $line->item instanceof ServiceItem) {
+            $serviceItem = $line->item;
+            $service = $serviceItem->relationLoaded('service')
+                ? $serviceItem->service
+                : Service::find($serviceItem->serviceID);
+
+            $payload['service_item_id'] = $serviceItem->id;
+            $payload['service_id'] = $serviceItem->serviceID;
+            $payload['service_name'] = $service?->name;
+            $payload['item_name'] = $serviceItem->name;
+            $payload['employee_id'] = $line->employeeID;
+            $payload['employee_name'] = $line->employee?->name;
+            $payload['scheduled_date'] = $line->scheduledDate?->toDateString();
+            $payload['scheduled_time'] = ServiceEmployeeSchedule::formatTimeForApi($line->scheduledTime);
+        }
+
+        return $payload;
     }
 
     private function fulfillProductLine(Order $order, BasketItem $line): void
@@ -481,12 +574,12 @@ class CheckoutService
         ], $extra);
     }
 
-    private function fail(string $message, int $httpStatus = 422): array
+    private function fail(string $message, int $httpStatus = 422, array $extra = []): array
     {
-        return [
+        return array_merge([
             'success' => false,
             'message' => $message,
             'http_status' => $httpStatus,
-        ];
+        ], $extra);
     }
 }
