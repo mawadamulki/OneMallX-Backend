@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'fcm' => [
+        // Must match the notification channel ID created in the mobile app (Android 8+).
+        'android_channel_id' => env('FCM_ANDROID_CHANNEL_ID', 'default'),
+    ],
+
 ];

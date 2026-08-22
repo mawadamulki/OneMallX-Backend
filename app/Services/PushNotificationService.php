@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Contract\Messaging;
 use Kreait\Firebase\Exception\Messaging\NotFound;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -113,7 +115,21 @@ class PushNotificationService
         try {
             $message = CloudMessage::withTarget('token', $token)
                 ->withNotification(Notification::create($title, $body))
-                ->withData($this->normalizeData($data));
+                ->withData($this->normalizeData($data))
+                ->withAndroidConfig(AndroidConfig::fromArray([
+                    'priority' => 'high',
+                    'notification' => [
+                        'sound' => 'default',
+                        'channel_id' => config('services.fcm.android_channel_id', 'default'),
+                    ],
+                ]))
+                ->withApnsConfig(ApnsConfig::fromArray([
+                    'payload' => [
+                        'aps' => [
+                            'sound' => 'default',
+                        ],
+                    ],
+                ]));
 
             $this->messaging()->send($message);
 
