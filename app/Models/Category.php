@@ -12,6 +12,7 @@ class Category extends Model
     protected $fillable = [
         'storeID',
         'parentID',
+        'iconID',
         'name',
         'slug',
         'sortOrder',
@@ -36,5 +37,10 @@ class Category extends Model
     {
         return $this->belongsToMany(Product::class, 'product_category', 'categoryID', 'productID')
             ->withTimestamps();
+    }
+
+    public function icon()
+    {
+        return $this->belongsTo(Icon::class, 'iconID');
     }
 }

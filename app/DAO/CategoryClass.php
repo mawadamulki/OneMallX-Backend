@@ -11,7 +11,7 @@ class CategoryClass implements CategoryInterface
     {
         return Category::query()
             ->where('storeID', $storeId)
-            ->with(['parent:id,name,slug'])
+            ->with(['parent:id,name,slug', 'icon:id,name,slug,url'])
             ->orderBy('sortOrder')
             ->orderBy('name')
             ->get();
@@ -22,7 +22,7 @@ class CategoryClass implements CategoryInterface
         return Category::query()
             ->whereKey($categoryId)
             ->where('storeID', $storeId)
-            ->with(['parent', 'children'])
+            ->with(['parent', 'children', 'icon'])
             ->first();
     }
 
@@ -38,7 +38,7 @@ class CategoryClass implements CategoryInterface
     {
         $category->update($data);
 
-        return $category->fresh(['parent', 'children']);
+        return $category->fresh(['parent', 'children', 'icon']);
     }
 
     public function delete(Category $category): bool

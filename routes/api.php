@@ -17,6 +17,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServiceItemController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\IconController;
 use App\Http\Controllers\FavoriteProductController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
@@ -76,6 +77,7 @@ Route::get('/productsWithOffersInStore/{storeId}', [StoreController::class, 'pro
 Route::get('/collectionsInStore/{storeId}', [StoreController::class, 'collections']);
 Route::get('/productsInCollection/{collectionId}', [StoreController::class, 'productsInCollection']);
 Route::get('/categoriesInStore/{storeId}', [StoreController::class, 'categories']);
+Route::get('/categoryIcons', [IconController::class, 'index']);
 Route::get('/productsInCategory/{categoryId}', [StoreController::class, 'productsInCategory']);
 Route::get('/storeRates/{storeId}', [RateController::class, 'storeRatesForMobile']);
 Route::get('/productRates/{productId}', [RateController::class, 'productRatesForMobile']);

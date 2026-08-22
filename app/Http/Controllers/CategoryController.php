@@ -29,6 +29,7 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255',
             'parentID' => 'nullable|integer',
+            'iconID' => 'nullable|integer',
             'sortOrder' => 'sometimes|integer|min:0',
         ]);
 
@@ -47,6 +48,7 @@ class CategoryController extends Controller
             'name' => 'sometimes|string|max:255',
             'slug' => 'nullable|string|max:255',
             'parentID' => 'nullable|integer',
+            'iconID' => 'nullable|integer',
             'sortOrder' => 'sometimes|integer|min:0',
         ]);
 

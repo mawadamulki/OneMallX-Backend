@@ -6,6 +6,7 @@ use App\DAO\CategoryInterface;
 use App\DAO\ProductInterface;
 use App\Models\Category;
 use App\Models\Store;
+use App\Support\IconFormatter;
 use Illuminate\Support\Str;
 
 class CategoryService
@@ -13,6 +14,7 @@ class CategoryService
     public function __construct(
         protected CategoryInterface $categoryClass,
         protected ProductInterface $productClass,
+        protected IconService $iconService,
     ) {}
 
     public function listForOwner(int $userId): array
@@ -64,14 +66,23 @@ class CategoryService
             }
         }
 
+        if (array_key_exists('iconID', $payload) && $payload['iconID'] !== null) {
+            if ($this->iconService->findActiveById((int) $payload['iconID']) === null) {
+                return $this->fail('Icon not found.', 422);
+            }
+        }
+
         $slug = $this->resolveSlug((int) $store->id, (string) $payload['name'], $payload['slug'] ?? null);
 
         $category = $this->categoryClass->createForStore((int) $store->id, [
             'name' => $payload['name'],
             'slug' => $slug,
             'parentID' => $payload['parentID'] ?? null,
+            'iconID' => $payload['iconID'] ?? null,
             'sortOrder' => (int) ($payload['sortOrder'] ?? 0),
         ]);
+
+        $category->load(['parent:id,name,slug', 'icon:id,name,slug,url']);
 
         return [
             'success' => true,
@@ -107,6 +118,12 @@ class CategoryService
             }
         }
 
+        if (array_key_exists('iconID', $payload) && $payload['iconID'] !== null) {
+            if ($this->iconService->findActiveById((int) $payload['iconID']) === null) {
+                return $this->fail('Icon not found.', 422);
+            }
+        }
+
         $data = [];
 
         if (array_key_exists('name', $payload)) {
@@ -123,7 +140,7 @@ class CategoryService
             );
         }
 
-        foreach (['parentID', 'sortOrder'] as $field) {
+        foreach (['parentID', 'iconID', 'sortOrder'] as $field) {
             if (array_key_exists($field, $payload)) {
                 $data[$field] = $payload[$field];
             }
@@ -168,7 +185,11 @@ class CategoryService
             'name' => $category->name,
             'slug' => $category->slug,
             'parentID' => $category->parentID,
+            'iconID' => $category->iconID,
             'sortOrder' => $category->sortOrder,
+            'icon' => $category->relationLoaded('icon')
+                ? IconFormatter::toArray($category->icon)
+                : null,
             'parent' => $category->relationLoaded('parent') && $category->parent
                 ? [
                     'id' => $category->parent->id,
