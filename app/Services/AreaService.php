@@ -54,13 +54,15 @@ class AreaService
 
         $data['floorID'] = $floorId;
 
-        $categoryError = $this->businessCategoryService->validateForArea(
-            (string) $data['usageType'],
-            (int) $data['categoryID'],
-        );
+        if (array_key_exists('categoryID', $data) && $data['categoryID'] !== null) {
+            $categoryError = $this->businessCategoryService->validateForArea(
+                (string) $data['usageType'],
+                (int) $data['categoryID'],
+            );
 
-        if ($categoryError !== null) {
-            return ['error' => $categoryError];
+            if ($categoryError !== null) {
+                return ['error' => $categoryError];
+            }
         }
 
         return $this->areaDAO->create($data);

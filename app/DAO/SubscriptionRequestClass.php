@@ -93,17 +93,12 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 return ['success' => false, 'message' => __('app.plan_price_mismatch')];
             }
 
-            $pick = $this->pickRandomAvailableStoreAreaId(
-                (int) $locked->storeSubscriptionPlanID,
-                $locked->businessCategoryID !== null ? (int) $locked->businessCategoryID : null
-            );
+            $pick = $this->pickRandomAvailableStoreAreaId((int) $locked->storeSubscriptionPlanID);
             if ($pick['areaId'] === null) {
                 $message = match ($pick['reason']) {
                     'plan_missing' => __('app.store_plan_not_found'),
                     'plan_closed' => __('app.store_plan_not_accepting_subscriptions'),
-                    'none_for_category' => __('app.no_areas_for_business_category_in_store_plan'),
                     'none' => __('app.no_areas_assigned_to_store_plan'),
-                    'full_for_category' => __('app.no_available_area_for_business_category_in_store_plan'),
                     default => __('app.no_available_area_in_store_plan'),
                 };
 
@@ -189,17 +184,12 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
                 return ['success' => false, 'message' => __('app.plan_price_mismatch')];
             }
 
-            $pick = $this->pickRandomAvailableServiceAreaId(
-                (int) $locked->serviceSubscriptionPlanID,
-                $locked->businessCategoryID !== null ? (int) $locked->businessCategoryID : null
-            );
+            $pick = $this->pickRandomAvailableServiceAreaId((int) $locked->serviceSubscriptionPlanID);
             if ($pick['areaId'] === null) {
                 $message = match ($pick['reason']) {
                     'plan_missing' => __('app.service_plan_not_found'),
                     'plan_closed' => __('app.service_plan_not_accepting_subscriptions'),
-                    'none_for_category' => __('app.no_areas_for_business_category_in_service_plan'),
                     'none' => __('app.no_areas_assigned_to_service_plan'),
-                    'full_for_category' => __('app.no_available_area_for_business_category_in_service_plan'),
                     default => __('app.no_available_area_in_service_plan'),
                 };
 
@@ -405,9 +395,9 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
     }
 
     /**
-     * @return array{areaId: int|null, reason?: 'plan_missing'|'plan_closed'|'none'|'none_for_category'|'full'|'full_for_category'}
+     * @return array{areaId: int|null, reason?: 'plan_missing'|'plan_closed'|'none'|'full'}
      */
-    private function pickRandomAvailableStoreAreaId(int $storeSubscriptionPlanId, ?int $businessCategoryId = null): array
+    private function pickRandomAvailableStoreAreaId(int $storeSubscriptionPlanId): array
     {
         $plan = StoreSubscriptionPlan::query()->find($storeSubscriptionPlanId);
         if (! $plan) {
@@ -418,16 +408,13 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
             return ['areaId' => null, 'reason' => 'plan_closed'];
         }
 
-        $areasQuery = $plan->areas()->where('usageType', 'store');
-
-        if ($businessCategoryId !== null) {
-            $areasQuery->where('categoryID', $businessCategoryId);
-        }
-
-        $areaIds = $areasQuery->pluck('id')->shuffle();
+        $areaIds = $plan->areas()
+            ->where('usageType', 'store')
+            ->pluck('id')
+            ->shuffle();
 
         if ($areaIds->isEmpty()) {
-            return ['areaId' => null, 'reason' => $businessCategoryId !== null ? 'none_for_category' : 'none'];
+            return ['areaId' => null, 'reason' => 'none'];
         }
 
         foreach ($areaIds as $id) {
@@ -441,13 +428,13 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
             }
         }
 
-        return ['areaId' => null, 'reason' => $businessCategoryId !== null ? 'full_for_category' : 'full'];
+        return ['areaId' => null, 'reason' => 'full'];
     }
 
     /**
-     * @return array{areaId: int|null, reason?: 'plan_missing'|'plan_closed'|'none'|'none_for_category'|'full'|'full_for_category'}
+     * @return array{areaId: int|null, reason?: 'plan_missing'|'plan_closed'|'none'|'full'}
      */
-    private function pickRandomAvailableServiceAreaId(int $serviceSubscriptionPlanId, ?int $businessCategoryId = null): array
+    private function pickRandomAvailableServiceAreaId(int $serviceSubscriptionPlanId): array
     {
         $plan = ServiceSubscriptionPlan::query()->find($serviceSubscriptionPlanId);
         if (! $plan) {
@@ -458,16 +445,13 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
             return ['areaId' => null, 'reason' => 'plan_closed'];
         }
 
-        $areasQuery = $plan->areas()->where('usageType', 'service');
-
-        if ($businessCategoryId !== null) {
-            $areasQuery->where('categoryID', $businessCategoryId);
-        }
-
-        $areaIds = $areasQuery->pluck('id')->shuffle();
+        $areaIds = $plan->areas()
+            ->where('usageType', 'service')
+            ->pluck('id')
+            ->shuffle();
 
         if ($areaIds->isEmpty()) {
-            return ['areaId' => null, 'reason' => $businessCategoryId !== null ? 'none_for_category' : 'none'];
+            return ['areaId' => null, 'reason' => 'none'];
         }
 
         foreach ($areaIds as $id) {
@@ -481,6 +465,6 @@ class SubscriptionRequestClass implements SubscriptionRequestInterface
             }
         }
 
-        return ['areaId' => null, 'reason' => $businessCategoryId !== null ? 'full_for_category' : 'full'];
+        return ['areaId' => null, 'reason' => 'full'];
     }
 }

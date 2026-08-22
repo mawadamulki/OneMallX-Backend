@@ -48,7 +48,7 @@ class AreaController extends Controller
             'name' => 'required|string',
             'number' => 'required|integer',
             'usageType' => 'required|in:store,service',
-            'categoryID' => 'required|integer|exists:business_categories,id',
+            'categoryID' => 'nullable|integer|exists:business_categories,id',
             'maxCapacity' => 'required|integer|min:1',
         ]);
 
